@@ -1,0 +1,311 @@
+substitutions:
+  friendly_name: Kauf Bulb
+
+esp8266:                       # https://esphome.io/components/esp8266.html
+  board: esp01_1m
+  restore_from_flash: true
+
+  framework:                   # provides updated PWM logic per https://github.com/esp8266/Arduino/pull/7231
+    version: 3.0.2             # https://github.com/esp8266/Arduino/releases
+    platform_version: 3.2.0    # https://github.com/platformio/platform-espressif8266/releases/
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/KaufHA/kauf-rgbww-bulbs
+    refresh: 0s
+
+
+esphome:
+
+  name: kauf-bulb
+
+  includes:
+    - kauf-bulb-main.h
+    - kauf-bulb-aux.h
+
+  name_add_mac_suffix: true
+
+
+  project:
+    name: "kauf.rgbww"
+    version: "1.71"
+
+
+  on_boot:
+    then:
+
+      - lambda: |-
+
+          // restore light state per setting.  Default is to restore previous state so we don't need an action for that.
+          if (id(select_boot_state).state == "Always On - Last Value") {
+            auto call = id(kauf_light).turn_on();
+            call.perform();
+          }
+          else if (id(select_boot_state).state == "Always On - Bright White") {
+            auto call = id(kauf_light).turn_on();
+            call.set_color_mode(ColorMode::COLOR_TEMPERATURE);
+            call.set_color_temperature(150);
+            call.set_brightness(1.0);
+            call.perform();
+          }
+          else if (id(select_boot_state).state == "Always Off") {
+            auto call = id(kauf_light).turn_off();
+            call.perform();
+          }
+
+          // turn on WLED if effect is selected
+          if ( id(effect).state == "WLED / DDP" ) { id(kauf_light)->set_use_wled(); }
+
+
+      # Wait until ESPHome tries loading wifi credentials before going on with WiFi AP logic.
+      - wait_until:
+          lambda: 'return ( wifi_wificomponent->tried_loading_creds );'
+
+      - if:
+          condition: # don't do anything if credentials were loaded unless force_ap is on as an override
+            lambda: 'return ( wifi_wificomponent->loaded_creds && !id(force_ap) );'
+
+          # if we don't need AP 
+          then:
+            - logger.log: "------------------->>>>>>>>>>>>>>>>>   wifi already configured, leaving ap timeout cranked"
+
+            - globals.set:  # set global so if wifi never connects we'll have AP next time.
+                id: force_ap
+                value: 'true'
+            - script.execute: save_changes
+
+            - wait_until:
+                wifi.connected
+            - globals.set:  # clear global so we won't have AP next time
+                id: force_ap
+                value: 'false'
+            - script.execute: save_changes
+
+
+          # if we do need AP 
+          else:           # if credentials not loaded or force_ap is set, lower ap timeout to allow saving new credentials
+            - logger.log: "------------------->>>>>>>>>>>>>>>>>   wifi not configured, enabling ap and waiting"
+              # set ap timeout to 15 seconds in milliseconds.
+            - lambda: 'wifi_wificomponent->set_ap_timeout(15000);'
+            - wait_until:
+                wifi.connected
+            - globals.set:  # clear global so ap doesn't come back up next time
+                id: force_ap
+                value: 'false'
+            - script.execute: save_changes
+
+              # set ap timeout to max 32 bit value in milliseconds.  About 3.5 weeks.
+            - logger.log: "------------------->>>>>>>>>>>>>>>>>   wifi connected, cranking ap timeout back up"
+            - lambda: 'wifi_wificomponent->set_ap_timeout(2147483647);'
+
+
+globals:
+  - id: force_ap
+    type: bool
+    restore_value: yes
+    initial_value: "true"
+    
+
+switch:
+  - platform: restart
+    id: restart_switch
+    name: $friendly_name Restart Firmware
+    entity_category: diagnostic
+    disabled_by_default: true
+  - platform: template
+    id: clear_wifi_switch
+    name: $friendly_name Clear WiFi Credentials
+    disabled_by_default: true
+    optimistic: true
+    entity_category: diagnostic
+    on_turn_on:
+      then:
+        - lambda: 'wifi_wificomponent->clear_stored_creds();'
+        - delay: 4s
+        - switch.turn_on: restart_switch
+
+
+wifi:
+
+  ssid: initial_ap2          # !secret wifi_ssid
+  password: asdfasdfasdfasdf # !secret wifi_pass
+
+  # Uncomment below to set a static IP
+  # manual_ip:
+  #   static_ip: !secret kauf_bulb_rgb_ip_address
+  #   gateway: !secret wifi_gateway
+  #   subnet: !secret wifi_subnet
+  #   dns1: !secret wifi_dns1
+
+  # use_address allows wireless programming through dashboard.
+  # Set to the bulb's IP Address.  Remove after programming.
+  # use_address: 192.168.86.244
+
+  # default is 20, 17 is recommended.
+  output_power: 17
+
+  ap:
+    ssid: ${friendly_name} Hotspot
+    ap_timeout: 2147483647ms      # maximum 32 bit value.  About 3.5 weeks in milliseconds.
+
+captive_portal:
+logger:
+  # level: verbose
+api:
+ota:
+debug:
+
+web_server:                           # web server allows access to device with a web browser
+  css_include: "webserver-v1.min.css"
+  css_url: ""
+  js_include: "webserver-v1.min.js"
+  js_url: ""
+
+
+# PWM outputs for each LED channel
+output:
+  - platform: esp8266_pwm
+    pin: GPIO4
+    frequency: 1000 Hz
+    id: pwm_red
+  - platform: esp8266_pwm
+    pin: GPIO12
+    frequency: 1000 Hz
+    id: pwm_green
+  - platform: esp8266_pwm
+    pin: GPIO14
+    frequency: 1000 Hz
+    id: pwm_blue
+  - platform: esp8266_pwm
+    pin: GPIO5
+    frequency: 1000 Hz
+    id: pwm_cw
+  - platform: esp8266_pwm
+    pin: GPIO13
+    frequency: 1000 Hz
+    id: pwm_ww
+
+
+
+
+light:
+
+# Additive RGB light for Warm White
+- platform: custom
+  lambda: |-
+    auto light_out = new KaufLightRGBAux();
+
+    App.register_component(light_out);
+    return {light_out};
+
+  lights:
+    - name: $friendly_name Warm RGB
+      id: warm_rgb
+      default_transition_length: 0ms
+      disabled_by_default: true
+      entity_category: config
+
+# Additive RGB light for Cold White
+- platform: custom
+  lambda: |-
+    auto light_out = new KaufLightRGBAux();
+
+    App.register_component(light_out);
+    return {light_out};
+
+  lights:
+    - name: $friendly_name Cold RGB
+      id: cold_rgb
+      default_transition_length: 0ms
+      disabled_by_default: true
+      entity_category: config
+
+# Main RGBWW light
+- platform: custom
+  lambda: |-
+    auto light_out = new KaufLightRGBMain();
+    light_out->output_red   = id(pwm_red);
+    light_out->output_green = id(pwm_green);
+    light_out->output_blue  = id(pwm_blue);
+    light_out->output_cold  = id(pwm_cw);
+    light_out->output_warm  = id(pwm_ww);
+
+    light_out->warm_rgb = warm_rgb;
+    light_out->cold_rgb = cold_rgb;
+    light_out->has_cw_rgb = true;
+
+    App.register_component(light_out);
+    return {light_out};
+
+  lights:
+    - name: $friendly_name
+      id: kauf_light
+      default_transition_length: 250ms
+      entity_category: ''
+
+
+select:
+
+  # default light state on boot
+  - platform: template
+    name: $friendly_name Power On State
+    id: select_boot_state
+    optimistic: true
+    options:
+      - "Restore Power Off State"
+      - "Always On - Last Value"
+      - "Always On - Bright White"
+      - "Always Off"
+    # defaulting to always on is nice so you know new bulbs are working
+    initial_option: "Always On - Bright White"
+    restore_value: true
+    icon: mdi:restart-alert
+    set_action:
+      - script.execute: save_changes
+    entity_category: config
+
+
+  - platform: template
+    name: $friendly_name Effect
+    id: effect
+    optimistic: true
+    options:
+      - "None"
+      - "WLED / DDP"
+    initial_option: "None"
+    restore_value: true
+    icon: mdi:string-lights
+    set_action:
+
+      - lambda: |-
+          if ( x == "None" )       { id(kauf_light)->clr_use_wled(); }
+          if ( x == "WLED / DDP" ) { id(kauf_light)->set_use_wled(); }
+
+      - script.execute: save_changes
+      
+    entity_category: config
+
+
+sensor:
+  - platform: uptime
+    name: $friendly_name Uptime
+    update_interval: 60s
+    entity_category: diagnostic
+    disabled_by_default: true
+
+
+# Send IP Address to HA
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: $friendly_name IP Address
+      entity_category: diagnostic
+
+
+script:
+  - id: save_changes
+    mode: restart
+    then:
+      - delay: 3s
+      - lambda: 'global_preferences->sync();'

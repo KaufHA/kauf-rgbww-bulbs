@@ -1,0 +1,256 @@
+substitutions:
+
+  # **** CHANGE FRIENDLY NAME TO SOMETHING UNIQUE PER DEVICE ****
+  friendly_name: Kauf Bulb
+
+esp8266:                       # https://esphome.io/components/esp8266.html
+  board: esp01_1m
+  restore_from_flash: true
+
+  framework:                   # provides updated PWM logic per https://github.com/esp8266/Arduino/pull/7231
+    version: 3.0.2             # https://github.com/esp8266/Arduino/releases
+    platform_version: 3.2.0    # https://github.com/platformio/platform-espressif8266/releases/
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/KaufHA/kauf-rgbww-bulbs
+    refresh: 0s
+    components: [light]  # limit to just custom light functionality when importing to your own dashboard.
+    
+esphome:
+
+  name: kauf-bulb # **** CHANGE DEVICE NAME TO SOMETHING UNIQUE PER DEVICE.  RENAME YAML FILE TO SAME NAME.    ****
+                  # **** USE DASHES (-) INSTEAD OF SPACES OR UNDERSCORE (_).  USE ONLY LOWER CASE LETTERS.     ****
+
+  includes:
+    - kauf-bulb-main.h
+    - kauf-bulb-aux.h
+
+
+
+  on_boot:
+    then:
+
+      - lambda: |-
+
+          // restore light state per setting.  Default is to restore previous state so we don't need an action for that.
+          if (id(select_boot_state).state == "Always On - Last Value") {
+            auto call = id(kauf_light).turn_on();
+            call.perform();
+          }
+          else if (id(select_boot_state).state == "Always On - Bright White") {
+            auto call = id(kauf_light).turn_on();
+            call.set_color_mode(ColorMode::COLOR_TEMPERATURE);
+            call.set_color_temperature(150);
+            call.set_brightness(1.0);
+            call.perform();
+          }
+          else if (id(select_boot_state).state == "Always Off") {
+            auto call = id(kauf_light).turn_off();
+            call.perform();
+          }
+
+          // turn on WLED if effect is selected
+          if ( id(effect).state == "WLED / DDP" ) { id(kauf_light)->set_use_wled(); }
+
+
+switch:
+  - platform: restart
+    id: restart_switch
+    name: $friendly_name Restart Firmware
+    entity_category: diagnostic
+    disabled_by_default: true
+
+
+wifi:
+
+  # **** ENTER WI-FI CREDENTIALS HERE, USING SECRETS.YAML RECOMMENDED ****
+  ssid: initial_ap2          # !secret wifi_ssid
+  password: asdfasdfasdfasdf # !secret wifi_pass
+
+  # Delete the following line to acknowledge that you know that you must enter your home network's
+  # wi-fi credentials in the preceding two fields.  If for whatever reason the credentials are typed
+  # in wrong you will have to set up a wifi network with the entered credentials to recover your plug.
+  you_must_enter_wifi_credentials_above: true
+
+
+  # Uncomment below to set a static IP
+  # manual_ip:
+  #   static_ip: !secret kauf_bulb_rgb_ip_address
+  #   gateway: !secret wifi_gateway
+  #   subnet: !secret wifi_subnet
+  #   dns1: !secret wifi_dns1
+
+  # use_address allows wireless programming through dashboard.
+  # Set to the bulb's IP Address.  Remove after programming.
+  # use_address: 192.168.86.244
+
+  # default is 20, 17 is recommended.
+  output_power: 17
+
+
+logger:                               # Enable logging
+#  baud_rate: 0                       # Disable UART logging since TX pad not easily available
+
+api:                                  # Enable Home Assistant API
+  # password: !secret api_password    # optional password field for Home Assistant API.
+
+ota:
+  # password: !secret ota_password    # optional password for OTA updates.
+
+debug:                                # outputs additional debug info when logs start
+
+web_server:                           # web server allows access to device with a web browser
+  # auth:                             # optional login details for web interface
+  #   username: admin
+  #   password: !secret web_server_password
+
+
+
+# PWM outputs for each LED channel
+output:
+  - platform: esp8266_pwm
+    pin: GPIO4
+    frequency: 1000 Hz
+    id: pwm_red
+  - platform: esp8266_pwm
+    pin: GPIO12
+    frequency: 1000 Hz
+    id: pwm_green
+  - platform: esp8266_pwm
+    pin: GPIO14
+    frequency: 1000 Hz
+    id: pwm_blue
+  - platform: esp8266_pwm
+    pin: GPIO5
+    frequency: 1000 Hz
+    id: pwm_cw
+  - platform: esp8266_pwm
+    pin: GPIO13
+    frequency: 1000 Hz
+    id: pwm_ww
+
+
+
+
+light:
+
+# Additive RGB light for Warm White
+- platform: custom
+  lambda: |-
+    auto light_out = new KaufLightRGBAux();
+
+    App.register_component(light_out);
+    return {light_out};
+
+  lights:
+    - name: $friendly_name Warm RGB
+      id: warm_rgb
+      default_transition_length: 0ms
+      disabled_by_default: true
+      entity_category: config
+
+# Additive RGB light for Cold White
+- platform: custom
+  lambda: |-
+    auto light_out = new KaufLightRGBAux();
+
+    App.register_component(light_out);
+    return {light_out};
+
+  lights:
+    - name: $friendly_name Cold RGB
+      id: cold_rgb
+      default_transition_length: 0ms
+      disabled_by_default: true
+      entity_category: config
+
+# Main RGBWW light
+- platform: custom
+  lambda: |-
+    auto light_out = new KaufLightRGBMain();
+    light_out->output_red   = id(pwm_red);
+    light_out->output_green = id(pwm_green);
+    light_out->output_blue  = id(pwm_blue);
+    light_out->output_cold  = id(pwm_cw);
+    light_out->output_warm  = id(pwm_ww);
+
+    light_out->warm_rgb = warm_rgb;
+    light_out->cold_rgb = cold_rgb;
+    light_out->has_cw_rgb = true;
+
+    App.register_component(light_out);
+    return {light_out};
+
+  lights:
+    - name: $friendly_name
+      id: kauf_light
+      default_transition_length: 250ms
+      entity_category: ''
+
+
+select:
+
+  # default light state on boot
+  - platform: template
+    name: $friendly_name Power On State
+    id: select_boot_state
+    optimistic: true
+    options:
+      - "Restore Power Off State"
+      - "Always On - Last Value"
+      - "Always On - Bright White"
+      - "Always Off"
+    # defaulting to always on is nice so you know new bulbs are working
+    initial_option: "Always On - Bright White"
+    restore_value: true
+    icon: mdi:restart-alert
+    set_action:
+      - script.execute: save_changes
+    entity_category: config
+
+
+  - platform: template
+    name: $friendly_name Effect
+    id: effect
+    optimistic: true
+    options:
+      - "None"
+      - "WLED / DDP"
+    initial_option: "None"
+    restore_value: true
+    icon: mdi:string-lights
+    set_action:
+
+      - lambda: |-
+          if ( x == "None" )       { id(kauf_light)->clr_use_wled(); }
+          if ( x == "WLED / DDP" ) { id(kauf_light)->set_use_wled(); }
+
+      - script.execute: save_changes
+      
+    entity_category: config
+
+
+sensor:
+  - platform: uptime
+    name: $friendly_name Uptime
+    update_interval: 60s
+    entity_category: diagnostic
+    disabled_by_default: true
+
+
+# Send IP Address to HA
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: $friendly_name IP Address
+      entity_category: diagnostic
+
+
+script:
+  - id: save_changes
+    mode: restart
+    then:
+      - delay: 3s
+      - lambda: 'global_preferences->sync();'

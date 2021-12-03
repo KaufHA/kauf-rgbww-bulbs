@@ -1,0 +1,97 @@
+substitutions:
+  # **** CHANGE FRIENDLY NAME TO SOMETHING UNIQUE PER DEVICE ****
+  friendly_name: Kauf Bulb
+  
+esp8266:
+  board: esp01_1m
+  restore_from_flash: true
+
+esphome:
+  # **** CHANGE DEVICE NAME TO SOMETHING UNIQUE PER DEVICE ****
+  name: kauf-bulb     # **** RENAME YAML FILE TO SAME NAME ****
+
+wifi:
+
+  # **** ENTER WI-FI CREDENTIALS HERE, USING SECRETS.YAML RECOMMENDED ****
+  ssid: initial_ap2          # !secret my_wifi_ssid
+  password: asdfasdfasdfasdf # !secret my_wifi_pass
+
+  # Uncomment below to set a static IP
+  # manual_ip:
+  #   static_ip: !secret kauf_bulb_rgb_ip_address
+  #   gateway: !secret wifi_gateway
+  #   subnet: !secret wifi_subnet
+  #   dns1: !secret wifi_dns1
+
+  # use_address allows wireless programming through dashboard.
+  # Set to the plug's IP Address.  Remove after programming.
+#  use_address: 192.168.86.244
+
+  # default is 20, 17 is recommended.
+  output_power: 17
+
+  # Delete the following line to acknowledge that you know that you must enter your home network's
+  # wi-fi credentials in the preceding two fields.  If for whatever reason the credentials are typed
+  # in wrong you will have to set up a wifi network with the entered credentials to recover your plug.
+  you_must_enter_wifi_credentials_above: true
+
+
+logger:                               # Enable logging
+#  baud_rate: 0                       # Disable UART logging since TX pad not easily available
+
+api:                                  # Enable Home Assistant API
+  # password: !secret api_password    # optional password field for Home Assistant API.
+
+ota:
+  # password: !secret ota_password    # optional password for OTA updates.
+
+
+debug:                                # outputs additional debug info when logs start
+
+
+
+web_server:                           # web server allows access to device with a web browser
+  # auth:                             # optional login details for web interface
+  #   username: admin
+  #   password: !secret web_server_password
+
+
+
+# PWM outputs for each LED channel
+output:
+  - platform: esp8266_pwm
+    pin: GPIO4
+    frequency: 1000 Hz
+    id: pwm_red
+  - platform: esp8266_pwm
+    pin: GPIO12
+    frequency: 1000 Hz
+    id: pwm_green
+  - platform: esp8266_pwm
+    pin: GPIO14
+    frequency: 1000 Hz
+    id: pwm_blue
+  - platform: esp8266_pwm
+    pin: GPIO5
+    frequency: 1000 Hz
+    id: pwm_cw
+  - platform: esp8266_pwm
+    pin: GPIO13
+    frequency: 1000 Hz
+    id: pwm_ww
+
+
+
+light:
+  - platform: rgbww
+    name: $friendly_name
+    id: kauf_light
+    red: pwm_red
+    green: pwm_green
+    blue: pwm_blue
+    cold_white: pwm_cw
+    warm_white: pwm_ww
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    # constant_brightness: true
+    # color_interlock: true
