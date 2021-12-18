@@ -1,4 +1,5 @@
 substitutions:
+  name: kauf-bulb
   friendly_name: Kauf Bulb
 
 esp8266:                       # https://esphome.io/components/esp8266.html
@@ -14,23 +15,22 @@ external_components:
       type: git
       url: https://github.com/KaufHA/kauf-rgbww-bulbs
     refresh: 0s
-
+  # - source:
+  #     type: local
+  #     path: kauf_rgbww_components
+      
+dashboard_import:
+  package_import_url: github://KaufHA/kauf-rgbww-bulbs/kauf-bulb.yaml
 
 esphome:
 
-  name: kauf-bulb
-
-  includes:
-    - kauf-bulb-main.h
-    - kauf-bulb-aux.h
+  name: $name
 
   name_add_mac_suffix: true
 
-
   project:
     name: "kauf.rgbww"
-    version: "1.71"
-
+    version: "1.72"
 
   on_boot:
     then:
@@ -86,6 +86,10 @@ esphome:
           # if we do need AP 
           else:           # if credentials not loaded or force_ap is set, lower ap timeout to allow saving new credentials
             - logger.log: "------------------->>>>>>>>>>>>>>>>>   wifi not configured, enabling ap and waiting"
+            
+            # always turn on light if turning on AP
+            - light.turn_on: kauf_light
+
               # set ap timeout to 15 seconds in milliseconds.
             - lambda: 'wifi_wificomponent->set_ap_timeout(15000);'
             - wait_until:
@@ -107,40 +111,29 @@ globals:
     initial_value: "true"
     
 
-switch:
+button:
   - platform: restart
-    id: restart_switch
+    id: restart_button
     name: $friendly_name Restart Firmware
     entity_category: diagnostic
     disabled_by_default: true
   - platform: template
-    id: clear_wifi_switch
-    name: $friendly_name Clear WiFi Credentials
-    disabled_by_default: true
-    optimistic: true
+    id: clear_wifi_button
+    name: $friendly_name Clear Wifi Credentials
     entity_category: diagnostic
-    on_turn_on:
+    disabled_by_default: true
+    on_press:
       then:
-        - lambda: 'wifi_wificomponent->clear_stored_creds();'
-        - delay: 4s
-        - switch.turn_on: restart_switch
-
+        script.execute: clear_wifi_script
 
 wifi:
 
   ssid: initial_ap2          # !secret wifi_ssid
   password: asdfasdfasdfasdf # !secret wifi_pass
 
-  # Uncomment below to set a static IP
-  # manual_ip:
-  #   static_ip: !secret kauf_bulb_rgb_ip_address
-  #   gateway: !secret wifi_gateway
-  #   subnet: !secret wifi_subnet
-  #   dns1: !secret wifi_dns1
-
   # use_address allows wireless programming through dashboard.
   # Set to the bulb's IP Address.  Remove after programming.
-  # use_address: 192.168.86.244
+  # use_address: 192.168.86.207
 
   # default is 20, 17 is recommended.
   output_power: 17
@@ -156,7 +149,7 @@ api:
 ota:
 debug:
 
-web_server:                           # web server allows access to device with a web browser
+web_server:
   css_include: "webserver-v1.min.css"
   css_url: ""
   js_include: "webserver-v1.min.js"
@@ -192,58 +185,33 @@ output:
 light:
 
 # Additive RGB light for Warm White
-- platform: custom
-  lambda: |-
-    auto light_out = new KaufLightRGBAux();
-
-    App.register_component(light_out);
-    return {light_out};
-
-  lights:
-    - name: $friendly_name Warm RGB
-      id: warm_rgb
-      default_transition_length: 0ms
-      disabled_by_default: true
-      entity_category: config
+- platform: kauf_rgbww
+  id: warm_rgb
+  entity_category: config
+  default_transition_length: 0ms
+  aux: true
+  name: $friendly_name Warm RGB
 
 # Additive RGB light for Cold White
-- platform: custom
-  lambda: |-
-    auto light_out = new KaufLightRGBAux();
-
-    App.register_component(light_out);
-    return {light_out};
-
-  lights:
-    - name: $friendly_name Cold RGB
-      id: cold_rgb
-      default_transition_length: 0ms
-      disabled_by_default: true
-      entity_category: config
+- platform: kauf_rgbww
+  id: cold_rgb
+  entity_category: config
+  default_transition_length: 0ms
+  aux: true
+  name: $friendly_name Cold RGB
 
 # Main RGBWW light
-- platform: custom
-  lambda: |-
-    auto light_out = new KaufLightRGBMain();
-    light_out->output_red   = id(pwm_red);
-    light_out->output_green = id(pwm_green);
-    light_out->output_blue  = id(pwm_blue);
-    light_out->output_cold  = id(pwm_cw);
-    light_out->output_warm  = id(pwm_ww);
-
-    light_out->warm_rgb = warm_rgb;
-    light_out->cold_rgb = cold_rgb;
-    light_out->has_cw_rgb = true;
-
-    App.register_component(light_out);
-    return {light_out};
-
-  lights:
-    - name: $friendly_name
-      id: kauf_light
-      default_transition_length: 250ms
-      entity_category: ''
-
+- platform: kauf_rgbww
+  id: kauf_light
+  default_transition_length: 250ms
+  name: $friendly_name
+  red: pwm_red
+  green: pwm_green
+  blue: pwm_blue
+  warm_white: pwm_ww
+  cold_white: pwm_cw
+  warm_rgb: warm_rgb
+  cold_rgb: cold_rgb
 
 select:
 
@@ -295,12 +263,13 @@ sensor:
     disabled_by_default: true
 
 
-# Send IP Address to HA
+# Send IP Address to HA.  Disabled by default, not as important now that Home Assistant provides link.
 text_sensor:
   - platform: wifi_info
     ip_address:
       name: $friendly_name IP Address
       entity_category: diagnostic
+      disabled_by_default: true
 
 
 script:
@@ -309,3 +278,8 @@ script:
     then:
       - delay: 3s
       - lambda: 'global_preferences->sync();'
+  - id: clear_wifi_script
+    then:
+      - lambda: 'wifi_wificomponent->clear_stored_creds();'
+      - delay: 2s
+      - button.press: restart_button
