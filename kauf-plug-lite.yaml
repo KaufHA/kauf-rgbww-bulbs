@@ -1,0 +1,152 @@
+substitutions:
+
+  name: kauf-plug              # **** CHANGE DEVICE NAME TO SOMETHING UNIQUE PER DEVICE.  RENAME YAML FILE TO SAME NAME.    ****
+                               # **** USE DASHES (-) INSTEAD OF SPACES OR UNDERSCORE (_).  USE ONLY LOWER CASE LETTERS.     ****
+  
+  friendly_name: Kauf Plug     # **** CHANGE FRIENDLY NAME TO SOMETHING UNIQUE PER DEVICE ****
+
+
+esphome:
+
+  name: $name
+
+  platform: ESP8266
+  board: esp01_1m
+
+  esp8266_restore_from_flash: true
+
+  project:
+    name: "kauf.plf10"
+    version: "1.83l"
+
+
+wifi:
+
+  # **** ENTER WI-FI CREDENTIALS HERE, USING SECRETS.YAML RECOMMENDED ****
+  ssid: initial_ap2          # !secret my_wifi_ssid
+  password: asdfasdfasdfasdf # !secret my_wifi_pass
+  
+  # Uncomment below to set a static IP
+  # manual_ip:
+  #   static_ip: !secret kauf_bulb_ip_address
+  #   gateway: !secret wifi_gateway
+  #   subnet: !secret wifi_subnet
+  #   dns1: !secret wifi_dns1
+
+  # use_address allows wireless programming through the ESPHome dashboard.
+  # Set to the plug's IP Address.  Remove after programming.
+  # use_address: 192.168.1.3
+
+  # default is 20, 17 is recommended.
+  output_power: 17
+
+  # using fast_connect as default since it is required for hidden networks.
+  # feel free to change or override.
+  fast_connect: true
+
+logger:                               # Enable logging
+#  baud_rate: 0                       # Disable UART logging since TX pad not easily available
+
+api:                                  # Enable Home Assistant API
+  # password: !secret api_password    # optional password field for Home Assistant API.
+
+ota:
+  # password: !secret ota_password    # optional password for OTA updates.
+
+
+
+# red led, blink when not connected to wifi or Home Assistant
+status_led:
+    pin:
+      number: GPIO0
+      inverted: true
+
+  
+binary_sensor:  
+
+    # button input toggles relay and thereby blue led
+  - platform: gpio
+    id: button
+    name: Kauf Plug Button
+    pin:
+      number: GPIO13
+      mode: INPUT_PULLUP
+      inverted: true
+
+    on_press:
+      then:
+        switch.toggle: relay
+
+
+
+switch:    
+
+    # blue LED follows relay power state
+  - platform: gpio
+    id: blue_led
+    pin:
+      number: GPIO2
+      inverted: true
+
+    # relay output
+  - platform: gpio
+    id: relay
+    name: $friendly_name
+    pin: GPIO4
+ 
+    # automatically make blue led equal relay state
+    on_turn_on:
+      - switch.turn_on: blue_led
+    on_turn_off:
+      - switch.turn_off: blue_led
+
+
+# clock input from Home Assistant used to calculate total daily energy
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+
+
+sensor:   # Power monitoring sensors output to Home Assistant
+  - platform: hlw8012
+    sel_pin:
+      number: GPIO12
+      inverted: True
+    cf_pin: GPIO5
+    cf1_pin: GPIO14
+    current_resistor: 0.001 # The value of the shunt resistor for current measurement. 
+    voltage_divider: 2401   # The value of the voltage divider on the board as (R_upstream + R_downstream) / R_downstream. 
+    power:
+      name: ${friendly_name} Power
+      unit_of_measurement: W
+      id: wattage
+      filters:
+        - calibrate_linear:
+            - 0.0 -> 0.0  
+            - 333.8 -> 60 # value with 60W bulb.
+    current:
+      name: ${friendly_name} Current
+      unit_of_measurement: A
+      filters:
+        - calibrate_linear:
+            - 0.0 -> 0.0
+            - 0.6 -> 0.515  # value with 60W bulb.
+    voltage:
+      name: ${friendly_name} Voltage
+      unit_of_measurement: V
+      filters:
+        - calibrate_linear:
+            - 0.0 -> 0.0
+            - 302.1 -> 117.1 # Tested using a meter
+    change_mode_every: 1 
+    update_interval: 10s # 20 second effective update rate for Power, 40 second for Current and Voltage.
+
+# Reports the total Power so-far each day, resets at midnight
+# See https://esphome.io/components/sensor/total_daily_energy.html
+  - platform: total_daily_energy
+    name: ${friendly_name} Total Daily Energy
+    power_id: wattage
+    filters:
+        - multiply: 0.001  ## convert Wh to kWh
+    unit_of_measurement: kWh
+
