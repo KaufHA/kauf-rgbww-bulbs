@@ -24,6 +24,10 @@ esphome:
 
   name: $name
 
+  project:
+    name: "kauf.rgbww"
+    version: "1.72"
+
   on_boot:
     then:
 
