@@ -28,13 +28,14 @@ class LightOutput {
   /// preceded by (at least) one call to update_state().
   virtual void write_state(LightState *state) = 0;
 
+  bool is_aux( ) {return aux;}
+  void set_aux(bool aux_in) { aux = aux_in; }
+
   // pointers to aux lights
   light::LightState *warm_rgb;
   light::LightState *cold_rgb;
 
-  // lets other logic know whether the aux pointers are actually valid.  easier than actually learning c++.
-  // this way we never try to access aux lights that belong to aux lights and crash the firmware.
-  bool has_cw_rgb = false;
+  bool aux = true;
 
   // toggle for whether bulb should monitor for UDP packets from WLED / DDP
   bool use_wled = false;

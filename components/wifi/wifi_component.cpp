@@ -68,6 +68,9 @@ void WiFiComponent::setup() {
 
     // inform on_boot block that credentials were successfully loaded
     loaded_creds = true;
+
+    // always use fast connect for saved credentials
+    this->set_fast_connect(true);
   }
 
   // inform on_boot block that we tried to load credentials, whether successful or not.

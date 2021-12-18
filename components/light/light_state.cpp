@@ -143,7 +143,7 @@ void LightState::loop() {
   }
 
   // check if aux lights have changed and refresh main light if so.
-  if ( this->output_->has_cw_rgb ) {
+  if ( !this->output_->is_aux() ) {
     if ( this->output_->warm_rgb->has_changed || this->output_->cold_rgb->has_changed ) {
       ESP_LOGV("KAUF_OUTPUT","warm or cold rgb changed");
       this->output_->warm_rgb->has_changed = false;
@@ -194,6 +194,19 @@ void LightState::wled_apply() {
 }
 
 bool LightState::parse_frame_(const uint8_t *payload, uint16_t size) {
+
+
+
+  ESP_LOGVV("KAUF WLED PACKET", "");
+  ESP_LOGVV("KAUF WLED PACKET", "size=%d", size);
+
+  for ( int i = 0; i < size; i++ ) {
+    ESP_LOGVV("KAUF WLED PACKET", "%d: %08x - %d", i, payload[i], payload[i]);
+  }
+
+  ESP_LOGVV("KAUF WLED PACKET", "");
+  ESP_LOGVV("KAUF WLED PACKET", "");
+
 
   if (size < 2) {
     return false;
