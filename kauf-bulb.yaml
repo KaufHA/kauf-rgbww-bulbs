@@ -18,7 +18,11 @@ external_components:
       type: git
       url: https://github.com/KaufHA/kauf-rgbww-bulbs
     refresh: 0s
-    components: [kauf_rgbww,light]  # limit to just custom light functionality when importing to your own dashboard.
+    
+    # kauf_rgbww and light are required external components.  If you don't want to use them, you should use kauf-bulb-minimal.yaml instead of kauf-bulb.yaml
+    # web_server is not required, it just adds the version number to the web interface and also a warning about not flashing WLED or tasmota-minimal.
+    # web_server_base is not required, it just makes the OTA system error out if wled or minimal are found in an uploaded firmware filename.
+    components: [kauf_rgbww,light,web_server,web_server_base]  # limit to just custom light functionality when importing to your own dashboard.
     
 esphome:
 
