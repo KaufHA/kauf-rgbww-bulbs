@@ -2,7 +2,7 @@
 
 The recommended way to import a bulb into your ESPHome dashboard is through the dashboard import feature.  The bulb will need to be updated to 1.72 to be discovered by the ESPHome dashboard.  You can accomplish the same thing without updating first by using the following yaml modified as desired.
 
-The friendly_name substitution is recommended and will need to be created in either case.
+The friendly_name substitution is recommended and will not be automatically created by the ESPHome dashboard import.
 
 ```
 substitutions:
