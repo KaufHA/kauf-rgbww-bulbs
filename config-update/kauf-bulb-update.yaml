@@ -30,7 +30,7 @@ esphome:
 
   project:
     name: "kauf.rgbww"
-    version: "1.72"
+    version: "1.72u"
 
   on_boot:
     then:
