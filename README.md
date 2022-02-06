@@ -1,6 +1,6 @@
 # kauf-rgbww-bulbs
 
-The recommended way to import a bulb into your ESPHome dashboard is through the dashboard import feature.  The bulb will need to be updated to 1.72 to be discovered by the ESPHome dashboard.  You can accomplish the same thing without updating first by using the following yaml modified as desired.
+The recommended way to import a bulb into your ESPHome dashboard is through the dashboard import feature.  The bulb will need to be updated to version 1.72 or greater to be discovered by the ESPHome dashboard.  You can accomplish the same thing without updating first by using the following yaml modified as desired.
 
 The friendly_name substitution is recommended and will not be automatically created by the ESPHome dashboard import.
 
@@ -23,7 +23,7 @@ wifi:
 
 This repo contains files for the KAUF RGBWW Smart Bulbs.
 
-***components* directory** - Custom components needed to compile the KAUF RGBWW bulb firmware.  These don't need to be downloaded, the yaml files automatically grab them by reference to this github repo.
+***components* directory** - Custom components needed to compile the KAUF RGBWW bulb firmware.  These don't need to be downloaded, the yaml files automatically grab them by reference to this github repo.  Every subfolder not starting with kauf_* is copied from stock ESPHome and edited for our products.
 
 ***config-update* directory** - Files needed in the ESPHome config directory to compile the update bin file for the KAUF RGBWW bulbs.
 
