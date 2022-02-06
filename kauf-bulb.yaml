@@ -18,11 +18,10 @@ external_components:
       type: git
       url: https://github.com/KaufHA/kauf-rgbww-bulbs
     refresh: 0s
+  # - source:
+  #     type: local
+  #     path: kauf_rgbww_components
     
-    # kauf_rgbww and light are required external components.  If you don't want to use them, you should use kauf-bulb-minimal.yaml instead of kauf-bulb.yaml
-    # web_server is not required, it just adds the version number to the web interface and also a warning about not flashing WLED or tasmota-minimal.
-    # web_server_base is not required, it just makes the OTA system error out if wled or minimal are found in an uploaded firmware filename.
-    components: [kauf_rgbww,light,web_server,web_server_base]
     
 esphome:
 
@@ -30,7 +29,7 @@ esphome:
 
   project:
     name: "kauf.rgbww"
-    version: "1.72y"
+    version: "1.73y"
 
   on_boot:
     then:
@@ -68,8 +67,8 @@ button:
 wifi:
 
   # **** ENTER WI-FI CREDENTIALS HERE, USING SECRETS.YAML RECOMMENDED ****
-  ssid: initial_ap2          # !secret wifi_ssid
-  password: asdfasdfasdfasdf # !secret wifi_pass
+  ssid: initial_ap           # !secret wifi_ssid
+  password: asdfasdfasdfasdf # !secret wifi_password
 
     # Uncomment below to set a static IP
   # manual_ip:
@@ -80,7 +79,7 @@ wifi:
 
   # use_address allows wireless programming through dashboard.
   # Set to the bulb's IP Address.  Remove after programming.
-  # use_address: 192.168.86.244
+  # use_address: 192.168.86.249
 
   # default is 20, 17 is recommended.
   output_power: 17
@@ -142,6 +141,7 @@ light:
   default_transition_length: 0ms
   aux: true
   name: $friendly_name Warm RGB
+  forced_hash: 4077116474
 
 # Additive RGB light for Cold White
 - platform: kauf_rgbww
@@ -150,6 +150,7 @@ light:
   default_transition_length: 0ms
   aux: true
   name: $friendly_name Cold RGB
+  forced_hash: 301094535
 
 # Main RGBWW light
 - platform: kauf_rgbww
@@ -163,6 +164,7 @@ light:
   cold_white: pwm_cw
   warm_rgb: warm_rgb
   cold_rgb: cold_rgb
+  forced_hash: 2723974766
 
 select:
 
@@ -183,6 +185,7 @@ select:
     set_action:
       - script.execute: save_changes
     entity_category: config
+    forced_hash: 3524332562
 
 
   - platform: template
@@ -204,7 +207,7 @@ select:
       - script.execute: save_changes
       
     entity_category: config
-
+    forced_hash: 5841966
 
 sensor:
   - platform: uptime
