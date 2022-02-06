@@ -9,7 +9,7 @@ esphome:
 
   project:
     name: "kauf.rgbww"
-    version: "1.72f"        # f = factory
+    version: "1.73f"        # f = factory
 
   on_boot:
     then:
