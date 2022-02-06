@@ -23,7 +23,7 @@ esphome:
   # overwrite project for different letter suffix
   project:
     name: "kauf.rgbww"
-    version: "1.72u"
+    version: "1.73u"
 
   # add wifi handling on boot, which is not needed for dashboard import version
   on_boot:
