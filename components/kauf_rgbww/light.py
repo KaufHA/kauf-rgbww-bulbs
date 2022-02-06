@@ -69,6 +69,7 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional("cold_rgb"): cv.use_id(light.LightState),
             cv.Optional("warm_rgb"): cv.use_id(light.LightState),
             cv.Optional("aux", default=False): cv.boolean,
+            cv.Optional("forced_hash"): cv.int_,
         }
     ),
     cv.has_none_or_all_keys(
@@ -81,6 +82,10 @@ CONFIG_SCHEMA = cv.All(
 async def to_code(config):
 
     var = cg.new_Pvariable(config[CONF_OUTPUT_ID])
+
+    # set forced hash if it exists
+    if "forced_hash" in config:
+        cg.add(var.set_forced_hash(config["forced_hash"]))
 
 
     # for main light

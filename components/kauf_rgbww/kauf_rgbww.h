@@ -12,7 +12,6 @@ class KaufRGBWWLight : public light::LightOutput, public Component {
   void setup() override;
   light::LightTraits get_traits() override;
 
-
   void set_red(output::FloatOutput *red) { red_ = red; }
   void set_green(output::FloatOutput *green) { green_ = green; }
   void set_blue(output::FloatOutput *blue) { blue_ = blue; }
@@ -23,17 +22,14 @@ class KaufRGBWWLight : public light::LightOutput, public Component {
   void set_constant_brightness(bool constant_brightness) { constant_brightness_ = constant_brightness; }
   void set_color_interlock(bool color_interlock) { color_interlock_ = color_interlock; }
 
-
   void write_state(light::LightState *state) override;
   void dump_config() override;
  
   void set_outputs(float red, float green, float blue, float white_brightness = 0.0f);
-  
-  // bool is_aux( ) {return aux;}
-  // void set_aux(bool aux_in) { aux = aux_in; }
 
   void set_cold_rgb(light::LightState *cold_rgb_in) { cold_rgb = cold_rgb_in; }
   void set_warm_rgb(light::LightState *warm_rgb_in) { warm_rgb = warm_rgb_in; }
+
 
  protected:
   output::FloatOutput *red_;
@@ -46,9 +42,6 @@ class KaufRGBWWLight : public light::LightOutput, public Component {
   bool constant_brightness_;
   bool color_interlock_{false};
 
-  // light::LightState *warm_rgb;
-  // light::LightState *cold_rgb;
-
   float min_mireds = 150;
   float max_mireds = 350;
   
@@ -56,8 +49,6 @@ class KaufRGBWWLight : public light::LightOutput, public Component {
   float max_blue  = .6;  // blue really overpowers red and green.  .6 scaling factor seems about right.
 
   float ct = .5;         // CT variable declared up here so that it gets saved across calls to write_state.
-
-  // bool aux = true;
 
 };
 
