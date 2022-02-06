@@ -194,8 +194,9 @@ class ESP8266Preferences : public ESPPreferences {
       else if ( type == 3755051405 ) { start = 68; }  // v1.7 - First boot Variable
 
       // should never get to this because ESPHome only saves a pretty small number of well defined things.
+      // end users might see it if they add their own entities and also have uart logging hooked up to see messages this early.
       else {
-        ESP_LOGD("KAUF Preferences", "              !!!! EXCEEDED EXPECTED MAXIMUM FLASH MEMORY ADDRESS !!!!");
+        ESP_LOGD("KAUF Preferences", "              !!!! NOTE: STORING PAST DEFAULT FLASH TABLE !!!!");
 
         // set start to end of memory map above if it's not there already.
         if ( this->current_flash_offset < 70 ) {this->current_flash_offset = 70;}
