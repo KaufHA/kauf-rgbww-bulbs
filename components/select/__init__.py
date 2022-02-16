@@ -1,98 +1,84 @@
-from typing import List
+from esphome import automation
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome import automation
-from esphome.components import mqtt
+from esphome.components import select
 from esphome.const import (
     CONF_ID,
-    CONF_ON_VALUE,
-    CONF_OPTION,
-    CONF_TRIGGER_ID,
-    CONF_MQTT_ID,
+    CONF_INITIAL_OPTION,
+    CONF_LAMBDA,
+    CONF_OPTIONS,
+    CONF_OPTIMISTIC,
+    CONF_RESTORE_VALUE,
 )
-from esphome.core import CORE, coroutine_with_priority
-from esphome.cpp_helpers import setup_entity
+from .. import template_ns
 
-CODEOWNERS = ["@esphome/core"]
-IS_PLATFORM_COMPONENT = True
-
-select_ns = cg.esphome_ns.namespace("select")
-Select = select_ns.class_("Select", cg.EntityBase)
-SelectPtr = Select.operator("ptr")
-
-# Triggers
-SelectStateTrigger = select_ns.class_(
-    "SelectStateTrigger", automation.Trigger.template(cg.float_)
+TemplateSelect = template_ns.class_(
+    "TemplateSelect", select.Select, cg.PollingComponent
 )
 
-# Actions
-SelectSetAction = select_ns.class_("SelectSetAction", automation.Action)
-
-icon = cv.icon
-
-SELECT_SCHEMA = cv.ENTITY_BASE_SCHEMA.extend(cv.MQTT_COMMAND_COMPONENT_SCHEMA).extend(
-    {
-        cv.OnlyWith(CONF_MQTT_ID, "mqtt"): cv.declare_id(mqtt.MQTTSelectComponent),
-        cv.GenerateID(): cv.declare_id(Select),
-        cv.Optional(CONF_ON_VALUE): automation.validate_automation(
-            {
-                cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(SelectStateTrigger),
-            }
-        ),
-            cv.Optional("forced_hash"): cv.int_,
-    }
-)
+CONF_SET_ACTION = "set_action"
 
 
-async def setup_select_core_(var, config, *, options: List[str]):
-    await setup_entity(var, config)
+def validate(config):
+    if CONF_LAMBDA in config:
+        if config[CONF_OPTIMISTIC]:
+            raise cv.Invalid("optimistic cannot be used with lambda")
+        if CONF_INITIAL_OPTION in config:
+            raise cv.Invalid("initial_value cannot be used with lambda")
+        if CONF_RESTORE_VALUE in config:
+            raise cv.Invalid("restore_value cannot be used with lambda")
+    elif CONF_INITIAL_OPTION in config:
+        if config[CONF_INITIAL_OPTION] not in config[CONF_OPTIONS]:
+            raise cv.Invalid(
+                f"initial_option '{config[CONF_INITIAL_OPTION]}' is not a valid option [{', '.join(config[CONF_OPTIONS])}]"
+            )
+    else:
+        config[CONF_INITIAL_OPTION] = config[CONF_OPTIONS][0]
 
-    cg.add(var.traits.set_options(options))
-
-    if "forced_hash" in config:
-        cg.add(var.set_forced_hash(config["forced_hash"]))
-
-    for conf in config.get(CONF_ON_VALUE, []):
-        trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
-        await automation.build_automation(trigger, [(cg.std_string, "x")], conf)
-
-    if CONF_MQTT_ID in config:
-        mqtt_ = cg.new_Pvariable(config[CONF_MQTT_ID], var)
-        await mqtt.register_mqtt_component(mqtt_, config)
-
-
-async def register_select(var, config, *, options: List[str]):
-    if not CORE.has_id(config[CONF_ID]):
-        var = cg.Pvariable(config[CONF_ID], var)
-    cg.add(cg.App.register_select(var))
-    await setup_select_core_(var, config, options=options)
-
-
-async def new_select(config, *, options: List[str]):
-    var = cg.new_Pvariable(config[CONF_ID])
-    await register_select(var, config, options=options)
-    return var
+    if not config[CONF_OPTIMISTIC] and CONF_SET_ACTION not in config:
+        raise cv.Invalid(
+            "Either optimistic mode must be enabled, or set_action must be set, to handle the option being set."
+        )
+    return config
 
 
-@coroutine_with_priority(40.0)
-async def to_code(config):
-    cg.add_define("USE_SELECT")
-    cg.add_global(select_ns.using)
-
-
-@automation.register_action(
-    "select.set",
-    SelectSetAction,
-    cv.Schema(
+CONFIG_SCHEMA = cv.All(
+    select.SELECT_SCHEMA.extend(
         {
-            cv.Required(CONF_ID): cv.use_id(Select),
-            cv.Required(CONF_OPTION): cv.templatable(cv.string_strict),
+            cv.GenerateID(): cv.declare_id(TemplateSelect),
+            cv.Required(CONF_OPTIONS): cv.All(
+                cv.ensure_list(cv.string_strict), cv.Length(min=1)
+            ),
+            cv.Optional(CONF_LAMBDA): cv.returning_lambda,
+            cv.Optional(CONF_OPTIMISTIC, default=False): cv.boolean,
+            cv.Optional(CONF_SET_ACTION): automation.validate_automation(single=True),
+            cv.Optional(CONF_INITIAL_OPTION): cv.string_strict,
+            cv.Optional(CONF_RESTORE_VALUE): cv.boolean,
         }
-    ),
+    ).extend(cv.polling_component_schema("60s")),
+    validate,
 )
-async def select_set_to_code(config, action_id, template_arg, args):
-    paren = await cg.get_variable(config[CONF_ID])
-    var = cg.new_Pvariable(action_id, template_arg, paren)
-    template_ = await cg.templatable(config[CONF_OPTION], args, cg.std_string)
-    cg.add(var.set_option(template_))
-    return var
+
+
+async def to_code(config):
+    var = cg.new_Pvariable(config[CONF_ID])
+    await cg.register_component(var, config)
+    await select.register_select(var, config, options=config[CONF_OPTIONS])
+
+    if CONF_LAMBDA in config:
+        template_ = await cg.process_lambda(
+            config[CONF_LAMBDA], [], return_type=cg.optional.template(cg.std_string)
+        )
+        cg.add(var.set_template(template_))
+
+    else:
+        cg.add(var.set_optimistic(config[CONF_OPTIMISTIC]))
+        cg.add(var.set_initial_option(config[CONF_INITIAL_OPTION]))
+
+        if CONF_RESTORE_VALUE in config:
+            cg.add(var.set_restore_value(config[CONF_RESTORE_VALUE]))
+
+    if CONF_SET_ACTION in config:
+        await automation.build_automation(
+            var.get_set_trigger(), [(cg.std_string, "x")], config[CONF_SET_ACTION]
+        )
