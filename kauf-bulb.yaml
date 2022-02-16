@@ -9,10 +9,6 @@ esp8266:                       # https://esphome.io/components/esp8266.html
   board: esp01_1m
   restore_from_flash: true
 
-  framework:                   # provides updated PWM logic per https://github.com/esp8266/Arduino/pull/7231
-    version: 3.0.2             # https://github.com/esp8266/Arduino/releases
-    platform_version: 3.2.0    # https://github.com/platformio/platform-espressif8266/releases/
-
 external_components:
   - source:
       type: git
