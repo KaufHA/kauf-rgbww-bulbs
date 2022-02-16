@@ -71,7 +71,6 @@ async def register_select(var, config, *, options: List[str]):
 async def new_select(config, *, options: List[str]):
     var = cg.new_Pvariable(config[CONF_ID])
     await register_select(var, config, options=options)
-
     return var
 
 
@@ -96,5 +95,4 @@ async def select_set_to_code(config, action_id, template_arg, args):
     var = cg.new_Pvariable(action_id, template_arg, paren)
     template_ = await cg.templatable(config[CONF_OPTION], args, cg.std_string)
     cg.add(var.set_option(template_))
-
     return var
