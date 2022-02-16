@@ -12,6 +12,10 @@ esp8266:                       # https://esphome.io/components/esp8266.html
 external_components:
   - source:
       type: git
+      url: https://github.com/KaufHA/common
+    refresh: 0s
+  - source:
+      type: git
       url: https://github.com/KaufHA/kauf-rgbww-bulbs
     refresh: 0s
   # - source:
