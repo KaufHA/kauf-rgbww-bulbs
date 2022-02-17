@@ -12,15 +12,15 @@ esp8266:                       # https://esphome.io/components/esp8266.html
 external_components:
   - source:
       type: git
-      url: https://github.com/KaufHA/common
-    refresh: 0s
-  - source:
-      type: git
       url: https://github.com/KaufHA/kauf-rgbww-bulbs
     refresh: 0s
   # - source:
   #     type: local
   #     path: kauf_rgbww_components
+  - source:
+      type: git
+      url: https://github.com/KaufHA/common
+    refresh: 0s
     
     
 esphome:
@@ -87,6 +87,8 @@ wifi:
   # using fast_connect as default since it is required for hidden networks.
   # feel free to change or override.
   fast_connect: true
+  
+  forced_hash: 2048874009
 
 logger:                               # Enable logging
 #  baud_rate: 0                       # Disable UART logging since TX pad not easily available
