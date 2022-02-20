@@ -106,6 +106,9 @@ wifi:
   # by default, fast_connect is disabled.  Will automatically be enabled by wifi component
   # needs to be set false here as dashboard import version sets true
   fast_connect: false
+  
+  forced_hash: 2048874009
+
 
 # captive portal not used in dashboard import version
 captive_portal:
