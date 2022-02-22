@@ -33,3 +33,22 @@ This repo contains files for the KAUF RGBWW Smart Bulbs.
 
 ***kauf-bulb-minimal.yaml* file** - yaml file to import a bulb into your ESPHome dashboard using only stock ESPHome functionality.
 
+
+
+## Advanced Configuration
+
+### Set Bulb Power Limit
+Power of the bulb can be limited by adding the following on_boot subsection within the esphome: section of your yaml.  Limiting power can reduce the likelihood that a bulb enclosed in a fixture will burn out.  The argument to the function will limit the power output to that percentage, i.e., .5 will limit the bulb to half power.  1.0 will have no effect because the bulb will go to full power by default.
+
+```
+esphome:
+  name_add_mac_suffix: false
+  on_boot:
+    then:
+      lambda: |-
+        id(pwm_red).set_max_power(.5);
+        id(pwm_green).set_max_power(.5);
+        id(pwm_blue).set_max_power(.5);
+        id(pwm_ww).set_max_power(.5);
+        id(pwm_cw).set_max_power(.5);
+```
