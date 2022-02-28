@@ -4,12 +4,11 @@ packages:
     files: config-update/kauf-bulb-update.yaml
     refresh: 0s
 
-
 esphome:
 
   project:
     name: "kauf.rgbww"
-    version: "1.73f"        # f = factory
+    version: "1.8(f)"        # f = factory
 
   on_boot:
     then:
