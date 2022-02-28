@@ -45,7 +45,7 @@ void LightCall::perform() {
     // is color mode the same?
     if ( v.get_color_mode() != this->parent_->remote_values.get_color_mode()) { super = false; }
 
-    ESP_LOGD("SUPER TRANSITION TEST","1: %d",super);
+    ESP_LOGD("KAUF TRANSITION TEST","1: %d",super);
 
     // if color mode is RGB, are r, g, and b values the same?
     if ( v.get_color_mode() == ColorMode::RGB) {
