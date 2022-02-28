@@ -67,8 +67,11 @@ class LightState : public EntityBase, public Component {
   // functions added for WLED / DDP support
   void wled_apply();
   bool parse_frame_(const uint8_t *payload, uint16_t size);
-  void set_use_wled();
-  void clr_use_wled();
+  void set_use_wled(bool use_wled) { this->use_wled_ = use_wled; }
+
+  void set_ddp_debug(int ddp_debug) { this->ddp_debug_ = ddp_debug; }
+
+  void set_next_write() { this->next_write_ = true; }
 
   /** The current values of the light as outputted to the light.
    *
@@ -162,6 +165,8 @@ class LightState : public EntityBase, public Component {
 
   void current_values_as_ct(float *color_temperature, float *white_brightness);
 
+  bool transformer_active = false;
+  
  protected:
   friend LightOutput;
   friend LightCall;
@@ -223,6 +228,10 @@ class LightState : public EntityBase, public Component {
   LightRestoreMode restore_mode_;
   /// List of effects for this light.
   std::vector<LightEffect *> effects_;
+
+  bool use_wled_ = false;
+  uint32_t ddp_debug_ = 0;
+
 };
 
 }  // namespace light

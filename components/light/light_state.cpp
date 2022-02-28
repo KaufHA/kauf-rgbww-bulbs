@@ -115,7 +115,7 @@ void LightState::dump_config() {
 void LightState::loop() {
  
   // run wled / ddp functions if enabled
-  if ( this->output_->use_wled ) {wled_apply();}
+  if ( this->use_wled_ ) {wled_apply();}
 
   // if not enabled but UPD is configured, stop UDP and reset bulb values
   else if (udp_) {
@@ -133,6 +133,7 @@ void LightState::loop() {
   // Apply transformer (if any)
   if (this->transformer_ != nullptr) {
     auto values = this->transformer_->apply();
+    this->transformer_active = true;
     if (values.has_value()) {
       this->current_values = *values;
       this->output_->update_state(this);
@@ -144,6 +145,7 @@ void LightState::loop() {
       this->current_values = this->transformer_->get_target_values();
 
       this->transformer_->stop();
+      this->transformer_active = false;
       this->transformer_ = nullptr;
       this->target_state_reached_callback_.call();
     }
@@ -177,7 +179,7 @@ void LightState::wled_apply() {
     ESP_LOGD("KAUF WLED", "Starting UDP listening");
 
     if (!udp_->begin(4048)) {   // always listen on DDP port
-      ESP_LOGD(TAG, "Cannot bind WLEDLightEffect to 4048.");
+      ESP_LOGD(TAG, "Cannot bind WLEDLightEffect to port 4048.");
       return;
     }
 
@@ -192,7 +194,7 @@ void LightState::wled_apply() {
     }
 
     if (!this->parse_frame_(&payload[0], payload.size())) {
-      ESP_LOGD(TAG, "Frame: Invalid (size=%zu, first=0x%02X).", payload.size(), payload[0]);
+      //ESP_LOGD(TAG, "Frame: Invalid (size=%zu, first=0x%02X).", payload.size(), payload[0]);
       continue;
     }
   }
@@ -202,21 +204,32 @@ void LightState::wled_apply() {
 
 bool LightState::parse_frame_(const uint8_t *payload, uint16_t size) {
 
+  if ( this->ddp_debug_ > 0) { 
+    if ( size < 10 ) {
+      ESP_LOGD("KAUF DDP Debug", "Invalid DDP packet received, too short (size=%d)", size);
+    }
+    else if ( size == 10 ) {
+      ESP_LOGD("KAUF DDP Debug", "DDP packet received w/ no channel data, 3 channels required - %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x", payload[0], payload[1], payload[2], payload[3], payload[4], payload[5], payload[6], payload[7], payload[8], payload[9] );
+    }
+    else if ( size == 11 ) {
+      ESP_LOGD("KAUF DDP Debug", "DDP packet received w/ 1 channel data, 3 channels required - %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x", payload[0], payload[1], payload[2], payload[3], payload[4], payload[5], payload[6], payload[7], payload[8], payload[9], payload[10] );
+    }
+    else if ( size == 12 ) {
+      ESP_LOGD("KAUF DDP Debug", "DDP packet received w/ 2 channel data, 3 channels required - %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x", payload[0], payload[1], payload[2], payload[3], payload[4], payload[5], payload[6], payload[7], payload[8], payload[9], payload[10], payload[11] );
+    }
+    else if ( size > 13 ) {
+      ESP_LOGD("KAUF DDP Debug", "DDP packet received w/ >3 channel data, using first 3 channels (size=%d) - %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x [%02x %02x %02x] %02x", size, payload[0], payload[1], payload[2], payload[3], payload[4], payload[5], payload[6], payload[7], payload[8], payload[9], payload[10], payload[11], payload[12], payload[13] );
+    }
 
-
-  ESP_LOGVV("KAUF WLED PACKET", "");
-  ESP_LOGVV("KAUF WLED PACKET", "size=%d", size);
-
-  for ( int i = 0; i < size; i++ ) {
-    ESP_LOGVV("KAUF WLED PACKET", "%d: %08x - %d", i, payload[i], payload[i]);
   }
 
-  ESP_LOGVV("KAUF WLED PACKET", "");
-  ESP_LOGVV("KAUF WLED PACKET", "");
-
-
-  if (size < 2) {
+  if (size < 13) {
     return false;
+  }
+
+  if ( (this->ddp_debug_ == 2) && (size == 13) ) {
+      ESP_LOGD("KAUF DDP Debug", "DDP packet received: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x [%02x %02x %02x]", payload[0], payload[1], payload[2], payload[3], payload[4], payload[5], payload[6], payload[7], payload[8], payload[9], payload[10], payload[11], payload[12] );
+
   }
 
   float r = (float)payload[10]/255.0f;
@@ -263,11 +276,6 @@ bool LightState::parse_frame_(const uint8_t *payload, uint16_t size) {
   return true;
 
 }
-
-
-void LightState::set_use_wled() { this->output_->use_wled = true;  }
-void LightState::clr_use_wled() { this->output_->use_wled = false; }
-
 
 float LightState::get_setup_priority() const { return setup_priority::HARDWARE - 1.0f; }
 uint32_t LightState::hash_base() { return 1114400283; }

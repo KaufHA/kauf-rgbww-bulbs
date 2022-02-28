@@ -31,6 +31,56 @@ void LightCall::perform() {
   const char *name = this->parent_->get_name().c_str();
   LightColorValues v = this->validate_();
 
+
+  // determine if call is superfluous.  i.e., a second call when the light is still in a transition
+  // for another call with the same target values.  Basically looking for if new values are same as
+  // remote values already being reported to Home Assistant and if transition is still ongoing.
+  // Can't figure out why Home Assistant is sending two calls in a row sometimes.  Screwing with fade.
+
+  // don't do any checks if not in transition
+  if ( this->parent_->transformer_active ) {
+
+    bool super = true;
+
+    // is color mode the same?
+    if ( v.get_color_mode() != this->parent_->remote_values.get_color_mode()) { super = false; }
+
+    ESP_LOGD("SUPER TRANSITION TEST","1: %d",super);
+
+    // if color mode is RGB, are r, g, and b values the same?
+    if ( v.get_color_mode() == ColorMode::RGB) {
+      if ( v.get_red()   != this->parent_->remote_values.get_red()   ) { super = false; }
+      ESP_LOGV("KAUF TRANSITION TEST","2: %d",super);
+      if ( v.get_green() != this->parent_->remote_values.get_green() ) { super = false; }
+      ESP_LOGV("KAUF TRANSITION TEST","3: %d",super);
+      if ( v.get_blue()  != this->parent_->remote_values.get_blue()  ) { super = false; }
+      ESP_LOGV("KAUF TRANSITION TEST","4: %d",super);
+    }
+
+    // if in CT mode, compare color temp and white brightness
+    else if ( v.get_color_mode() == ColorMode::COLOR_TEMPERATURE) {
+      float new_ct;
+      float new_wb;
+      float old_ct;
+      float old_wb;
+      v.as_ct(150,350, &new_ct, &new_wb);
+      this->parent_->remote_values.as_ct(150,350, &old_ct, &old_wb);
+
+      if ( new_ct != old_ct ) { super = false; }
+      ESP_LOGV("KAUF TRANSITION TEST","5: %d    (new: %f - old: %f)",super, new_ct, old_ct);
+      if ( new_wb != old_wb ) { super = false; }
+      ESP_LOGV("KAUF TRANSITION TEST","6: %d    (new: %f - old: %f)",super, new_wb, old_wb);
+    }
+
+    if ( super == true ) {
+      ESP_LOGD("KAUF TRANSITION TEST","done, skipping call");
+      return; }
+
+  }  
+
+  ESP_LOGV("KAUF TRANSITION TEST","--------------------------done, going ahead with call");
+
+
   if (this->publish_) {
     ESP_LOGD(TAG, "'%s' Setting:", name);
 

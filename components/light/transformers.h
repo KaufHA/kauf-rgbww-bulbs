@@ -26,6 +26,7 @@ class LightTransitionTransformer : public LightTransformer {
     // if starting in RGB, clear white brightness and vice versa
     if ( this->start_values_.get_color_mode() & ColorCapability::RGB) {
       this->start_values_.set_white(0.0f);
+      this->start_values_.set_color_temperature(this->target_values_.get_color_temperature());
     } else {
       this->start_values_.set_red(0.0f);
       this->start_values_.set_green(0.0f);
@@ -45,6 +46,7 @@ class LightTransitionTransformer : public LightTransformer {
     // if ending in RGB, clear white brightness and vice versa
     if ( this->end_values_.get_color_mode() & ColorCapability::RGB) {
       this->end_values_.set_white(0.0f);
+      this->end_values_.set_color_temperature(this->start_values_.get_color_temperature());
     } else {
       this->end_values_.set_red(0.0f);
       this->end_values_.set_green(0.0f);

@@ -37,10 +37,6 @@ class LightOutput {
 
   bool aux = true;
 
-  // toggle for whether bulb should monitor for UDP packets from WLED / DDP
-  bool use_wled = false;
-
-
   bool has_forced_hash = false;
   uint32_t forced_hash = 0;
   void set_forced_hash(uint32_t hash_value) {
