@@ -18,11 +18,20 @@ esphome:
             lambda: |-
               return id(first_boot);
           then:
+            - lambda: |-
+                id(pwm_red).set_max_power(1.0f);
+                id(pwm_green).set_max_power(1.0f);
+                id(pwm_blue).set_max_power(1.0f);
+                id(pwm_ww).set_max_power(1.0f);
+                id(pwm_cw).set_max_power(1.0f);
+                
             - while:               # repeat test pattern 30 times total to get to 10 minutes
                 condition:
                   lambda: |-
                     return (id(test_count) < 30);   
                 then:
+
+
 
                   - logger.log:
                       format: "[5] Test Pattern Starting"
@@ -92,7 +101,14 @@ esphome:
                       id(test_count) += 1;
                       ESP_LOGD("KAUF Test", "[0] Test Pattern Completed %d/30", id(test_count) );
 
-      # after test pattern completes or if it already completed:
+            - lambda: |-
+                id(pwm_red).set_max_power(0.8f);
+                id(pwm_green).set_max_power(0.8f);
+                id(pwm_blue).set_max_power(0.8f);
+                id(pwm_ww).set_max_power(0.8f);
+                id(pwm_cw).set_max_power(0.8f);
+
+      # after test pattern completes
       - globals.set:
           id: first_boot
           value: 'false'
