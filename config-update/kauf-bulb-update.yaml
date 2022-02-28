@@ -4,16 +4,6 @@ packages:
     files: kauf-bulb.yaml
     refresh: 0s
 
-# external components need to be re-added so that they are all included.
-external_components:
-  - source:
-      type: git
-      url: https://github.com/KaufHA/kauf-rgbww-bulbs
-    refresh: 0s
-  # - source:
-  #     type: local
-  #     path: kauf_rgbww_components
-
 dashboard_import:
   package_import_url: github://KaufHA/kauf-rgbww-bulbs/kauf-bulb.yaml
 
@@ -23,7 +13,7 @@ esphome:
   # overwrite project for different letter suffix
   project:
     name: "kauf.rgbww"
-    version: "1.73u"
+    version: "1.8(u)"   # 'u' stands for update bin file
 
   # add wifi handling on boot, which is not needed for dashboard import version
   on_boot:
@@ -44,14 +34,14 @@ esphome:
             - globals.set:  # set global so if wifi never connects we'll have AP next time.
                 id: force_ap
                 value: 'true'
-            - script.execute: save_changes
+            - script.execute: script_save_changes
 
             - wait_until:
                 wifi.connected
             - globals.set:  # clear global so we won't have AP next time
                 id: force_ap
                 value: 'false'
-            - script.execute: save_changes
+            - script.execute: script_save_changes
 
 
           # if we do need AP 
@@ -68,7 +58,7 @@ esphome:
             - globals.set:  # clear global so ap doesn't come back up next time
                 id: force_ap
                 value: 'false'
-            - script.execute: save_changes
+            - script.execute: script_save_changes
 
               # set ap timeout to max 32 bit value in milliseconds.  About 3.5 weeks.
             - logger.log: "------------------->>>>>>>>>>>>>>>>>   wifi connected, cranking ap timeout back up"
@@ -96,8 +86,10 @@ button:
       - delay: 2s
       - button.press: restart_button
 
+
 # re-adding wifi component so that hotspot will be enabled
 wifi:
+
   # enable wifi ap, which was not needed in dashboard import version
   ap:
     ssid: ${friendly_name} Hotspot
@@ -107,6 +99,7 @@ wifi:
   # needs to be set false here as dashboard import version sets true
   fast_connect: false
   
+  # add forced hash which isn't needed for dashboard import.  Allows saving wifi credentials across update.
   forced_hash: 2048874009
 
 
