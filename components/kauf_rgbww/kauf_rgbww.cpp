@@ -105,9 +105,9 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
     if ( cold_rgb->current_values.is_on() ) { cold_rgb->current_values_as_rgbw(&cold_red, &cold_green, &cold_blue, &cold_white); }
 
 
-    ESP_LOGV("Kauf Light", "Input RGBW: - R:%f G:%f B:%f W:%f CT:%f)", red, green, blue, white_brightness, ct);
-    ESP_LOGV("Kauf Light", " Warm RGBW: - R:%f G:%f B:%f W:%f)", warm_red, warm_green, warm_blue, warm_white);
-    ESP_LOGV("Kauf Light", " Cold RGBW: - R:%f G:%f B:%f W:%f)", cold_red, cold_green, cold_blue, cold_white);
+//     ESP_LOGV("Kauf Light", "Input RGBW: - R:%f G:%f B:%f W:%f CT:%f)", red, green, blue, white_brightness, ct);
+//     ESP_LOGV("Kauf Light", " Warm RGBW: - R:%f G:%f B:%f W:%f)", warm_red, warm_green, warm_blue, warm_white);
+//     ESP_LOGV("Kauf Light", " Cold RGBW: - R:%f G:%f B:%f W:%f)", cold_red, cold_green, cold_blue, cold_white);
 
 
     // get minimum of input rgb values for blending into white
@@ -143,7 +143,7 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
     scaled_warm  = ceil(scaled_warm  * 1000)/1000;
 
 
-    // ESP_LOGD("Kauf Light", "Setting Levels - R:%f G:%f B:%f CW:%f WW:%f)", scaled_red, scaled_green, scaled_blue, scaled_cold, scaled_warm);
+    ESP_LOGV("Kauf Light", "Setting Levels - R:%f G:%f B:%f CW:%f WW:%f)", scaled_red, scaled_green, scaled_blue, scaled_cold, scaled_warm);
 
     // set outputs
     this->red_->set_level(scaled_red);
