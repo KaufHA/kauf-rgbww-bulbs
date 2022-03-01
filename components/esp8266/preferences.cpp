@@ -12,6 +12,18 @@ extern "C" {
 #include "esphome/core/log.h"
 #include "esphome/core/defines.h"
 
+#include "esphome/core/version.h"
+
+#if ESPHOME_VERSION_CODE < VERSION_CODE(2022, 2, 0)
+  #error "Please Update ESPHome to the latest version."
+#endif
+
+#if ESPHOME_VERSION_CODE >= VERSION_CODE(2022, 3, 0)
+  #error "KAUF external components have not been updated for this version of ESPHome yet, or you are not using the latest KAUF external components version"
+#endif
+
+
+
 namespace esphome {
 namespace esp8266 {
 
