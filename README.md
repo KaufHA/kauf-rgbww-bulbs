@@ -34,3 +34,8 @@ This repo contains files for the KAUF RGBWW Smart Bulbs.
 ***kauf-bulb-minimal.yaml* file** - yaml file to import a bulb into your ESPHome dashboard using only stock ESPHome functionality.
 
 
+## Tasmota Template
+
+```
+{"NAME":"Kauf Bulb", "GPIO":[0,0,0,0,416,419,0,0,417,420,418,0,0,0], "FLAG":0, "BASE":18, "CMND":"SO105 1|RGBWWTable 204,204,122,153,153"}
+```
