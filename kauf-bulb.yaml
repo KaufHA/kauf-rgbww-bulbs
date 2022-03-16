@@ -113,6 +113,7 @@ ota:
 debug:                                # outputs additional debug info when logs start
 
 web_server:                           # web server allows access to device with a web browser
+  local: true
   # auth:                             # optional login details for web interface
   #   username: admin
   #   password: !secret web_server_password
