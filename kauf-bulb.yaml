@@ -63,7 +63,7 @@ esphome:
       - script.execute: script_set_wled
       - script.execute: script_max_power
       - script.execute: script_default_fade
-      - script.execute: script_http_only
+      - script.execute: script_no_hass
 
 
 button:
@@ -296,8 +296,8 @@ number:      # set max power output for PWMs
 
 switch:
   - platform: template
-    id: switch_http_only
-    name: $friendly_name HTTP Only
+    id: switch_no_hass
+    name: $friendly_name No HASS
     optimistic: true
     restore_state: true
     entity_category: config
@@ -305,10 +305,10 @@ switch:
     icon: mdi:toggle-switch-off-outline
     forced_hash: 706743398
     on_turn_on:
-      - script.execute: script_http_only
+      - script.execute: script_no_hass
       - script.execute: script_save_changes
     on_turn_off:
-      - script.execute: script_http_only
+      - script.execute: script_no_hass
       - script.execute: script_save_changes
 
 
@@ -361,9 +361,9 @@ script:
       - delay: 1ms
       - lambda: 'id(kauf_light)->set_default_transition_length(id(number_default_fade).state);'
       
-  - id: script_http_only
+  - id: script_no_hass
     then:
       - delay: 1ms
       - lambda: |-
-          if ( id(switch_http_only).state ) { id(kauf_api)->set_reboot_timeout(0); }
-          else                              { id(kauf_api)->set_reboot_timeout(900000); }
+          if ( id(switch_no_hass).state ) { id(kauf_api)->set_reboot_timeout(0); }
+          else                            { id(kauf_api)->set_reboot_timeout(900000); }
