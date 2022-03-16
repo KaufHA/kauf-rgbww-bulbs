@@ -34,7 +34,7 @@ esphome:
 
   project:
     name: "kauf.rgbww"
-    version: "1.8(y)"  # y stands for yaml dashboard import
+    version: "1.81(y)"  # y stands for yaml dashboard import
 
   on_boot:
     then:
