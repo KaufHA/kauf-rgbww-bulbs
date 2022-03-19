@@ -7,6 +7,11 @@ substitutions:
 
   disable_entities: "true"     # change to have all entities show up in Home Assistant automatically
 
+  project_name: Kauf.RGBWW
+  project_ver_num: "1.81"
+  project_ver_let: "y"
+  
+
 esp8266:                       # https://esphome.io/components/esp8266.html
   board: esp01_1m
   restore_from_flash: true
@@ -33,8 +38,8 @@ esphome:
   name: $name
 
   project:
-    name: "Kauf.RGBWW"
-    version: "1.81(y)"  # y stands for yaml dashboard import
+    name: $project_name
+    version: $project_ver_num($project_ver_let)
 
   on_boot:
     then:
