@@ -1,0 +1,275 @@
+substitutions:
+
+  name: kauf-bulb              # **** CHANGE DEVICE NAME TO SOMETHING UNIQUE PER DEVICE.  RENAME YAML FILE TO SAME NAME.    ****
+                               # **** USE DASHES (-) INSTEAD OF SPACES OR UNDERSCORE (_).  USE ONLY LOWER CASE LETTERS.     ****
+  
+  friendly_name: Kauf Bulb     # **** CHANGE FRIENDLY NAME TO SOMETHING UNIQUE PER DEVICE ****
+
+  disable_entities: "true"     # change to have all entities show up in Home Assistant automatically
+
+esp8266:                       # https://esphome.io/components/esp8266.html
+  board: esp01_1m
+  restore_from_flash: true
+    
+esphome:
+
+  name: $name
+
+  project:
+    name: "Kauf.RGBWW"
+    version: "1.81(l)"  # l stands for lite version
+
+  on_boot:
+    then:
+
+      - lambda: |-
+
+          // restore light state per setting.  Default is to restore previous state so we don't need an action for that.
+          if (id(select_boot_state).state == "Always On - Last Value") {
+            auto call = id(kauf_light).turn_on();
+            call.perform();
+          }
+          else if (id(select_boot_state).state == "Always On - Bright White") {
+            auto call = id(kauf_light).turn_on();
+            call.set_color_mode(ColorMode::COLOR_TEMPERATURE);
+            call.set_color_temperature(150);
+            call.set_brightness(1.0);
+            call.perform();
+          }
+          else if (id(select_boot_state).state == "Always Off") {
+            auto call = id(kauf_light).turn_off();
+            call.perform();
+          }
+
+
+        # restore settings
+      - script.execute: script_max_power
+      - script.execute: script_default_fade
+      - script.execute: script_no_hass
+
+
+button:
+  - platform: restart
+    id: restart_button
+    name: $friendly_name Restart Firmware
+    entity_category: diagnostic
+    disabled_by_default: $disable_entities
+
+wifi:
+
+  # **** ENTER WI-FI CREDENTIALS HERE, USING SECRETS.YAML RECOMMENDED ****
+  ssid: initial_ap           # !secret wifi_ssid
+  password: asdfasdfasdfasdf # !secret wifi_password
+
+  # Uncomment below to set a static IP
+  # manual_ip:
+  #   static_ip: !secret kauf_bulb_rgb_ip_address
+  #   gateway: !secret wifi_gateway
+  #   subnet: !secret wifi_subnet
+  #   dns1: !secret wifi_dns1
+
+  # use_address allows wireless programming through dashboard.
+  # Set to the bulb's IP Address.  Remove after programming.
+  # use_address: 192.168.86.249
+
+  # default is 20, 17 is recommended.
+  output_power: 17
+
+  # using fast_connect as default since it is required for hidden networks.
+  # feel free to change or override.
+  fast_connect: true
+  
+logger:                               # Enable logging
+#  baud_rate: 0                       # Disable UART logging since TX pad not easily available
+
+api:                                  # Enable Home Assistant API
+  id: kauf_api
+  # password: !secret api_password    # optional password field for Home Assistant API.
+
+ota:
+  # password: !secret ota_password    # optional password for OTA updates.
+  on_error:
+    then:
+      - button.press: restart_button
+
+debug:                                # outputs additional debug info when logs start
+
+web_server:                           # web server allows access to device with a web browser
+  local: true
+  # auth:                             # optional login details for web interface
+  #   username: admin
+  #   password: !secret web_server_password
+
+
+
+# PWM outputs for each LED channel
+output:
+  - platform: esp8266_pwm
+    pin: GPIO4
+    frequency: 1000 Hz
+    id: pwm_red
+    max_power: .8
+  - platform: esp8266_pwm
+    pin: GPIO12
+    frequency: 1000 Hz
+    id: pwm_green
+    max_power: .8
+  - platform: esp8266_pwm
+    pin: GPIO14
+    frequency: 1000 Hz
+    id: pwm_blue
+    max_power: .8
+  - platform: esp8266_pwm
+    pin: GPIO5
+    frequency: 1000 Hz
+    id: pwm_cw
+    max_power: .8
+  - platform: esp8266_pwm
+    pin: GPIO13
+    frequency: 1000 Hz
+    id: pwm_ww
+    max_power: .8
+
+
+
+
+light:
+  - platform: rgbww
+    name: $friendly_name
+    id: kauf_light
+    red: pwm_red
+    green: pwm_green
+    blue: pwm_blue
+    cold_white: pwm_cw
+    warm_white: pwm_ww
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+
+select:
+
+  # default light state on boot
+  - platform: template
+    name: $friendly_name Power On State
+    id: select_boot_state
+    optimistic: true
+    options:
+      - "Restore Power Off State"
+      - "Always On - Last Value"
+      - "Always On - Bright White"
+      - "Always Off"
+    # defaulting to always on is nice so you know new bulbs are working
+    initial_option: "Always On - Bright White"
+    restore_value: true
+    icon: mdi:restart-alert
+    set_action:
+      - script.execute: script_save_changes
+    entity_category: config
+
+
+
+
+number:      # set max power output for PWMs
+  - platform: template
+    name: ${friendly_name} Max Power
+    min_value: 1
+    max_value: 100
+    step: 1
+    initial_value: 80
+    id: number_max_power
+    entity_category: config
+    disabled_by_default: $disable_entities
+    icon: mdi:brightness-percent
+    optimistic: true
+    restore_value: true
+    unit_of_measurement: "%"
+    mode: box
+    on_value:
+      - script.execute: script_max_power
+      - script.execute: script_save_changes
+
+  - platform: template
+    name: ${friendly_name} Default Fade
+    min_value: 0
+    max_value: 5000
+    step: 50
+    initial_value: 250
+    id: number_default_fade
+    entity_category: config
+    icon: mdi:timer-outline
+    optimistic: true
+    restore_value: true
+    unit_of_measurement: "ms"
+    mode: box
+    on_value:
+      - script.execute: script_default_fade
+      - script.execute: script_save_changes
+
+
+
+switch:
+  - platform: template
+    id: switch_no_hass
+    name: $friendly_name No HASS
+    optimistic: true
+    restore_state: true
+    entity_category: config
+    disabled_by_default: $disable_entities
+    icon: mdi:toggle-switch-off-outline
+    on_turn_on:
+      - script.execute: script_no_hass
+      - script.execute: script_save_changes
+    on_turn_off:
+      - script.execute: script_no_hass
+      - script.execute: script_save_changes
+
+
+sensor:
+  - platform: uptime
+    name: $friendly_name Uptime
+    update_interval: 60s
+    entity_category: diagnostic
+    disabled_by_default: $disable_entities
+
+
+# Send IP Address to HA.  Disabled by default, not as important now that Home Assistant provides link.
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: $friendly_name IP Address
+      entity_category: diagnostic
+      disabled_by_default: $disable_entities
+
+
+script:
+  - id: script_save_changes
+    mode: restart
+    then:
+      - delay: 3s
+      - lambda: 'global_preferences->sync();'
+
+  - id: script_max_power
+    then:
+      - delay: 1ms
+      - lambda: |-
+          float new_power = ((float)id(number_max_power).state)/100.0f;
+          ESP_LOGD("script_max_power","number_max_power = %d -- new_power = %f",number_max_power, new_power);
+          id(pwm_red).set_max_power(new_power);
+          id(pwm_green).set_max_power(new_power);
+          id(pwm_blue).set_max_power(new_power);
+          id(pwm_ww).set_max_power(new_power);
+          id(pwm_cw).set_max_power(new_power);
+          id(kauf_light)->toggle();
+          id(kauf_light)->toggle();
+
+
+  - id: script_default_fade
+    then:
+      - delay: 1ms
+      - lambda: 'id(kauf_light)->set_default_transition_length(id(number_default_fade).state);'
+      
+  - id: script_no_hass
+    then:
+      - delay: 1ms
+      - lambda: |-
+          if ( id(switch_no_hass).state ) { id(kauf_api)->set_reboot_timeout(0); }
+          else                            { id(kauf_api)->set_reboot_timeout(900000); }
