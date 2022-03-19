@@ -14,8 +14,8 @@ esphome:
   name: $name
 
   project:
-    name: "kauf.rgbww"
-    version: "1.72m"
+    name: "Kauf.RGBWW"
+    version: "1.81(m)"
 
 
 wifi:
