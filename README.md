@@ -12,29 +12,28 @@ substitutions:
 packages:
   kauf.rgbww: github://KaufHA/kauf-rgbww-bulbs/kauf-bulb.yaml
 
-esphome:
-  name_add_mac_suffix: false
-
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 ```
 
-
+## Repo Contents
 This repo contains files for the KAUF RGBWW Smart Bulbs.
 
 ***components* directory** - Custom components needed to compile the KAUF RGBWW bulb firmware.  These don't need to be downloaded, the yaml files automatically grab them by reference to this github repo.  Every subfolder not starting with kauf_* is copied from stock ESPHome and edited for our products.
 
-***config-update* directory** - Files needed in the ESPHome config directory to compile the update bin file for the KAUF RGBWW bulbs.
+***kauf-bulb.yaml*** - The yaml file recommended to import a bulb into your ESPHome dashboard and keep all custom KAUF functionality. This is the yaml file incorporated automatically when the dashboard import feature is used.
 
-***config-factory* directory** - Files needed in the ESPHome config directory to compile the factory bin file for the KAUF RGBWW bulbs.
+***kauf-bulb-lite.yaml*** - A yaml file without any Kauf custom components but otherwise keeping as much functionality from kauf-bulb.yaml as possible.
 
-***kauf-bulb.yaml* file** - yaml file needed to import a bulb into your ESPHome dashboard and keep basically all the stock KAUF functionality.
+***kauf-bulb-minimal.yaml*** - A yaml file to import a bulb into your ESPHome dashboard with only basic RGBWW Bulb functionality.
 
-***kauf-bulb-minimal.yaml* file** - yaml file to import a bulb into your ESPHome dashboard using only stock ESPHome functionality.
+***kauf-bulb-update.yaml*** - The yaml file to build the update bin file. Generally not needed by end users.
+
+***kauf-bulb-factory.yaml*** - The yaml file to build the factory bin file. Generally not needed by end users.
 
 
-## Tasmota Template
+## Recommended Tasmota Template
 
 ```
 {"NAME":"Kauf Bulb", "GPIO":[0,0,0,0,416,419,0,0,417,420,418,0,0,0], "FLAG":0, "BASE":18, "CMND":"SO105 1|RGBWWTable 204,204,122,153,153"}
