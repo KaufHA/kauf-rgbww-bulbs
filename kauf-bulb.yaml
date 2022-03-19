@@ -33,7 +33,7 @@ esphome:
   name: $name
 
   project:
-    name: "kauf.rgbww"
+    name: "Kauf.RGBWW"
     version: "1.81(y)"  # y stands for yaml dashboard import
 
   on_boot:
