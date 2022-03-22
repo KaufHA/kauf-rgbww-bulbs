@@ -20,10 +20,12 @@ external_components:
   - source:
       type: git
       url: https://github.com/KaufHA/common
+      ref: plf10-v1.87
   #  refresh: 0s
   - source:
       type: git
       url: https://github.com/KaufHA/kauf-rgbww-bulbs
+      ref: v1.81
   #  refresh: 0s
   # - source:
   #     type: local
