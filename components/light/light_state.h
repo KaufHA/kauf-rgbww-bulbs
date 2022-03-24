@@ -170,7 +170,7 @@ class LightState : public EntityBase, public Component {
   void current_values_as_ct(float *color_temperature, float *white_brightness);
 
   bool transformer_active = false;
-  
+
  protected:
   friend LightOutput;
   friend LightCall;

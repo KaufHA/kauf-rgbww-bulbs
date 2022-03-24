@@ -70,6 +70,8 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional("warm_rgb"): cv.use_id(light.LightState),
             cv.Optional("aux", default=False): cv.boolean,
             cv.Optional("forced_hash"): cv.int_,
+            cv.Optional("forced_addr", default="12345"): cv.int_,
+            cv.Optional("global_addr"): cv.use_id(globals),            
         }
     ),
     cv.has_none_or_all_keys(
@@ -87,6 +89,11 @@ async def to_code(config):
     if "forced_hash" in config:
         cg.add(var.set_forced_hash(config["forced_hash"]))
 
+    cg.add(var.set_forced_addr(config["forced_addr"]))
+
+    if "global_addr" in config:
+        ga = await cg.get_variable(config["global_addr"])
+        cg.add(var.set_global_addr(ga))
 
     # for main light
     if not config["aux"] :
