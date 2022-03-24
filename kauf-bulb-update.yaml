@@ -1,3 +1,6 @@
+substitutions:
+  project_ver_let: u
+
 packages:
   kauf_bulb_base:
     url: https://github.com/KaufHA/kauf-rgbww-bulbs
@@ -9,11 +12,6 @@ dashboard_import:
 
 esphome:
   name_add_mac_suffix: true
-
-  # overwrite project for different letter suffix
-  project:
-    name: "Kauf.RGBWW"
-    version: "1.81(u)"   # 'u' stands for update bin file
 
   # add wifi handling on boot, which is not needed for dashboard import version
   on_boot:
