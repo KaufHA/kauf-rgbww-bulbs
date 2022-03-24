@@ -8,7 +8,7 @@ The friendly_name substitution is recommended and will not be automatically crea
 substitutions:
   name: bedroom-lamp
   friendly_name: Bedroom Lamp
-  
+
 packages:
   kauf.rgbww: github://KaufHA/kauf-rgbww-bulbs/kauf-bulb.yaml
 
@@ -28,9 +28,9 @@ This repo contains files for the KAUF RGBWW Smart Bulbs.
 
 ***kauf-bulb-minimal.yaml*** - A yaml file to import a bulb into your ESPHome dashboard with only basic RGBWW Bulb functionality.
 
-***kauf-bulb-update.yaml*** - The yaml file to build the update bin file. Generally not needed by end users.
+***kauf-bulb-update.yaml*** - The yaml file to build the update bin file. Generally not useful to end users.
 
-***kauf-bulb-factory.yaml*** - The yaml file to build the factory bin file. Generally not needed by end users.
+***kauf-bulb-factory.yaml*** - The yaml file to build the factory bin file. Generally not useful to end users.
 
 
 ## Recommended Tasmota Template
