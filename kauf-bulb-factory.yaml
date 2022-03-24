@@ -1,3 +1,6 @@
+substitutions:
+  project_ver_let: f
+
 packages:
   kauf_bulb_update:
     url: https://github.com/KaufHA/kauf-rgbww-bulbs
@@ -5,10 +8,6 @@ packages:
     refresh: 0s
 
 esphome:
-
-  project:
-    name: "Kauf.RGBWW"
-    version: "1.81(f)"        # f = factory
 
   on_boot:
     then:
