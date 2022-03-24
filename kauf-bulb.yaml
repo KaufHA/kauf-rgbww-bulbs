@@ -8,33 +8,35 @@ substitutions:
   disable_entities: "true"     # change to have all entities show up in Home Assistant automatically
 
   project_name: Kauf.RGBWW
-  project_ver_num: "1.81"
-  project_ver_let: "y"
+  project_ver_num: "1.82"
+  project_ver_let: y
   
 
 esp8266:                       # https://esphome.io/components/esp8266.html
   board: esp01_1m
   restore_from_flash: true
+  start_free: 76
+  global_addr: global_forced_addr  
+
 
 external_components:
   - source:
       type: git
       url: https://github.com/KaufHA/common
-      ref: plf10-v1.87
-  #  refresh: 0s
+    refresh: 0s
   - source:
       type: git
       url: https://github.com/KaufHA/kauf-rgbww-bulbs
-      ref: v1.81
-  #  refresh: 0s
-  # - source:
-  #     type: local
-  #     path: kauf_rgbww_components
-  # - source:
-  #     type: local
-  #     path: kauf_common_components
-    
-    
+    refresh: 0s
+
+
+globals:
+  - id: global_forced_addr
+    type: int
+    restore_value: no
+    initial_value: '12345'
+
+
 esphome:
 
   name: $name
@@ -80,6 +82,7 @@ button:
     entity_category: diagnostic
     disabled_by_default: $disable_entities
 
+
 wifi:
 
   # **** ENTER WI-FI CREDENTIALS HERE, USING SECRETS.YAML RECOMMENDED ****
@@ -95,7 +98,7 @@ wifi:
 
   # use_address allows wireless programming through dashboard.
   # Set to the bulb's IP Address.  Remove after programming.
-  # use_address: 192.168.86.249
+  # use_address: 192.168.86.250
 
   # default is 20, 17 is recommended.
   output_power: 17
@@ -103,6 +106,10 @@ wifi:
   # using fast_connect as default since it is required for hidden networks.
   # feel free to change or override.
   fast_connect: true
+  
+  forced_addr: 0
+  global_addr: global_forced_addr
+  
   
 logger:                               # Enable logging
 #  baud_rate: 0                       # Disable UART logging since TX pad not easily available
@@ -124,7 +131,6 @@ web_server:                           # web server allows access to device with 
   # auth:                             # optional login details for web interface
   #   username: admin
   #   password: !secret web_server_password
-
 
 
 # PWM outputs for each LED channel
@@ -156,45 +162,49 @@ output:
     max_power: .8
 
 
-
-
 light:
 
-# Additive RGB light for Warm White
-- platform: kauf_rgbww
-  id: warm_rgb
-  entity_category: config
-  default_transition_length: 0ms
-  icon: mdi:store-cog
-  aux: true
-  name: $friendly_name Warm RGB
-  forced_hash: 4077116474
-  disabled_by_default: $disable_entities
-
-# Additive RGB light for Cold White
-- platform: kauf_rgbww
-  id: cold_rgb
-  entity_category: config
-  default_transition_length: 0ms
-  icon: mdi:store-cog-outline
-  aux: true
-  name: $friendly_name Cold RGB
-  forced_hash: 301094535
-  disabled_by_default: $disable_entities
-
-# Main RGBWW light
-- platform: kauf_rgbww
-  id: kauf_light
-  default_transition_length: 250ms
-  name: $friendly_name
-  red: pwm_red
-  green: pwm_green
-  blue: pwm_blue
-  warm_white: pwm_ww
-  cold_white: pwm_cw
-  warm_rgb: warm_rgb
-  cold_rgb: cold_rgb
-  forced_hash: 2723974766
+  # Additive RGB light for Warm White
+  - platform: kauf_rgbww
+    id: warm_rgb
+    entity_category: config
+    default_transition_length: 0ms
+    icon: mdi:store-cog
+    aux: true
+    name: $friendly_name Warm RGB
+    forced_hash: 4077116474
+    forced_addr: 28
+    global_addr: global_forced_addr
+    disabled_by_default: $disable_entities
+  
+  # Additive RGB light for Cold White
+  - platform: kauf_rgbww
+    id: cold_rgb
+    entity_category: config
+    default_transition_length: 0ms
+    icon: mdi:store-cog-outline
+    aux: true
+    name: $friendly_name Cold RGB
+    forced_hash: 301094535
+    forced_addr: 40
+    global_addr: global_forced_addr
+    disabled_by_default: $disable_entities
+  
+  # Main RGBWW light
+  - platform: kauf_rgbww
+    id: kauf_light
+    default_transition_length: 250ms
+    name: $friendly_name
+    red: pwm_red
+    green: pwm_green
+    blue: pwm_blue
+    warm_white: pwm_ww
+    cold_white: pwm_cw
+    warm_rgb: warm_rgb
+    cold_rgb: cold_rgb
+    forced_hash: 2723974766
+    forced_addr: 52
+    global_addr: global_forced_addr
 
 
 
@@ -218,6 +228,8 @@ select:
       - script.execute: script_save_changes
     entity_category: config
     forced_hash: 3524332562
+    forced_addr: 64
+    global_addr: global_forced_addr
 
 
   - platform: template
@@ -236,6 +248,8 @@ select:
       
     entity_category: config
     forced_hash: 5841966
+    forced_addr: 66
+    global_addr: global_forced_addr
 
 
   - platform: template
@@ -259,8 +273,6 @@ select:
           else if ( x == "Print all packets" )       { id(kauf_light)->set_ddp_debug(2); }
 
 
-
-
 number:      # set max power output for PWMs
   - platform: template
     name: ${friendly_name} Max Power
@@ -277,6 +289,8 @@ number:      # set max power output for PWMs
     unit_of_measurement: "%"
     mode: box
     forced_hash: 4189052763
+    forced_addr: 74
+    global_addr: global_forced_addr
     on_value:
       - script.execute: script_max_power
       - script.execute: script_save_changes
@@ -295,10 +309,11 @@ number:      # set max power output for PWMs
     unit_of_measurement: "ms"
     mode: box
     forced_hash: 3133748577
+    forced_addr: 72
+    global_addr: global_forced_addr
     on_value:
       - script.execute: script_default_fade
       - script.execute: script_save_changes
-
 
 
 switch:
@@ -311,6 +326,8 @@ switch:
     disabled_by_default: $disable_entities
     icon: mdi:toggle-switch-off-outline
     forced_hash: 706743398
+    forced_addr: 70
+    global_addr: global_forced_addr
     on_turn_on:
       - script.execute: script_no_hass
       - script.execute: script_save_changes
@@ -327,7 +344,7 @@ sensor:
     disabled_by_default: $disable_entities
 
 
-# Send IP Address to HA.  Disabled by default, not as important now that Home Assistant provides link.
+# Send IP Address to HA.
 text_sensor:
   - platform: wifi_info
     ip_address:
@@ -348,7 +365,6 @@ script:
       - delay: 1ms
       - lambda: |-
           float new_power = ((float)id(number_max_power).state)/100.0f;
-          ESP_LOGD("script_max_power","number_max_power = %d -- new_power = %f",number_max_power, new_power);
           id(pwm_red).set_max_power(new_power);
           id(pwm_green).set_max_power(new_power);
           id(pwm_blue).set_max_power(new_power);
@@ -374,3 +390,18 @@ script:
       - lambda: |-
           if ( id(switch_no_hass).state ) { id(kauf_api)->set_reboot_timeout(0); }
           else                            { id(kauf_api)->set_reboot_timeout(900000); }
+
+
+# Current reserved flash memory:
+
+# 00-25: Wi-Fi Credentials
+
+# 28-39: Warm RGB
+# 40-51: Cold RGB
+# 52-63: Main Light
+# 64-65: Power On State select
+# 66-67: Effect select
+
+# 70-71: No HASS switch
+# 72-73: Default Fade Length
+# 74-75: Max Power
