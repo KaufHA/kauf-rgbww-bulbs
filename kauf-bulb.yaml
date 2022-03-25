@@ -5,8 +5,14 @@ substitutions:
   
   friendly_name: Kauf Bulb     # **** CHANGE FRIENDLY NAME TO SOMETHING UNIQUE PER DEVICE ****
 
-  disable_entities: "true"     # change to have all entities show up in Home Assistant automatically
+  disable_entities: "true"     # set to "false" to have all entities show up in Home Assistant automatically
 
+
+  # change power-on action for main light entity
+  # https://esphome.io/components/light/index.html#base-light-configuration
+  light_restore_mode: RESTORE_DEFAULT_OFF
+  
+  
   project_name: Kauf.RGBWW
   project_ver_num: "1.82"
   project_ver_let: y
@@ -47,26 +53,6 @@ esphome:
 
   on_boot:
     then:
-
-      - lambda: |-
-
-          // restore light state per setting.  Default is to restore previous state so we don't need an action for that.
-          if (id(select_boot_state).state == "Always On - Last Value") {
-            auto call = id(kauf_light).turn_on();
-            call.perform();
-          }
-          else if (id(select_boot_state).state == "Always On - Bright White") {
-            auto call = id(kauf_light).turn_on();
-            call.set_color_mode(ColorMode::COLOR_TEMPERATURE);
-            call.set_color_temperature(150);
-            call.set_brightness(1.0);
-            call.perform();
-          }
-          else if (id(select_boot_state).state == "Always Off") {
-            auto call = id(kauf_light).turn_off();
-            call.perform();
-          }
-
 
         # restore settings
       - script.execute: script_set_wled
@@ -205,32 +191,11 @@ light:
     forced_hash: 2723974766
     forced_addr: 52
     global_addr: global_forced_addr
-
+    
+    restore_mode: $light_restore_mode
 
 
 select:
-
-  # default light state on boot
-  - platform: template
-    name: $friendly_name Power On State
-    id: select_boot_state
-    optimistic: true
-    options:
-      - "Restore Power Off State"
-      - "Always On - Last Value"
-      - "Always On - Bright White"
-      - "Always Off"
-    # defaulting to always on is nice so you know new bulbs are working
-    initial_option: "Always On - Bright White"
-    restore_value: true
-    icon: mdi:restart-alert
-    set_action:
-      - script.execute: script_save_changes
-    entity_category: config
-    forced_hash: 3524332562
-    forced_addr: 64
-    global_addr: global_forced_addr
-
 
   - platform: template
     name: $friendly_name Effect
