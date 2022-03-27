@@ -38,3 +38,8 @@ This repo contains files for the KAUF RGBWW Smart Bulbs.
 ```
 {"NAME":"Kauf Bulb", "GPIO":[0,0,0,0,416,419,0,0,417,420,418,0,0,0], "FLAG":0, "BASE":18, "CMND":"SO105 1|RGBWWTable 204,204,122,153,153"}
 ```
+
+## Links
+- [Purchase A21 bulbs on Amazon](https://www.amazon.com/dp/B09GV9FD3X)
+- [Purchase BR30 bulbs on Amazon](https://www.amazon.com/dp/B09L5P2MDD)
+- [KAUF YouTube Channel](https://www.youtube.com/channel/UCjgziIA-lXmcqcMIm8HDnYg)
