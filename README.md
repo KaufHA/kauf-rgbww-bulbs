@@ -33,6 +33,11 @@ This repo contains files for the KAUF RGBWW Smart Bulbs.
 ***kauf-bulb-factory.yaml*** - The yaml file to build the factory bin file. Generally not useful to end users.
 
 
+## Troubleshooting
+Any build errors can usually be resolved by upgrading the ESPHome dashboard to the latest version.  On the days when ESPHome updates are released, it may take us up to 24 hours to make necessary changes to our custom components during which time you may see build errors.  Please be patient.  
+  
+If you are still getting errors after upgrading the ESPHome dashboard to the latest version, try deleting the .esphome/packages and .esphome/external_components subfolders from within the ESPHome config directory.
+
 ## Recommended Tasmota Template
 
 ```
