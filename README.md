@@ -33,6 +33,23 @@ This repo contains files for the KAUF RGBWW Smart Bulbs.
 ***kauf-bulb-factory.yaml*** - The yaml file to build the factory bin file. Generally not useful to end users.
 
 
+## Advanced Settings
+When using kauf-bulb.yaml as a package in the ESPHome dashboard, you can configure the following aspects by adding substitutions. The substitutions section of kauf-bulb.yaml has comments with more explanation as well.
+
+***friendly_name*** - The friendly name will be used to name every entity in Home Assistant. Add a substitution to change this to something descriptive for each device.
+
+***disable_entities*** - Adding a substitution to redefine this to "false" will result in all entities being automatically enabled in Home Assistant.
+
+***light_restore_mode*** - Defines the state of the bulb on boot-up.  Building with kauf-bulb.yaml removes the boot up state select entity and relies on this substitution instead.  For more information on the available options, see restore_mode under [Base Light Configuration](https://esphome.io/components/light/index.html#base-light-configuration).
+- RESTORE_DEFAULT_OFF is the default and equivalent to the select entity option "Restore Power Off State"
+- RESTORE_AND_ON is equivalent to the select entity option "Always On - Last Value"
+- ALWAYS_ON is equivalent to the select entity option "Always On - Bright White"
+- RESTORE_AND_OFF is equivalent to the select entity option "Always Off"
+
+## Factory Reset
+Going to the bulb's URL in a web browser and adding /reset will completely wipe all settings from flash memory.
+
+
 ## Troubleshooting
 Any build errors can usually be resolved by upgrading the ESPHome dashboard to the latest version.  On the days when ESPHome updates are released, it may take us up to 24 hours to make necessary changes to our custom components during which time you may see build errors.  Please be patient.  
   
