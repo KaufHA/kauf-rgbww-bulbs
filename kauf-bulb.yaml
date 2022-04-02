@@ -98,8 +98,8 @@ wifi:
   
   forced_addr: 0
   global_addr: global_forced_addr
-  
-  
+
+
 logger:                               # Enable logging
 #  baud_rate: 0                       # Disable UART logging since TX pad not easily available
 
@@ -211,6 +211,7 @@ select:
     restore_value: true
     icon: mdi:string-lights
     set_action:
+      - delay: 1ms
       - script.execute: script_set_wled
       - script.execute: script_save_changes
       
@@ -257,7 +258,9 @@ select:
     restore_value: true
     icon: mdi:restart-alert
     set_action:
+      - delay: 1ms
       - script.execute: script_save_changes
+      - script.execute: script_set_boot_mode
     entity_category: config
     forced_hash: 3524332562
     forced_addr: 64
@@ -282,6 +285,7 @@ number:      # set max power output for PWMs
     forced_addr: 74
     global_addr: global_forced_addr
     on_value:
+      - delay: 1ms
       - script.execute: script_max_power
       - script.execute: script_save_changes
 
@@ -302,6 +306,7 @@ number:      # set max power output for PWMs
     forced_addr: 72
     global_addr: global_forced_addr
     on_value:
+      - delay: 1ms
       - script.execute: script_default_fade
       - script.execute: script_save_changes
 
@@ -319,9 +324,11 @@ switch:
     forced_addr: 70
     global_addr: global_forced_addr
     on_turn_on:
+      - delay: 1ms
       - script.execute: script_no_hass
       - script.execute: script_save_changes
     on_turn_off:
+      - delay: 1ms
       - script.execute: script_no_hass
       - script.execute: script_save_changes
 
@@ -352,7 +359,6 @@ script:
 
   - id: script_max_power
     then:
-      - delay: 1ms
       - lambda: |-
           float new_power = ((float)id(number_max_power).state)/100.0f;
           id(pwm_red).set_max_power(new_power);
@@ -364,7 +370,6 @@ script:
 
   - id: script_set_wled
     then:
-      - delay: 1ms
       - lambda: |-
           if ( id(effect).state == "WLED / DDP" ) { id(kauf_light)->set_use_wled(true); }
           else                                    { id(kauf_light)->set_use_wled(false); }
@@ -376,7 +381,6 @@ script:
       
   - id: script_no_hass
     then:
-      - delay: 1ms
       - lambda: |-
           if ( id(switch_no_hass).state ) { id(kauf_api)->set_reboot_timeout(0); }
           else                            { id(kauf_api)->set_reboot_timeout(900000); }
@@ -392,6 +396,8 @@ script:
           kauf_light->set_restore_mode(LIGHT_ALWAYS_ON);
         else if ( id(select_boot_state).state == "Always Off")
           kauf_light->set_restore_mode(LIGHT_RESTORE_AND_OFF);
+        else
+          kauf_light->set_restore_mode(LIGHT_$light_restore_mode);
 
 
 # Current reserved flash memory:
