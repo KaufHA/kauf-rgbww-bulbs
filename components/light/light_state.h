@@ -171,7 +171,11 @@ class LightState : public EntityBase, public Component {
 
   bool transformer_active = false;
 
- protected:
+  /// Save the current remote_values to the preferences
+  void save_remote_values_();
+
+
+protected:
   friend LightOutput;
   friend LightCall;
   friend class AddressableLight;
@@ -192,9 +196,6 @@ class LightState : public EntityBase, public Component {
 
   /// Internal method to set the color values to target immediately (with no transition).
   void set_immediately_(const LightColorValues &target, bool set_remote_values);
-
-  /// Internal method to save the current remote_values to the preferences
-  void save_remote_values_();
 
   /// Store the output to allow effects to have more access.
   LightOutput *output_;
