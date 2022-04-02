@@ -14,7 +14,7 @@ substitutions:
   
   
   project_name: Kauf.RGBWW
-  project_ver_num: "1.82.2"
+  project_ver_num: "1.83"
   project_ver_let: y
   
 
@@ -52,7 +52,10 @@ esphome:
     version: $project_ver_num($project_ver_let)
 
   on_boot:
+    priority: 799.5 # after numbers/selects/switches being setup (800) and before lights being setup (799).
     then:
+
+      - script.execute: script_set_boot_mode
 
         # restore settings
       - script.execute: script_set_wled
@@ -238,6 +241,28 @@ select:
           else if ( x == "Print all packets" )       { id(kauf_light)->set_ddp_debug(2); }
 
 
+  # default light state on boot
+  - platform: template
+    name: $friendly_name Power On State
+    id: select_boot_state
+    optimistic: true
+    options:
+      - "Restore Power Off State"
+      - "Always On - Last Value"
+      - "Always On - Bright White"
+      - "Always Off"
+      - "YAML Configured ($light_restore_mode)"
+    # defaulting to always on is nice so you know new bulbs are working
+    initial_option: "YAML Configured ($light_restore_mode)"
+    restore_value: true
+    icon: mdi:restart-alert
+    set_action:
+      - script.execute: script_save_changes
+    entity_category: config
+    forced_hash: 3524332562
+    forced_addr: 64
+    global_addr: global_forced_addr
+
 number:      # set max power output for PWMs
   - platform: template
     name: ${friendly_name} Max Power
@@ -355,6 +380,18 @@ script:
       - lambda: |-
           if ( id(switch_no_hass).state ) { id(kauf_api)->set_reboot_timeout(0); }
           else                            { id(kauf_api)->set_reboot_timeout(900000); }
+
+  - id: script_set_boot_mode
+    then:
+      lambda: |-
+        if ( id(select_boot_state).state == "Restore Power Off State")
+          kauf_light->set_restore_mode(LIGHT_RESTORE_DEFAULT_OFF);
+        else if ( id(select_boot_state).state == "Always On - Last Value")
+          kauf_light->set_restore_mode(LIGHT_RESTORE_AND_ON);
+        else if ( id(select_boot_state).state == "Always On - Bright White")
+          kauf_light->set_restore_mode(LIGHT_ALWAYS_ON);
+        else if ( id(select_boot_state).state == "Always Off")
+          kauf_light->set_restore_mode(LIGHT_RESTORE_AND_OFF);
 
 
 # Current reserved flash memory:
