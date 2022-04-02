@@ -261,6 +261,7 @@ select:
       - delay: 1ms
       - script.execute: script_save_changes
       - script.execute: script_set_boot_mode
+      - lambda: kauf_light->save_remote_values_();
     entity_category: config
     forced_hash: 3524332562
     forced_addr: 64
