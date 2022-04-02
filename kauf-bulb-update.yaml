@@ -1,5 +1,7 @@
 substitutions:
   project_ver_let: u
+  light_restore_mode: ALWAYS_ON
+
 
 packages:
   kauf_bulb_base:
@@ -7,8 +9,10 @@ packages:
     files: kauf-bulb.yaml
     refresh: 0s
 
+
 dashboard_import:
   package_import_url: github://KaufHA/kauf-rgbww-bulbs/kauf-bulb.yaml
+
 
 esphome:
   name_add_mac_suffix: true
@@ -16,28 +20,6 @@ esphome:
   # add wifi handling on boot, which is not needed for dashboard import version
   on_boot:
     then:
-
-      # restore power on state setting
-      - lambda: |-
-
-          // restore light state per setting.  Default is to restore previous state so we don't need an action for that.
-          if (id(select_boot_state).state == "Always On - Last Value") {
-            auto call = id(kauf_light).turn_on();
-            call.perform();
-          }
-          else if (id(select_boot_state).state == "Always On - Bright White") {
-            auto call = id(kauf_light).turn_on();
-            call.set_color_mode(ColorMode::COLOR_TEMPERATURE);
-            call.set_color_temperature(150);
-            call.set_brightness(1.0);
-            call.perform();
-          }
-          else if (id(select_boot_state).state == "Always Off") {
-            auto call = id(kauf_light).turn_off();
-            call.perform();
-          }
-
-
 
       # Wait until ESPHome tries loading wifi credentials before going on with WiFi AP logic.
       - wait_until:
@@ -89,7 +71,7 @@ globals:
   - id: force_ap
     type: bool
     restore_value: yes
-    initial_value: "true"
+    initial_value: "false"
     
 
 # add new button to clear wifi credentials.  Not needed in dashboard import
@@ -125,27 +107,3 @@ wifi:
 
 # captive portal not used in dashboard import version
 captive_portal:
-
-
-select:
-  # default light state on boot
-  - platform: template
-    name: $friendly_name Power On State
-    id: select_boot_state
-    optimistic: true
-    options:
-      - "Restore Power Off State"
-      - "Always On - Last Value"
-      - "Always On - Bright White"
-      - "Always Off"
-    # defaulting to always on is nice so you know new bulbs are working
-    initial_option: "Always On - Bright White"
-    restore_value: true
-    icon: mdi:restart-alert
-    set_action:
-      - script.execute: script_save_changes
-    entity_category: config
-    forced_hash: 3524332562
-    forced_addr: 64
-    global_addr: global_forced_addr
-
