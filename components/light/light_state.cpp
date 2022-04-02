@@ -49,19 +49,21 @@ void LightState::setup() {
 
   auto call = this->make_call();
   LightStateRTCState recovered{};
+
+  // set up rtc_ no matter what in case mode changes later on.
+  if ( this->output_->has_global_forced_addr ) { id(output_->global_forced_addr) = this->output_->forced_addr; }
+  if ( this->output_->has_forced_hash ) {
+    this->rtc_ = global_preferences->make_preference<LightStateRTCState>(this->output_->forced_hash);
+  } else {
+    this->rtc_ = global_preferences->make_preference<LightStateRTCState>(this->get_object_id_hash());
+  }
+
+
   switch (this->restore_mode_) {
     case LIGHT_RESTORE_DEFAULT_OFF:
     case LIGHT_RESTORE_DEFAULT_ON:
     case LIGHT_RESTORE_INVERTED_DEFAULT_OFF:
     case LIGHT_RESTORE_INVERTED_DEFAULT_ON:
-
-      if ( this->output_->has_global_forced_addr ) { id(output_->global_forced_addr) = this->output_->forced_addr; }
-      if ( this->output_->has_forced_hash ) {
-        this->rtc_ = global_preferences->make_preference<LightStateRTCState>(this->output_->forced_hash);
-      } else {
-        this->rtc_ = global_preferences->make_preference<LightStateRTCState>(this->get_object_id_hash());
-      }
-
       // Attempt to load from preferences, else fall back to default values
       if (!this->rtc_.load(&recovered)) {
         recovered.state = false;
@@ -77,12 +79,6 @@ void LightState::setup() {
       break;
     case LIGHT_RESTORE_AND_OFF:
     case LIGHT_RESTORE_AND_ON:
-      if ( this->output_->has_global_forced_addr ) { id(output_->global_forced_addr) = this->output_->forced_addr; }
-      if ( this->output_->has_forced_hash ) {
-        this->rtc_ = global_preferences->make_preference<LightStateRTCState>(this->output_->forced_hash);
-      } else {
-        this->rtc_ = global_preferences->make_preference<LightStateRTCState>(this->get_object_id_hash());
-      }
       this->rtc_.load(&recovered);
       recovered.state = (this->restore_mode_ == LIGHT_RESTORE_AND_ON);
       break;
@@ -419,20 +415,24 @@ void LightState::set_immediately_(const LightColorValues &target, bool set_remot
 }
 
 void LightState::save_remote_values_() {
-  LightStateRTCState saved;
-  saved.color_mode = this->remote_values.get_color_mode();
-  saved.state = this->remote_values.is_on();
-  saved.brightness = this->remote_values.get_brightness();
-  saved.color_brightness = this->remote_values.get_color_brightness();
-  saved.red = this->remote_values.get_red();
-  saved.green = this->remote_values.get_green();
-  saved.blue = this->remote_values.get_blue();
-  saved.white = this->remote_values.get_white();
-  saved.color_temp = this->remote_values.get_color_temperature();
-  saved.cold_white = this->remote_values.get_cold_white();
-  saved.warm_white = this->remote_values.get_warm_white();
-  saved.effect = this->active_effect_index_;
-  this->rtc_.save(&saved);
+
+  // don't actually save if not in a saving mode
+  if ( (this->restore_mode_ != LIGHT_ALWAYS_OFF) && (this->restore_mode_ != LIGHT_ALWAYS_ON) ) {
+    LightStateRTCState saved;
+    saved.color_mode = this->remote_values.get_color_mode();
+    saved.state = this->remote_values.is_on();
+    saved.brightness = this->remote_values.get_brightness();
+    saved.color_brightness = this->remote_values.get_color_brightness();
+    saved.red = this->remote_values.get_red();
+    saved.green = this->remote_values.get_green();
+    saved.blue = this->remote_values.get_blue();
+    saved.white = this->remote_values.get_white();
+    saved.color_temp = this->remote_values.get_color_temperature();
+    saved.cold_white = this->remote_values.get_cold_white();
+    saved.warm_white = this->remote_values.get_warm_white();
+    saved.effect = this->active_effect_index_;
+    this->rtc_.save(&saved);
+  }
 }
 
 }  // namespace light
