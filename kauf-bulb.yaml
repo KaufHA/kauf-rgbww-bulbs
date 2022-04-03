@@ -1,5 +1,14 @@
+# https://esphome.io/guides/configuration-types.html#substitutions
 substitutions:
 
+  # substitutions can be changed here if you are using this file directly in the ESPHome dashboard.  The better approach is
+  # to incorporate this file as a package using the following lines, and then overwrite these substitutions in your local
+  # yaml file by redefining them.
+  #
+  # packages:
+  #   kauf.rgbww: github://KaufHA/kauf-rgbww-bulbs/kauf-bulb.yaml
+  #
+  
   name: kauf-bulb              # **** CHANGE DEVICE NAME TO SOMETHING UNIQUE PER DEVICE.  RENAME YAML FILE TO SAME NAME.    ****
                                # **** USE DASHES (-) INSTEAD OF SPACES OR UNDERSCORE (_).  USE ONLY LOWER CASE LETTERS.     ****
   
@@ -7,24 +16,23 @@ substitutions:
 
   disable_entities: "true"     # set to "false" to have all entities show up in Home Assistant automatically
 
-
-  # change power-on action for main light entity
   # https://esphome.io/components/light/index.html#base-light-configuration
-  light_restore_mode: RESTORE_DEFAULT_OFF
-  
+  light_restore_mode: RESTORE_DEFAULT_OFF   # change power-on action for main light entity
   
   project_name: Kauf.RGBWW
   project_ver_num: "1.83"
   project_ver_let: y
   
 
-esp8266:                       # https://esphome.io/components/esp8266.html
+# https://esphome.io/components/esp8266.html
+esp8266:
   board: esp01_1m
   restore_from_flash: true
   start_free: 76
   global_addr: global_forced_addr  
 
 
+# https://esphome.io/components/external_components.html
 external_components:
   - source:
       type: git
@@ -35,7 +43,7 @@ external_components:
       url: https://github.com/KaufHA/kauf-rgbww-bulbs
     refresh: 0s
 
-
+# https://esphome.io/guides/automations.html#global-variables
 globals:
   - id: global_forced_addr
     type: int
@@ -43,6 +51,7 @@ globals:
     initial_value: '12345'
 
 
+# https://esphome.io/components/esphome.html
 esphome:
 
   name: $name
@@ -53,68 +62,64 @@ esphome:
 
   on_boot:
     priority: 799.5 # after numbers/selects/switches being setup (800) and before lights being setup (799).
-    then:
-
+    then: # restore settings
       - script.execute: script_set_boot_mode
-
-        # restore settings
       - script.execute: script_set_wled
       - script.execute: script_max_power
       - script.execute: script_default_fade
       - script.execute: script_no_hass
 
 
+# https://esphome.io/components/button/index.html
 button:
+
+  # https://esphome.io/components/button/restart.html
   - platform: restart
     id: restart_button
     name: $friendly_name Restart Firmware
     entity_category: diagnostic
     disabled_by_default: $disable_entities
 
-
+# https://esphome.io/components/wifi.html
 wifi:
 
-  # **** ENTER WI-FI CREDENTIALS HERE, USING SECRETS.YAML RECOMMENDED ****
-  ssid: initial_ap           # !secret wifi_ssid
-  password: asdfasdfasdfasdf # !secret wifi_password
-
-  # Uncomment below to set a static IP
-  # manual_ip:
-  #   static_ip: !secret kauf_bulb_rgb_ip_address
-  #   gateway: !secret wifi_gateway
-  #   subnet: !secret wifi_subnet
-  #   dns1: !secret wifi_dns1
-
-  # use_address allows wireless programming through dashboard.
-  # Set to the bulb's IP Address.  Remove after programming.
-  # use_address: 192.168.86.250
+  ssid: initial_ap
+  password: asdfasdfasdfasdf
 
   # default is 20, 17 is recommended.
   output_power: 17
 
   # using fast_connect as default since it is required for hidden networks.
-  # feel free to change or override.
   fast_connect: true
   
   forced_addr: 0
   global_addr: global_forced_addr
 
 
+# https://esphome.io/components/logger.html
 logger:                               # Enable logging
 #  baud_rate: 0                       # Disable UART logging since TX pad not easily available
 
+
+# https://esphome.io/components/api.html
 api:                                  # Enable Home Assistant API
   id: kauf_api
   # password: !secret api_password    # optional password field for Home Assistant API.
 
+
+# https://esphome.io/components/ota.html
 ota:
   # password: !secret ota_password    # optional password for OTA updates.
   on_error:
     then:
       - button.press: restart_button
 
+
+# https://esphome.io/components/debug.html
 debug:                                # outputs additional debug info when logs start
 
+
+# https://esphome.io/components/web_server.html
 web_server:                           # web server allows access to device with a web browser
   local: true
   # auth:                             # optional login details for web interface
@@ -123,6 +128,7 @@ web_server:                           # web server allows access to device with 
 
 
 # PWM outputs for each LED channel
+# https://esphome.io/components/output/esp8266_pwm.html
 output:
   - platform: esp8266_pwm
     pin: GPIO4
@@ -151,6 +157,7 @@ output:
     max_power: .8
 
 
+# https://esphome.io/components/light/index.html
 light:
 
   # Additive RGB light for Warm White
@@ -198,6 +205,8 @@ light:
     restore_mode: $light_restore_mode
 
 
+# https://esphome.io/components/select/index.html
+# https://esphome.io/components/select/template.html
 select:
 
   - platform: template
@@ -220,7 +229,6 @@ select:
     forced_addr: 66
     global_addr: global_forced_addr
 
-
   - platform: template
     name: $friendly_name DDP Debug
     id: select_ddp_debug
@@ -234,13 +242,11 @@ select:
     icon: mdi:play-network
     entity_category: diagnostic
     disabled_by_default: $disable_entities
-
     set_action:
       - lambda: |-
           if      ( x == "Print no packets" )        { id(kauf_light)->set_ddp_debug(0); }
           else if ( x == "Print imperfect packets" ) { id(kauf_light)->set_ddp_debug(1); }
           else if ( x == "Print all packets" )       { id(kauf_light)->set_ddp_debug(2); }
-
 
   # default light state on boot
   - platform: template
@@ -267,6 +273,9 @@ select:
     forced_addr: 64
     global_addr: global_forced_addr
 
+
+# https://esphome.io/components/number/index.html
+# https://esphome.io/components/number/template.html
 number:      # set max power output for PWMs
   - platform: template
     name: ${friendly_name} Max Power
@@ -312,6 +321,8 @@ number:      # set max power output for PWMs
       - script.execute: script_save_changes
 
 
+# https://esphome.io/components/switch/index.html
+# https://esphome.io/components/switch/template.html
 switch:
   - platform: template
     id: switch_no_hass
@@ -334,6 +345,7 @@ switch:
       - script.execute: script_save_changes
 
 
+# https://esphome.io/components/sensor/uptime.html
 sensor:
   - platform: uptime
     name: $friendly_name Uptime
@@ -343,6 +355,7 @@ sensor:
 
 
 # Send IP Address to HA.
+# https://esphome.io/components/text_sensor/wifi_info.html
 text_sensor:
   - platform: wifi_info
     ip_address:
@@ -351,6 +364,7 @@ text_sensor:
       disabled_by_default: $disable_entities
 
 
+# https://esphome.io/guides/automations.html#script-component
 script:
   - id: script_save_changes
     mode: restart
