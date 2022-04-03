@@ -11,112 +11,78 @@ esphome:
 
   on_boot:
     then:
-
-      - if:
+      - while:               # repeat test pattern 30 times total to get to 10 minutes
           condition:
-            lambda: |-
-              return id(first_boot);
+            lambda: return ((id(test_count) < 30) && id(first_boot));
           then:
+
             - lambda: |-
                 id(pwm_red).set_max_power(1.0f);
                 id(pwm_green).set_max_power(1.0f);
                 id(pwm_blue).set_max_power(1.0f);
                 id(pwm_ww).set_max_power(1.0f);
                 id(pwm_cw).set_max_power(1.0f);
-                
-            - while:               # repeat test pattern 30 times total to get to 10 minutes
-                condition:
-                  lambda: |-
-                    return (id(test_count) < 30);   
-                then:
 
+            - lambda: ESP_LOGD("KAUF Test", "[5] Test Pattern Starting");
 
+            - light.turn_on:
+                id: kauf_light
+                brightness: 100%
+                color_temperature: 350 mireds
+                transition_length: 2s
+            - delay: 4s
 
-                  - logger.log:
-                      format: "[5] Test Pattern Starting"
-                      tag: "KAUF Test"
+            - lambda: ESP_LOGD("KAUF Test", "[4] Test Pattern to Warm");
 
-                  - light.turn_on:
-                      id: kauf_light
-                      brightness: 100%
-                      color_temperature: 350 mireds
-                      transition_length: 2s
-                  - delay: 4s
+            - light.turn_on:
+                id: kauf_light
+                color_temperature: 150 mireds
+                transition_length: 2s
+            - delay: 4s
 
-                  - logger.log:
-                      format: "[4] Test Pattern to Warm"
-                      tag: "KAUF Test"
+            - lambda: ESP_LOGD("KAUF Test", "[3] Test Pattern to Red");
 
-                  - light.turn_on:
-                      id: kauf_light
-                      brightness: 100%
-                      color_temperature: 150 mireds
-                      transition_length: 2s
-                  - delay: 4s
+              # light on to red
+            - light.turn_on:
+                id: kauf_light
+                red: 100%
+                blue: 0%
+                green: 0%
+                transition_length: 2s
+            - delay: 4s
 
-                  - logger.log:
-                      format: "[3] Test Pattern to Red"
-                      tag: "KAUF Test"
+            - lambda: ESP_LOGD("KAUF Test", "[2] Test Pattern to Green");
 
-                    # light on to red
-                  - light.turn_on:
-                      id: kauf_light
-                      brightness: 100%
-                      red: 100%
-                      blue: 0%
-                      green: 0%
-                      transition_length: 2s
-                  - delay: 4s
+            # light on to green
+            - light.turn_on:
+                id: kauf_light
+                red: 0%
+                blue: 0%
+                green: 100%
+                transition_length: 2s
+            - delay: 4s
 
-                  - logger.log:
-                      format: "[2] Test Pattern to Green"
-                      tag: "KAUF Test"
+            - lambda: ESP_LOGD("KAUF Test", "[1] Test Pattern to Blue");
 
-                  # light on to green
-                  - light.turn_on:
-                      id: kauf_light
-                      brightness: 100%
-                      red: 0%
-                      blue: 0%
-                      green: 100%
-                      transition_length: 2s
-                  - delay: 4s
-
-                  - logger.log:
-                      format: "[1] Test Pattern to Blue"
-                      tag: "KAUF Test"
-      
-                  # light on to blue
-                  - light.turn_on:
-                      id: kauf_light
-                      brightness: 100%
-                      red: 0%
-                      blue: 100%
-                      green: 0%
-                      transition_length: 2s
-                  - delay: 4s
-
-                  - lambda: |-
-                      id(test_count) += 1;
-                      ESP_LOGD("KAUF Test", "[0] Test Pattern Completed %d/30", id(test_count) );
+            # light on to blue
+            - light.turn_on:
+                id: kauf_light
+                red: 0%
+                blue: 100%
+                green: 0%
+                transition_length: 2s
+            - delay: 4s
 
             - lambda: |-
-                id(pwm_red).set_max_power(0.8f);
-                id(pwm_green).set_max_power(0.8f);
-                id(pwm_blue).set_max_power(0.8f);
-                id(pwm_ww).set_max_power(0.8f);
-                id(pwm_cw).set_max_power(0.8f);
+                id(test_count) += 1;
+                ESP_LOGD("KAUF Test", "[0] Test Pattern Completed %d/30", id(test_count) );
 
-      # after test pattern completes
+      # after test pattern completes, clear first_boot variable so it doesn't run again
       - globals.set:
           id: first_boot
           value: 'false'
 
-      # return to white light
-      - light.turn_on:
-          id: kauf_light
-          brightness: 100%
-          color_temperature: 150 mireds
+      - script.execute: script_save_changes
 
 
 globals:
