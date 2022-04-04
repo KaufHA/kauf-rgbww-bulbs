@@ -45,16 +45,16 @@ void LightCall::perform() {
     // is color mode the same?
     if ( v.get_color_mode() != this->parent_->remote_values.get_color_mode()) { super = false; }
 
-    ESP_LOGD("KAUF TRANSITION TEST","1: %d",super);
+    ESP_LOGV("KAUF Transition Filter","1: %d",super);
 
     // if color mode is RGB, are r, g, and b values the same?
     if ( v.get_color_mode() == ColorMode::RGB) {
       if ( v.get_red()   != this->parent_->remote_values.get_red()   ) { super = false; }
-      ESP_LOGV("KAUF TRANSITION TEST","2: %d",super);
+      ESP_LOGV("KAUF Transition Filter","2: %d",super);
       if ( v.get_green() != this->parent_->remote_values.get_green() ) { super = false; }
-      ESP_LOGV("KAUF TRANSITION TEST","3: %d",super);
+      ESP_LOGV("KAUF Transition Filter","3: %d",super);
       if ( v.get_blue()  != this->parent_->remote_values.get_blue()  ) { super = false; }
-      ESP_LOGV("KAUF TRANSITION TEST","4: %d",super);
+      ESP_LOGV("KAUF Transition Filter","4: %d",super);
     }
 
     // if in CT mode, compare color temp and white brightness
@@ -67,18 +67,18 @@ void LightCall::perform() {
       this->parent_->remote_values.as_ct(150,350, &old_ct, &old_wb);
 
       if ( new_ct != old_ct ) { super = false; }
-      ESP_LOGV("KAUF TRANSITION TEST","5: %d    (new: %f - old: %f)",super, new_ct, old_ct);
+      ESP_LOGV("KAUF Transition Filter","5: %d    (new: %f - old: %f)",super, new_ct, old_ct);
       if ( new_wb != old_wb ) { super = false; }
-      ESP_LOGV("KAUF TRANSITION TEST","6: %d    (new: %f - old: %f)",super, new_wb, old_wb);
+      ESP_LOGV("KAUF Transition Filter","6: %d    (new: %f - old: %f)",super, new_wb, old_wb);
     }
 
     if ( super == true ) {
-      ESP_LOGD("KAUF TRANSITION TEST","done, skipping call");
+      ESP_LOGD("KAUF Transition Filter","skipping call due to active transition to same state");
       return; }
 
   }  
 
-  ESP_LOGV("KAUF TRANSITION TEST","--------------------------done, going ahead with call");
+  ESP_LOGV("KAUF Transition Filter","--------------------------done, going ahead with call");
 
 
   if (this->publish_) {
