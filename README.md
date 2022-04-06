@@ -40,7 +40,7 @@ When using kauf-bulb.yaml as a package in the ESPHome dashboard, you can configu
 
 ***disable_entities*** - Adding a substitution to redefine this to "false" will result in all entities being automatically enabled in Home Assistant.
 
-***light_restore_mode*** - Defines the state of the bulb on boot-up.  Building with kauf-bulb.yaml removes the boot up state select entity and relies on this substitution instead.  For more information on the available options, see restore_mode under [Base Light Configuration](https://esphome.io/components/light/index.html#base-light-configuration).
+***light_restore_mode*** - Defines the state of the bulb on boot-up.  The select entity needs to remain in the "YAML Configured" setting for this substitution to be effective, otherwise the bootup automation will overwrite this setting.  For more information on the available options, see restore_mode under [Base Light Configuration](https://esphome.io/components/light/index.html#base-light-configuration).
 - RESTORE_DEFAULT_OFF is the default and equivalent to the select entity option "Restore Power Off State"
 - RESTORE_AND_ON is equivalent to the select entity option "Always On - Last Value"
 - ALWAYS_ON is equivalent to the select entity option "Always On - Bright White"
@@ -51,7 +51,7 @@ Going to the bulb's URL in a web browser and adding /reset will completely wipe 
 
 
 ## Troubleshooting
-Any build errors can usually be resolved by upgrading the ESPHome dashboard to the latest version.  On the days when ESPHome updates are released, it may take us up to 24 hours to make necessary changes to our custom components during which time you may see build errors.  Please be patient.  
+Any build errors can usually be resolved by upgrading the ESPHome dashboard to the latest version.  On the days when ESPHome updates are released, it may take us up to 24 hours to make necessary changes to our custom components during which time you may see build errors with the new version.  Please be patient.  
   
 If you are still getting errors after upgrading the ESPHome dashboard to the latest version, try deleting the .esphome/packages and .esphome/external_components subfolders from within the ESPHome config directory.
 
