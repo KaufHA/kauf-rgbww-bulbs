@@ -19,6 +19,7 @@ substitutions:
   # https://esphome.io/components/light/index.html#base-light-configuration
   light_restore_mode: RESTORE_DEFAULT_OFF   # change power-on action for main light entity
   
+  # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
   project_ver_num: "1.83"
   project_ver_let: y
@@ -42,6 +43,7 @@ external_components:
       type: git
       url: https://github.com/KaufHA/kauf-rgbww-bulbs
     refresh: 0s
+
 
 # https://esphome.io/guides/automations.html#global-variables
 globals:
@@ -71,14 +73,14 @@ esphome:
 
 
 # https://esphome.io/components/button/index.html
+# https://esphome.io/components/button/restart.html
 button:
-
-  # https://esphome.io/components/button/restart.html
   - platform: restart
     id: restart_button
     name: $friendly_name Restart Firmware
     entity_category: diagnostic
     disabled_by_default: $disable_entities
+
 
 # https://esphome.io/components/wifi.html
 wifi:
