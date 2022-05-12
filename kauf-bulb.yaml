@@ -17,11 +17,11 @@ substitutions:
   disable_entities: "true"     # set to "false" to have all entities show up in Home Assistant automatically
 
   # https://esphome.io/components/light/index.html#base-light-configuration
-  light_restore_mode: RESTORE_DEFAULT_OFF   # change power-on action for main light entity
+  light_restore_mode: RESTORE_INVERTED_DEFAULT_OFF  # change power-on action for main light entity
   
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.831"
+  project_ver_num: "1.832"
   project_ver_let: y
   
 
@@ -262,7 +262,7 @@ select:
       - "Always Off"
       - "YAML Configured ($light_restore_mode)"
     # defaulting to always on is nice so you know new bulbs are working
-    initial_option: "YAML Configured ($light_restore_mode)"
+    initial_option: "Restore Power Off State"
     restore_value: true
     icon: mdi:restart-alert
     set_action:
