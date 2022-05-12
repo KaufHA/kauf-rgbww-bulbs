@@ -405,6 +405,7 @@ void LightState::start_flash_(const LightColorValues &target, uint32_t length, b
 }
 
 void LightState::set_immediately_(const LightColorValues &target, bool set_remote_values) {
+  this->transformer_active = false;
   this->transformer_ = nullptr;
   this->current_values = target;
   if (set_remote_values) {
