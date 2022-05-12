@@ -43,37 +43,59 @@ void LightCall::perform() {
     bool super = true;
 
     // is color mode the same?
-    if ( v.get_color_mode() != this->parent_->remote_values.get_color_mode()) { super = false; }
-
-    ESP_LOGV("KAUF Transition Filter","1: %d",super);
+    if ( v.get_color_mode() != this->parent_->remote_values.get_color_mode()) {
+      super = false;
+      ESP_LOGV("KAUF Transition Filter","Color Mode different");
+    }
 
     // if color mode is RGB, are r, g, and b values the same?
-    if ( v.get_color_mode() == ColorMode::RGB) {
-      if ( v.get_red()   != this->parent_->remote_values.get_red()   ) { super = false; }
-      ESP_LOGV("KAUF Transition Filter","2: %d",super);
-      if ( v.get_green() != this->parent_->remote_values.get_green() ) { super = false; }
-      ESP_LOGV("KAUF Transition Filter","3: %d",super);
-      if ( v.get_blue()  != this->parent_->remote_values.get_blue()  ) { super = false; }
-      ESP_LOGV("KAUF Transition Filter","4: %d",super);
+    else if ( v.get_color_mode() == ColorMode::RGB) {
+
+      // get old and new rgb values.  as_rgb function applies brightness for us.
+      float new_r, new_g, new_b, old_r, old_g, old_b;
+      v.as_rgb(&new_r,&new_g,&new_b);
+      this->parent_->remote_values.as_rgb(&old_r,&old_g,&old_b);
+
+      if      ( new_r != old_r ) {
+        super = false;
+        ESP_LOGV("KAUF Transition Filter","Red channel different");
+      }
+      else if ( new_g != old_g ) {
+        super = false;
+        ESP_LOGV("KAUF Transition Filter","Green channel different");
+      }
+      else if ( new_b != old_b ) {
+        super = false;
+        ESP_LOGV("KAUF Transition Filter","Blue channel different");
+      }
+      else {
+        ESP_LOGV("KAUF Transition Filter","RGB values all the same");
+      }
     }
 
     // if in CT mode, compare color temp and white brightness
     else if ( v.get_color_mode() == ColorMode::COLOR_TEMPERATURE) {
-      float new_ct;
-      float new_wb;
-      float old_ct;
-      float old_wb;
+
+      // get old and new color temp and white brightness values.
+      float new_ct, new_wb, old_ct, old_wb;
       v.as_ct(150,350, &new_ct, &new_wb);
       this->parent_->remote_values.as_ct(150,350, &old_ct, &old_wb);
 
-      if ( new_ct != old_ct ) { super = false; }
-      ESP_LOGV("KAUF Transition Filter","5: %d    (new: %f - old: %f)",super, new_ct, old_ct);
-      if ( new_wb != old_wb ) { super = false; }
-      ESP_LOGV("KAUF Transition Filter","6: %d    (new: %f - old: %f)",super, new_wb, old_wb);
+      if      ( new_wb != old_wb ) {
+        super = false;
+        ESP_LOGV("KAUF Transition Filter","White Brightness different");
+      }
+      else if ( new_ct != old_ct ) {
+        super = false;
+        ESP_LOGV("KAUF Transition Filter","Color Temp different");
+      }
+      else {
+        ESP_LOGV("KAUF Transition Filter","Color Temp values all the same");
+      }
     }
 
     if ( super == true ) {
-      ESP_LOGD("KAUF Transition Filter","skipping call due to active transition to same state");
+      ESP_LOGD("KAUF Transition Filter","Double light call detected, skipping second call while first is still ongoing");
       return; }
 
   }  
