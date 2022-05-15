@@ -24,6 +24,8 @@ substitutions:
   project_ver_num: "1.832"
   project_ver_let: y
   
+  sub_on_turn_on:  script_do_nothing
+  sub_on_turn_off: script_do_nothing
 
 # https://esphome.io/components/esp8266.html
 esp8266:
@@ -174,8 +176,12 @@ light:
     forced_addr: 28
     global_addr: global_forced_addr
     disabled_by_default: $disable_entities
-  
-  # Additive RGB light for Cold White
+    on_turn_on:
+      - script.execute: $sub_on_turn_on
+    on_turn_off:
+      - script.execute: $sub_on_turn_off
+
+# Additive RGB light for Cold White
   - platform: kauf_rgbww
     id: cold_rgb
     entity_category: config
@@ -415,6 +421,10 @@ script:
           kauf_light->set_restore_mode(LIGHT_RESTORE_AND_OFF);
         else
           kauf_light->set_restore_mode(LIGHT_$light_restore_mode);
+
+  - id: script_do_nothing
+    then:
+      lambda: return;
 
 
 # Current reserved flash memory:
