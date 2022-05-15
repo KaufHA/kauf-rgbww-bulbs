@@ -21,7 +21,7 @@ substitutions:
   
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.833"
+  project_ver_num: "1.834"
   project_ver_let: y
   
   sub_on_turn_on:  script_do_nothing
@@ -176,10 +176,6 @@ light:
     forced_addr: 28
     global_addr: global_forced_addr
     disabled_by_default: $disable_entities
-    on_turn_on:
-      - script.execute: $sub_on_turn_on
-    on_turn_off:
-      - script.execute: $sub_on_turn_off
 
 # Additive RGB light for Cold White
   - platform: kauf_rgbww
@@ -193,7 +189,7 @@ light:
     forced_addr: 40
     global_addr: global_forced_addr
     disabled_by_default: $disable_entities
-  
+
   # Main RGBWW light
   - platform: kauf_rgbww
     id: kauf_light
@@ -209,8 +205,11 @@ light:
     forced_hash: 2723974766
     forced_addr: 52
     global_addr: global_forced_addr
-    
     restore_mode: $light_restore_mode
+    on_turn_on:
+      - script.execute: $sub_on_turn_on
+    on_turn_off:
+      - script.execute: $sub_on_turn_off
 
 
 # https://esphome.io/components/select/index.html
