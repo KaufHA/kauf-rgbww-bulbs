@@ -1,5 +1,6 @@
 substitutions:
   project_ver_let: u
+  default_power_on_state: "Always On - Bright White"
 
 
 packages:
@@ -18,12 +19,7 @@ esphome:
 
   # add wifi handling on boot, which is not needed for dashboard import version
   on_boot:
-    priority: 801 # before select entities are setup, to change default light restore mode in precompiled firmware
     then:
-
-      # change default boot state config for update.
-      - lambda: select_boot_state->set_initial_option("Always On - Bright White");
-
 
       # Wait until ESPHome tries loading wifi credentials before going on with WiFi AP logic.
       - wait_until:
