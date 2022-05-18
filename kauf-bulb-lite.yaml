@@ -1,53 +1,59 @@
+# https://esphome.io/guides/configuration-types.html#substitutions
 substitutions:
 
+  # substitutions can be changed here if you are using this file directly in the ESPHome dashboard.  The better approach is
+  # to incorporate this file as a package using the following lines, and then overwrite these substitutions in your local
+  # yaml file by redefining them.
+  #
+  # packages:
+  #   kauf.rgbww: github://KaufHA/kauf-rgbww-bulbs/kauf-bulb.yaml
+  #
+  
   name: kauf-bulb              # **** CHANGE DEVICE NAME TO SOMETHING UNIQUE PER DEVICE.  RENAME YAML FILE TO SAME NAME.    ****
                                # **** USE DASHES (-) INSTEAD OF SPACES OR UNDERSCORE (_).  USE ONLY LOWER CASE LETTERS.     ****
   
   friendly_name: Kauf Bulb     # **** CHANGE FRIENDLY NAME TO SOMETHING UNIQUE PER DEVICE ****
 
-  disable_entities: "true"     # change to have all entities show up in Home Assistant automatically
+  disable_entities: "true"     # set to "false" to have all entities show up in Home Assistant automatically
 
-esp8266:                       # https://esphome.io/components/esp8266.html
+  # https://esphome.io/components/light/index.html#base-light-configuration
+  light_restore_mode: RESTORE_INVERTED_DEFAULT_OFF  # change power-on action for main light entity
+  default_power_on_state: "Restore Power Off State"
+
+  # https://esphome.io/components/esphome.html#esphome-creators-project
+  project_name: Kauf.RGBWW
+  project_ver_num: "1.84"
+  project_ver_let: l
+  
+  sub_on_turn_on:  script_do_nothing
+  sub_on_turn_off: script_do_nothing
+
+# https://esphome.io/components/esp8266.html
+esp8266:
   board: esp01_1m
   restore_from_flash: true
-    
+
+
+# https://esphome.io/components/esphome.html
 esphome:
 
   name: $name
 
   project:
-    name: "Kauf.RGBWW"
-    version: "1.81(l)"  # l stands for lite version
+    name: $project_name
+    version: $project_ver_num($project_ver_let)
 
   on_boot:
-    then:
-
-      - lambda: |-
-
-          // restore light state per setting.  Default is to restore previous state so we don't need an action for that.
-          if (id(select_boot_state).state == "Always On - Last Value") {
-            auto call = id(kauf_light).turn_on();
-            call.perform();
-          }
-          else if (id(select_boot_state).state == "Always On - Bright White") {
-            auto call = id(kauf_light).turn_on();
-            call.set_color_mode(ColorMode::COLOR_TEMPERATURE);
-            call.set_color_temperature(150);
-            call.set_brightness(1.0);
-            call.perform();
-          }
-          else if (id(select_boot_state).state == "Always Off") {
-            auto call = id(kauf_light).turn_off();
-            call.perform();
-          }
-
-
-        # restore settings
+    priority: 799.5 # after numbers/selects/switches being setup (800) and before lights being setup (799).
+    then: # restore settings
+      - script.execute: script_set_boot_mode
       - script.execute: script_max_power
       - script.execute: script_default_fade
       - script.execute: script_no_hass
 
 
+# https://esphome.io/components/button/index.html
+# https://esphome.io/components/button/restart.html
 button:
   - platform: restart
     id: restart_button
@@ -55,45 +61,44 @@ button:
     entity_category: diagnostic
     disabled_by_default: $disable_entities
 
+
+# https://esphome.io/components/wifi.html
 wifi:
 
-  # **** ENTER WI-FI CREDENTIALS HERE, USING SECRETS.YAML RECOMMENDED ****
-  ssid: initial_ap           # !secret wifi_ssid
-  password: asdfasdfasdfasdf # !secret wifi_password
-
-  # Uncomment below to set a static IP
-  # manual_ip:
-  #   static_ip: !secret kauf_bulb_rgb_ip_address
-  #   gateway: !secret wifi_gateway
-  #   subnet: !secret wifi_subnet
-  #   dns1: !secret wifi_dns1
-
-  # use_address allows wireless programming through dashboard.
-  # Set to the bulb's IP Address.  Remove after programming.
-  # use_address: 192.168.86.249
+  ssid: initial_ap
+  password: asdfasdfasdfasdf
 
   # default is 20, 17 is recommended.
   output_power: 17
 
   # using fast_connect as default since it is required for hidden networks.
-  # feel free to change or override.
   fast_connect: true
   
+
+# https://esphome.io/components/logger.html
 logger:                               # Enable logging
 #  baud_rate: 0                       # Disable UART logging since TX pad not easily available
 
+
+# https://esphome.io/components/api.html
 api:                                  # Enable Home Assistant API
   id: kauf_api
   # password: !secret api_password    # optional password field for Home Assistant API.
 
+
+# https://esphome.io/components/ota.html
 ota:
   # password: !secret ota_password    # optional password for OTA updates.
   on_error:
     then:
       - button.press: restart_button
 
+
+# https://esphome.io/components/debug.html
 debug:                                # outputs additional debug info when logs start
 
+
+# https://esphome.io/components/web_server.html
 web_server:                           # web server allows access to device with a web browser
   local: true
   # auth:                             # optional login details for web interface
@@ -101,8 +106,8 @@ web_server:                           # web server allows access to device with 
   #   password: !secret web_server_password
 
 
-
 # PWM outputs for each LED channel
+# https://esphome.io/components/output/esp8266_pwm.html
 output:
   - platform: esp8266_pwm
     pin: GPIO4
@@ -131,8 +136,7 @@ output:
     max_power: .8
 
 
-
-
+# https://esphome.io/components/light/index.html
 light:
   - platform: rgbww
     name: $friendly_name
@@ -145,6 +149,9 @@ light:
     cold_white_color_temperature: 6500 K
     warm_white_color_temperature: 2700 K
 
+
+# https://esphome.io/components/select/index.html
+# https://esphome.io/components/select/template.html
 select:
 
   # default light state on boot
@@ -157,17 +164,20 @@ select:
       - "Always On - Last Value"
       - "Always On - Bright White"
       - "Always Off"
+      - "YAML Configured ($light_restore_mode)"
     # defaulting to always on is nice so you know new bulbs are working
-    initial_option: "Always On - Bright White"
+    initial_option: $default_power_on_state
     restore_value: true
     icon: mdi:restart-alert
     set_action:
+      - delay: 1ms
       - script.execute: script_save_changes
+      - script.execute: script_set_boot_mode
     entity_category: config
 
 
-
-
+# https://esphome.io/components/number/index.html
+# https://esphome.io/components/number/template.html
 number:      # set max power output for PWMs
   - platform: template
     name: ${friendly_name} Max Power
@@ -184,6 +194,7 @@ number:      # set max power output for PWMs
     unit_of_measurement: "%"
     mode: box
     on_value:
+      - delay: 1ms
       - script.execute: script_max_power
       - script.execute: script_save_changes
 
@@ -201,11 +212,13 @@ number:      # set max power output for PWMs
     unit_of_measurement: "ms"
     mode: box
     on_value:
+      - delay: 1ms
       - script.execute: script_default_fade
       - script.execute: script_save_changes
 
 
-
+# https://esphome.io/components/switch/index.html
+# https://esphome.io/components/switch/template.html
 switch:
   - platform: template
     id: switch_no_hass
@@ -216,13 +229,16 @@ switch:
     disabled_by_default: $disable_entities
     icon: mdi:toggle-switch-off-outline
     on_turn_on:
+      - delay: 1ms
       - script.execute: script_no_hass
       - script.execute: script_save_changes
     on_turn_off:
+      - delay: 1ms
       - script.execute: script_no_hass
       - script.execute: script_save_changes
 
 
+# https://esphome.io/components/sensor/uptime.html
 sensor:
   - platform: uptime
     name: $friendly_name Uptime
@@ -231,7 +247,8 @@ sensor:
     disabled_by_default: $disable_entities
 
 
-# Send IP Address to HA.  Disabled by default, not as important now that Home Assistant provides link.
+# Send IP Address to HA.
+# https://esphome.io/components/text_sensor/wifi_info.html
 text_sensor:
   - platform: wifi_info
     ip_address:
@@ -240,6 +257,7 @@ text_sensor:
       disabled_by_default: $disable_entities
 
 
+# https://esphome.io/guides/automations.html#script-component
 script:
   - id: script_save_changes
     mode: restart
@@ -249,18 +267,13 @@ script:
 
   - id: script_max_power
     then:
-      - delay: 1ms
       - lambda: |-
           float new_power = ((float)id(number_max_power).state)/100.0f;
-          ESP_LOGD("script_max_power","number_max_power = %d -- new_power = %f",number_max_power, new_power);
           id(pwm_red).set_max_power(new_power);
           id(pwm_green).set_max_power(new_power);
           id(pwm_blue).set_max_power(new_power);
           id(pwm_ww).set_max_power(new_power);
           id(pwm_cw).set_max_power(new_power);
-          id(kauf_light)->toggle();
-          id(kauf_light)->toggle();
-
 
   - id: script_default_fade
     then:
@@ -269,7 +282,24 @@ script:
       
   - id: script_no_hass
     then:
-      - delay: 1ms
       - lambda: |-
           if ( id(switch_no_hass).state ) { id(kauf_api)->set_reboot_timeout(0); }
           else                            { id(kauf_api)->set_reboot_timeout(900000); }
+
+  - id: script_set_boot_mode
+    then:
+      lambda: |-
+        if ( id(select_boot_state).state == "Restore Power Off State")
+          kauf_light->set_restore_mode(LIGHT_RESTORE_DEFAULT_OFF);
+        else if ( id(select_boot_state).state == "Always On - Last Value")
+          kauf_light->set_restore_mode(LIGHT_RESTORE_AND_ON);
+        else if ( id(select_boot_state).state == "Always On - Bright White")
+          kauf_light->set_restore_mode(LIGHT_ALWAYS_ON);
+        else if ( id(select_boot_state).state == "Always Off")
+          kauf_light->set_restore_mode(LIGHT_RESTORE_AND_OFF);
+        else
+          kauf_light->set_restore_mode(LIGHT_$light_restore_mode);
+
+  - id: script_do_nothing
+    then:
+      lambda: return;
