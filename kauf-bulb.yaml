@@ -28,6 +28,7 @@ substitutions:
   sub_on_turn_on:  script_do_nothing
   sub_on_turn_off: script_do_nothing
 
+
 # https://esphome.io/components/esp8266.html
 esp8266:
   board: esp01_1m
@@ -102,34 +103,24 @@ wifi:
 
 
 # https://esphome.io/components/logger.html
-logger:                               # Enable logging
-#  baud_rate: 0                       # Disable UART logging since TX pad not easily available
+logger:
 
 
 # https://esphome.io/components/api.html
-api:                                  # Enable Home Assistant API
+api:
   id: kauf_api
-  # password: !secret api_password    # optional password field for Home Assistant API.
 
 
 # https://esphome.io/components/ota.html
 ota:
-  # password: !secret ota_password    # optional password for OTA updates.
   on_error:
     then:
       - button.press: restart_button
 
 
-# https://esphome.io/components/debug.html
-debug:                                # outputs additional debug info when logs start
-
-
 # https://esphome.io/components/web_server.html
-web_server:                           # web server allows access to device with a web browser
+web_server:
   local: true
-  # auth:                             # optional login details for web interface
-  #   username: admin
-  #   password: !secret web_server_password
 
 
 # PWM outputs for each LED channel
@@ -428,7 +419,6 @@ script:
 
 
 # Current reserved flash memory:
-
 # 00-25: Wi-Fi Credentials
 
 # 28-39: Warm RGB
