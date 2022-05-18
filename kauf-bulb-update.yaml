@@ -20,7 +20,54 @@ esphome:
   # add wifi handling on boot, which is not needed for dashboard import version
   on_boot:
     then:
+      - script.execute: on_boot_wifi
 
+
+globals:
+  - id: force_ap
+    type: bool
+    restore_value: yes
+    initial_value: "false"
+    
+
+# add new button to clear wifi credentials.  Not needed in dashboard import
+# version as credentials are hard coded
+button:
+  - platform: template
+    id: clear_wifi_button
+    name: $friendly_name Clear Wifi Credentials
+    entity_category: diagnostic
+    disabled_by_default: true
+    on_press:
+      then:
+      - lambda: 'wifi_wificomponent->clear_stored_creds();'
+      - delay: 2s
+      - button.press: restart_button
+
+
+# re-adding wifi component so that hotspot will be enabled
+wifi:
+
+  # enable wifi ap, which was not needed in dashboard import version
+  ap:
+    ssid: ${friendly_name} Hotspot
+    ap_timeout: 2147483647ms      # maximum 32 bit value.  About 3.5 weeks in milliseconds.
+
+  # by default, fast_connect is disabled.  Will automatically be enabled by wifi component
+  # needs to be set false here as dashboard import version sets true
+  fast_connect: false
+  
+  # add forced hash which isn't needed for dashboard import.  Allows saving wifi credentials across update.
+  forced_hash: 2048874009
+
+
+# captive portal not used in dashboard import version
+captive_portal:
+
+
+script:
+  - id: on_boot_wifi
+    then:
       # Wait until ESPHome tries loading wifi credentials before going on with WiFi AP logic.
       - wait_until:
           lambda: 'return ( wifi_wificomponent->tried_loading_creds );'
@@ -65,45 +112,3 @@ esphome:
               # set ap timeout to max 32 bit value in milliseconds.  About 3.5 weeks.
             - logger.log: "------------------->>>>>>>>>>>>>>>>>   wifi connected, cranking ap timeout back up"
             - lambda: 'wifi_wificomponent->set_ap_timeout(2147483647);'
-
-
-globals:
-  - id: force_ap
-    type: bool
-    restore_value: yes
-    initial_value: "false"
-    
-
-# add new button to clear wifi credentials.  Not needed in dashboard import
-# version as credentials are hard coded
-button:
-  - platform: template
-    id: clear_wifi_button
-    name: $friendly_name Clear Wifi Credentials
-    entity_category: diagnostic
-    disabled_by_default: true
-    on_press:
-      then:
-      - lambda: 'wifi_wificomponent->clear_stored_creds();'
-      - delay: 2s
-      - button.press: restart_button
-
-
-# re-adding wifi component so that hotspot will be enabled
-wifi:
-
-  # enable wifi ap, which was not needed in dashboard import version
-  ap:
-    ssid: ${friendly_name} Hotspot
-    ap_timeout: 2147483647ms      # maximum 32 bit value.  About 3.5 weeks in milliseconds.
-
-  # by default, fast_connect is disabled.  Will automatically be enabled by wifi component
-  # needs to be set false here as dashboard import version sets true
-  fast_connect: false
-  
-  # add forced hash which isn't needed for dashboard import.  Allows saving wifi credentials across update.
-  forced_hash: 2048874009
-
-
-# captive portal not used in dashboard import version
-captive_portal:
