@@ -46,6 +46,13 @@ When using kauf-bulb.yaml as a package in the ESPHome dashboard, you can configu
 - ALWAYS_ON is equivalent to the select entity option "Always On - Bright White"
 - RESTORE_AND_OFF is equivalent to the select entity option "Always Off"
 
+***default_power_on_state*** - defines the default option for the power on state select entity.
+
+***sub_on_turn_on*** - define an ESPHome script to execute when the light turns on.
+
+***sub_on_turn_off*** - define an ESPHome script to execute when the light turns off.
+
+
 ## Factory Reset
 Going to the bulb's URL in a web browser and adding /reset will completely wipe all settings from flash memory.
 
