@@ -1,4 +1,4 @@
-# kauf-rgbww-bulbs
+# KAUF RGBWW Smart Bulbs (BLF10/BRF30)
 
 The recommended way to import a bulb into your ESPHome dashboard is through the dashboard import feature.  The bulb will need to be updated to version 1.72 or greater to be discovered by the ESPHome dashboard.  You can accomplish the same thing without updating first by using the following yaml modified as desired.
 
