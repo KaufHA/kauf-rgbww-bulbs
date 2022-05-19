@@ -72,3 +72,4 @@ If you are still getting errors after upgrading the ESPHome dashboard to the lat
 - [Purchase A21 bulbs on Amazon](https://www.amazon.com/dp/B09GV9FD3X)
 - [Purchase BR30 bulbs on Amazon](https://www.amazon.com/dp/B09L5P2MDD)
 - [KAUF YouTube Channel](https://www.youtube.com/channel/UCjgziIA-lXmcqcMIm8HDnYg)
+- [KaufHA Website](https://kaufha.com/blf10/)
