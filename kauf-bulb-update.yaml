@@ -1,6 +1,7 @@
 substitutions:
   project_ver_let: u
   default_power_on_state: "Always On - Bright White"
+  wifi_ap_timeout: 15s    # default to 15 second timeout for update bin file
 
 
 packages:
@@ -17,18 +18,6 @@ dashboard_import:
 esphome:
   name_add_mac_suffix: true
 
-  # add wifi handling on boot, which is not needed for dashboard import version
-  on_boot:
-    then:
-      - script.execute: on_boot_wifi
-
-
-globals:
-  - id: force_ap
-    type: bool
-    restore_value: yes
-    initial_value: "false"
-    
 
 # add new button to clear wifi credentials.  Not needed in dashboard import
 # version as credentials are hard coded
@@ -45,70 +34,11 @@ button:
       - button.press: restart_button
 
 
-# re-adding wifi component so that hotspot will be enabled
 wifi:
-
-  # enable wifi ap, which was not needed in dashboard import version
-  ap:
-    ssid: ${friendly_name} Hotspot
-    ap_timeout: 2147483647ms      # maximum 32 bit value.  About 3.5 weeks in milliseconds.
 
   # by default, fast_connect is disabled.  Will automatically be enabled by wifi component
   # needs to be set false here as dashboard import version sets true
   fast_connect: false
-  
+
   # add forced hash which isn't needed for dashboard import.  Allows saving wifi credentials across update.
   forced_hash: 2048874009
-
-
-# captive portal not used in dashboard import version
-captive_portal:
-
-
-script:
-  - id: on_boot_wifi
-    then:
-      # Wait until ESPHome tries loading wifi credentials before going on with WiFi AP logic.
-      - wait_until:
-          lambda: 'return ( wifi_wificomponent->tried_loading_creds );'
-
-      - if:
-          condition: # don't do anything if credentials were loaded unless force_ap is on as an override
-            lambda: 'return ( wifi_wificomponent->loaded_creds && !id(force_ap) );'
-
-          # if we don't need AP 
-          then:
-            - logger.log: "------------------->>>>>>>>>>>>>>>>>   wifi already configured, leaving ap timeout cranked"
-
-            - globals.set:  # set global so if wifi never connects we'll have AP next time.
-                id: force_ap
-                value: 'true'
-            - script.execute: script_save_changes
-
-            - wait_until:
-                wifi.connected
-            - globals.set:  # clear global so we won't have AP next time
-                id: force_ap
-                value: 'false'
-            - script.execute: script_save_changes
-
-
-          # if we do need AP 
-          else:           # if credentials not loaded or force_ap is set, lower ap timeout to allow saving new credentials
-            - logger.log: "------------------->>>>>>>>>>>>>>>>>   wifi not configured, enabling ap and waiting"
-            
-            # always turn on light if turning on AP
-            - light.turn_on: kauf_light
-
-              # set ap timeout to 15 seconds in milliseconds.
-            - lambda: 'wifi_wificomponent->set_ap_timeout(15000);'
-            - wait_until:
-                wifi.connected
-            - globals.set:  # clear global so ap doesn't come back up next time
-                id: force_ap
-                value: 'false'
-            - script.execute: script_save_changes
-
-              # set ap timeout to max 32 bit value in milliseconds.  About 3.5 weeks.
-            - logger.log: "------------------->>>>>>>>>>>>>>>>>   wifi connected, cranking ap timeout back up"
-            - lambda: 'wifi_wificomponent->set_ap_timeout(2147483647);'
