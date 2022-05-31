@@ -8,10 +8,10 @@ substitutions:
   # packages:
   #   kauf.rgbww: github://KaufHA/kauf-rgbww-bulbs/kauf-bulb.yaml
   #
-  
+
   name: kauf-bulb              # **** CHANGE DEVICE NAME TO SOMETHING UNIQUE PER DEVICE.  RENAME YAML FILE TO SAME NAME.    ****
                                # **** USE DASHES (-) INSTEAD OF SPACES OR UNDERSCORE (_).  USE ONLY LOWER CASE LETTERS.     ****
-  
+
   friendly_name: Kauf Bulb     # **** CHANGE FRIENDLY NAME TO SOMETHING UNIQUE PER DEVICE ****
 
   disable_entities: "true"     # set to "false" to have all entities show up in Home Assistant automatically
@@ -20,11 +20,13 @@ substitutions:
   light_restore_mode: RESTORE_INVERTED_DEFAULT_OFF  # change power-on action for main light entity
   default_power_on_state: "Restore Power Off State"
 
+  wifi_ap_timeout: 2min    # default to 2 minute timeout for yaml file as package.
+
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.84"
+  project_ver_num: "1.841"
   project_ver_let: y
-  
+
   sub_on_turn_on:  script_do_nothing
   sub_on_turn_off: script_do_nothing
 
@@ -34,7 +36,7 @@ esp8266:
   board: esp01_1m
   restore_from_flash: true
   start_free: 76
-  global_addr: global_forced_addr  
+  global_addr: global_forced_addr
 
 
 # https://esphome.io/components/external_components.html
@@ -97,9 +99,17 @@ wifi:
 
   # using fast_connect as default since it is required for hidden networks.
   fast_connect: true
-  
+
   forced_addr: 0
   global_addr: global_forced_addr
+
+  ap:
+    ssid: ${friendly_name} Hotspot
+    ap_timeout: $wifi_ap_timeout
+
+
+# https://esphome.io/components/captive_portal.html
+captive_portal:
 
 
 # https://esphome.io/components/logger.html
@@ -222,7 +232,7 @@ select:
       - delay: 1ms
       - script.execute: script_set_wled
       - script.execute: script_save_changes
-      
+
     entity_category: config
     forced_hash: 5841966
     forced_addr: 66
@@ -387,12 +397,12 @@ script:
       - lambda: |-
           if ( id(effect).state == "WLED / DDP" ) { id(kauf_light)->set_use_wled(true); }
           else                                    { id(kauf_light)->set_use_wled(false); }
-      
+
   - id: script_default_fade
     then:
       - delay: 1ms
       - lambda: 'id(kauf_light)->set_default_transition_length(id(number_default_fade).state);'
-      
+
   - id: script_no_hass
     then:
       - lambda: |-
