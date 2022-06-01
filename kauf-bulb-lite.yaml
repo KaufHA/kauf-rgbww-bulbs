@@ -6,12 +6,12 @@ substitutions:
   # yaml file by redefining them.
   #
   # packages:
-  #   kauf.rgbww: github://KaufHA/kauf-rgbww-bulbs/kauf-bulb.yaml
+  #   kauf.rgbww: github://KaufHA/kauf-rgbww-bulbs/kauf-bulb-lite.yaml
   #
-  
+
   name: kauf-bulb              # **** CHANGE DEVICE NAME TO SOMETHING UNIQUE PER DEVICE.  RENAME YAML FILE TO SAME NAME.    ****
                                # **** USE DASHES (-) INSTEAD OF SPACES OR UNDERSCORE (_).  USE ONLY LOWER CASE LETTERS.     ****
-  
+
   friendly_name: Kauf Bulb     # **** CHANGE FRIENDLY NAME TO SOMETHING UNIQUE PER DEVICE ****
 
   disable_entities: "true"     # set to "false" to have all entities show up in Home Assistant automatically
@@ -20,13 +20,16 @@ substitutions:
   light_restore_mode: RESTORE_INVERTED_DEFAULT_OFF  # change power-on action for main light entity
   default_power_on_state: "Restore Power Off State"
 
+  wifi_ap_timeout: 2min    # default to 2 minute timeout for yaml file as package.
+
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.84"
+  project_ver_num: "1.841"
   project_ver_let: l
-  
+
   sub_on_turn_on:  script_do_nothing
   sub_on_turn_off: script_do_nothing
+
 
 # https://esphome.io/components/esp8266.html
 esp8266:
@@ -73,37 +76,35 @@ wifi:
 
   # using fast_connect as default since it is required for hidden networks.
   fast_connect: true
-  
+
+  ap:
+    ssid: ${friendly_name} Hotspot
+    ap_timeout: $wifi_ap_timeout
+
+
+# https://esphome.io/components/captive_portal.html
+captive_portal:
+
 
 # https://esphome.io/components/logger.html
-logger:                               # Enable logging
-#  baud_rate: 0                       # Disable UART logging since TX pad not easily available
+logger:
 
 
 # https://esphome.io/components/api.html
-api:                                  # Enable Home Assistant API
+api:
   id: kauf_api
-  # password: !secret api_password    # optional password field for Home Assistant API.
 
 
 # https://esphome.io/components/ota.html
 ota:
-  # password: !secret ota_password    # optional password for OTA updates.
   on_error:
     then:
       - button.press: restart_button
 
 
-# https://esphome.io/components/debug.html
-debug:                                # outputs additional debug info when logs start
-
-
 # https://esphome.io/components/web_server.html
-web_server:                           # web server allows access to device with a web browser
+web_server:
   local: true
-  # auth:                             # optional login details for web interface
-  #   username: admin
-  #   password: !secret web_server_password
 
 
 # PWM outputs for each LED channel
@@ -279,7 +280,7 @@ script:
     then:
       - delay: 1ms
       - lambda: 'id(kauf_light)->set_default_transition_length(id(number_default_fade).state);'
-      
+
   - id: script_no_hass
     then:
       - lambda: |-
