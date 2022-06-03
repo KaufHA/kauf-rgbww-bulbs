@@ -19,21 +19,6 @@ esphome:
   name_add_mac_suffix: true
 
 
-# add new button to clear wifi credentials.  Not needed in dashboard import
-# version as credentials are hard coded
-button:
-  - platform: template
-    id: clear_wifi_button
-    name: $friendly_name Clear Wifi Credentials
-    entity_category: diagnostic
-    disabled_by_default: true
-    on_press:
-      then:
-      - lambda: 'wifi_wificomponent->clear_stored_creds();'
-      - delay: 2s
-      - button.press: restart_button
-
-
 wifi:
 
   # by default, fast_connect is disabled.  Will automatically be enabled by wifi component
