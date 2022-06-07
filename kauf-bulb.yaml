@@ -24,7 +24,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.842"
+  project_ver_num: "1.843"
   project_ver_let: y
 
   sub_on_turn_on:  script_do_nothing
