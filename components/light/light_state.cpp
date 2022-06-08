@@ -285,7 +285,7 @@ bool LightState::parse_frame_(const uint8_t *payload, uint16_t size) {
 }
 
 float LightState::get_setup_priority() const { return setup_priority::HARDWARE - 1.0f; }
-
+uint32_t LightState::hash_base() { return 1114400283; }
 void LightState::publish_state() { this->remote_values_callback_.call(); }
 
 LightOutput *LightState::get_output() const { return this->output_; }
