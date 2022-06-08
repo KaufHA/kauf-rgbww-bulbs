@@ -180,8 +180,6 @@ protected:
   friend LightCall;
   friend class AddressableLight;
 
-  uint32_t hash_base() override;
-
   /// Internal method to start an effect with the given index
   void start_effect_(uint32_t effect_index);
   /// Internal method to get the currently active effect
