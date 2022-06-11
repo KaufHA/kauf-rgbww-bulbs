@@ -290,7 +290,7 @@ number:      # set max power output for PWMs
     min_value: 1
     max_value: 100
     step: 1
-    initial_value: 90
+    initial_value: 85
     id: number_max_power
     entity_category: config
     disabled_by_default: $disable_entities
