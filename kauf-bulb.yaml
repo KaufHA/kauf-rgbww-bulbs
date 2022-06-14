@@ -24,7 +24,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.844"
+  project_ver_num: "1.845"
   project_ver_let: y
 
   sub_on_turn_on:  script_do_nothing
@@ -73,9 +73,6 @@ esphome:
     then: # restore settings
       - script.execute: script_set_boot_mode
       - script.execute: script_set_wled
-      - script.execute: script_max_power
-      - script.execute: script_default_fade
-      - script.execute: script_no_hass
 
 
 # https://esphome.io/components/button/index.html
@@ -139,27 +136,27 @@ output:
     pin: GPIO4
     frequency: 1000 Hz
     id: pwm_red
-    max_power: .8
+    max_power: .85
   - platform: esp8266_pwm
     pin: GPIO12
     frequency: 1000 Hz
     id: pwm_green
-    max_power: .8
+    max_power: .85
   - platform: esp8266_pwm
     pin: GPIO14
     frequency: 1000 Hz
     id: pwm_blue
-    max_power: .8
+    max_power: .85
   - platform: esp8266_pwm
     pin: GPIO5
     frequency: 1000 Hz
     id: pwm_cw
-    max_power: .8
+    max_power: .85
   - platform: esp8266_pwm
     pin: GPIO13
     frequency: 1000 Hz
     id: pwm_ww
-    max_power: .8
+    max_power: .85
 
 
 # https://esphome.io/components/light/index.html
@@ -303,8 +300,14 @@ number:      # set max power output for PWMs
     forced_addr: 74
     global_addr: global_forced_addr
     on_value:
-      - delay: 1ms
-      - script.execute: script_max_power
+      - lambda: |-
+          float new_power = ((float)x)/100.0f;
+          id(pwm_red).set_max_power(new_power);
+          id(pwm_green).set_max_power(new_power);
+          id(pwm_blue).set_max_power(new_power);
+          id(pwm_ww).set_max_power(new_power);
+          id(pwm_cw).set_max_power(new_power);
+          id(kauf_light)->set_next_write();
       - script.execute: script_save_changes
 
   - platform: template
@@ -324,8 +327,7 @@ number:      # set max power output for PWMs
     forced_addr: 72
     global_addr: global_forced_addr
     on_value:
-      - delay: 1ms
-      - script.execute: script_default_fade
+      - lambda: 'id(kauf_light)->set_default_transition_length(x);'
       - script.execute: script_save_changes
 
 
@@ -344,12 +346,10 @@ switch:
     forced_addr: 70
     global_addr: global_forced_addr
     on_turn_on:
-      - delay: 1ms
-      - script.execute: script_no_hass
+      - lambda: id(kauf_api)->set_reboot_timeout(0);
       - script.execute: script_save_changes
     on_turn_off:
-      - delay: 1ms
-      - script.execute: script_no_hass
+      - lambda: id(kauf_api)->set_reboot_timeout(900000);
       - script.execute: script_save_changes
 
 
@@ -380,33 +380,11 @@ script:
       - delay: 3s
       - lambda: 'global_preferences->sync();'
 
-  - id: script_max_power
-    then:
-      - lambda: |-
-          float new_power = ((float)id(number_max_power).state)/100.0f;
-          id(pwm_red).set_max_power(new_power);
-          id(pwm_green).set_max_power(new_power);
-          id(pwm_blue).set_max_power(new_power);
-          id(pwm_ww).set_max_power(new_power);
-          id(pwm_cw).set_max_power(new_power);
-          id(kauf_light)->set_next_write();
-
   - id: script_set_wled
     then:
       - lambda: |-
           if ( id(effect).state == "WLED / DDP" ) { id(kauf_light)->set_use_wled(true); }
           else                                    { id(kauf_light)->set_use_wled(false); }
-
-  - id: script_default_fade
-    then:
-      - delay: 1ms
-      - lambda: 'id(kauf_light)->set_default_transition_length(id(number_default_fade).state);'
-
-  - id: script_no_hass
-    then:
-      - lambda: |-
-          if ( id(switch_no_hass).state ) { id(kauf_api)->set_reboot_timeout(0); }
-          else                            { id(kauf_api)->set_reboot_timeout(900000); }
 
   - id: script_set_boot_mode
     then:
