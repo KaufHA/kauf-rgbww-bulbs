@@ -24,7 +24,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.845"
+  project_ver_num: "1.846"
   project_ver_let: y
 
   sub_on_turn_on:  script_do_nothing
@@ -68,12 +68,6 @@ esphome:
     name: $project_name
     version: $project_ver_num($project_ver_let)
 
-  on_boot:
-    priority: 799.5 # after numbers/selects/switches being setup (800) and before lights being setup (799).
-    then: # restore settings
-      - script.execute: script_set_boot_mode
-      - script.execute: script_set_wled
-
 
 # https://esphome.io/components/button/index.html
 # https://esphome.io/components/button/restart.html
@@ -90,9 +84,6 @@ wifi:
 
   ssid: initial_ap
   password: asdfasdfasdfasdf
-
-  # default is 20, 17 is recommended.
-  output_power: 17
 
   # using fast_connect as default since it is required for hidden networks.
   fast_connect: true
@@ -224,9 +215,10 @@ select:
     initial_option: "None"
     restore_value: true
     icon: mdi:string-lights
-    set_action:
-      - delay: 1ms
-      - script.execute: script_set_wled
+    on_value:
+      - lambda: |-
+          if ( x == "WLED / DDP" ) { id(kauf_light)->set_use_wled(true); }
+          else                     { id(kauf_light)->set_use_wled(false); }
       - script.execute: script_save_changes
 
     entity_category: config
@@ -268,11 +260,20 @@ select:
     initial_option: $default_power_on_state
     restore_value: true
     icon: mdi:restart-alert
-    set_action:
-      - delay: 1ms
+    on_value:
+      - lambda: |-
+          if ( x == "Restore Power Off State")
+            kauf_light->set_restore_mode(LIGHT_RESTORE_DEFAULT_OFF);
+          else if ( x == "Always On - Last Value")
+            kauf_light->set_restore_mode(LIGHT_RESTORE_AND_ON);
+          else if ( x == "Always On - Bright White")
+            kauf_light->set_restore_mode(LIGHT_ALWAYS_ON);
+          else if ( x == "Always Off")
+            kauf_light->set_restore_mode(LIGHT_RESTORE_AND_OFF);
+          else
+            kauf_light->set_restore_mode(LIGHT_$light_restore_mode);
+          kauf_light->save_remote_values_();
       - script.execute: script_save_changes
-      - script.execute: script_set_boot_mode
-      - lambda: kauf_light->save_remote_values_();
     entity_category: config
     forced_hash: 3524332562
     forced_addr: 64
@@ -327,7 +328,7 @@ number:      # set max power output for PWMs
     forced_addr: 72
     global_addr: global_forced_addr
     on_value:
-      - lambda: 'id(kauf_light)->set_default_transition_length(x);'
+      - lambda: id(kauf_light)->set_default_transition_length(x);
       - script.execute: script_save_changes
 
 
@@ -378,27 +379,7 @@ script:
     mode: restart
     then:
       - delay: 3s
-      - lambda: 'global_preferences->sync();'
-
-  - id: script_set_wled
-    then:
-      - lambda: |-
-          if ( id(effect).state == "WLED / DDP" ) { id(kauf_light)->set_use_wled(true); }
-          else                                    { id(kauf_light)->set_use_wled(false); }
-
-  - id: script_set_boot_mode
-    then:
-      lambda: |-
-        if ( id(select_boot_state).state == "Restore Power Off State")
-          kauf_light->set_restore_mode(LIGHT_RESTORE_DEFAULT_OFF);
-        else if ( id(select_boot_state).state == "Always On - Last Value")
-          kauf_light->set_restore_mode(LIGHT_RESTORE_AND_ON);
-        else if ( id(select_boot_state).state == "Always On - Bright White")
-          kauf_light->set_restore_mode(LIGHT_ALWAYS_ON);
-        else if ( id(select_boot_state).state == "Always Off")
-          kauf_light->set_restore_mode(LIGHT_RESTORE_AND_OFF);
-        else
-          kauf_light->set_restore_mode(LIGHT_$light_restore_mode);
+      - lambda: global_preferences->sync();
 
   - id: script_do_nothing
     then:
