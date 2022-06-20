@@ -24,7 +24,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.841"
+  project_ver_num: "1.85"
   project_ver_let: l
 
   sub_on_turn_on:  script_do_nothing
@@ -45,14 +45,6 @@ esphome:
   project:
     name: $project_name
     version: $project_ver_num($project_ver_let)
-
-  on_boot:
-    priority: 799.5 # after numbers/selects/switches being setup (800) and before lights being setup (799).
-    then: # restore settings
-      - script.execute: script_set_boot_mode
-      - script.execute: script_max_power
-      - script.execute: script_default_fade
-      - script.execute: script_no_hass
 
 
 # https://esphome.io/components/button/index.html
@@ -78,7 +70,6 @@ wifi:
   fast_connect: true
 
   ap:
-    ssid: ${friendly_name} Hotspot
     ap_timeout: $wifi_ap_timeout
 
 
@@ -114,27 +105,27 @@ output:
     pin: GPIO4
     frequency: 1000 Hz
     id: pwm_red
-    max_power: .8
+    max_power: .85
   - platform: esp8266_pwm
     pin: GPIO12
     frequency: 1000 Hz
     id: pwm_green
-    max_power: .8
+    max_power: .85
   - platform: esp8266_pwm
     pin: GPIO14
     frequency: 1000 Hz
     id: pwm_blue
-    max_power: .8
+    max_power: .85
   - platform: esp8266_pwm
     pin: GPIO5
     frequency: 1000 Hz
     id: pwm_cw
-    max_power: .8
+    max_power: .85
   - platform: esp8266_pwm
     pin: GPIO13
     frequency: 1000 Hz
     id: pwm_ww
-    max_power: .8
+    max_power: .85
 
 
 # https://esphome.io/components/light/index.html
@@ -145,8 +136,8 @@ light:
     red: pwm_red
     green: pwm_green
     blue: pwm_blue
-    cold_white: pwm_cw
     warm_white: pwm_ww
+    cold_white: pwm_cw
     cold_white_color_temperature: 6500 K
     warm_white_color_temperature: 2700 K
 
@@ -170,10 +161,20 @@ select:
     initial_option: $default_power_on_state
     restore_value: true
     icon: mdi:restart-alert
-    set_action:
-      - delay: 1ms
+    on_value:
+      - lambda: |-
+          if ( x == "Restore Power Off State")
+            kauf_light->set_restore_mode(LIGHT_RESTORE_DEFAULT_OFF);
+          else if ( x == "Always On - Last Value")
+            kauf_light->set_restore_mode(LIGHT_RESTORE_AND_ON);
+          else if ( x == "Always On - Bright White")
+            kauf_light->set_restore_mode(LIGHT_ALWAYS_ON);
+          else if ( x == "Always Off")
+            kauf_light->set_restore_mode(LIGHT_RESTORE_AND_OFF);
+          else
+            kauf_light->set_restore_mode(LIGHT_$light_restore_mode);
+          kauf_light->save_remote_values_();
       - script.execute: script_save_changes
-      - script.execute: script_set_boot_mode
     entity_category: config
 
 
@@ -185,7 +186,7 @@ number:      # set max power output for PWMs
     min_value: 1
     max_value: 100
     step: 1
-    initial_value: 80
+    initial_value: 85
     id: number_max_power
     entity_category: config
     disabled_by_default: $disable_entities
@@ -195,8 +196,14 @@ number:      # set max power output for PWMs
     unit_of_measurement: "%"
     mode: box
     on_value:
-      - delay: 1ms
-      - script.execute: script_max_power
+      - lambda: |-
+          float new_power = ((float)x)/100.0f;
+          id(pwm_red).set_max_power(new_power);
+          id(pwm_green).set_max_power(new_power);
+          id(pwm_blue).set_max_power(new_power);
+          id(pwm_ww).set_max_power(new_power);
+          id(pwm_cw).set_max_power(new_power);
+          id(kauf_light)->set_next_write();
       - script.execute: script_save_changes
 
   - platform: template
@@ -213,8 +220,7 @@ number:      # set max power output for PWMs
     unit_of_measurement: "ms"
     mode: box
     on_value:
-      - delay: 1ms
-      - script.execute: script_default_fade
+      - lambda: id(kauf_light)->set_default_transition_length(x);
       - script.execute: script_save_changes
 
 
@@ -230,12 +236,10 @@ switch:
     disabled_by_default: $disable_entities
     icon: mdi:toggle-switch-off-outline
     on_turn_on:
-      - delay: 1ms
-      - script.execute: script_no_hass
+      - lambda: id(kauf_api)->set_reboot_timeout(0);
       - script.execute: script_save_changes
     on_turn_off:
-      - delay: 1ms
-      - script.execute: script_no_hass
+      - lambda: id(kauf_api)->set_reboot_timeout(900000);
       - script.execute: script_save_changes
 
 
@@ -264,42 +268,7 @@ script:
     mode: restart
     then:
       - delay: 3s
-      - lambda: 'global_preferences->sync();'
-
-  - id: script_max_power
-    then:
-      - lambda: |-
-          float new_power = ((float)id(number_max_power).state)/100.0f;
-          id(pwm_red).set_max_power(new_power);
-          id(pwm_green).set_max_power(new_power);
-          id(pwm_blue).set_max_power(new_power);
-          id(pwm_ww).set_max_power(new_power);
-          id(pwm_cw).set_max_power(new_power);
-
-  - id: script_default_fade
-    then:
-      - delay: 1ms
-      - lambda: 'id(kauf_light)->set_default_transition_length(id(number_default_fade).state);'
-
-  - id: script_no_hass
-    then:
-      - lambda: |-
-          if ( id(switch_no_hass).state ) { id(kauf_api)->set_reboot_timeout(0); }
-          else                            { id(kauf_api)->set_reboot_timeout(900000); }
-
-  - id: script_set_boot_mode
-    then:
-      lambda: |-
-        if ( id(select_boot_state).state == "Restore Power Off State")
-          kauf_light->set_restore_mode(LIGHT_RESTORE_DEFAULT_OFF);
-        else if ( id(select_boot_state).state == "Always On - Last Value")
-          kauf_light->set_restore_mode(LIGHT_RESTORE_AND_ON);
-        else if ( id(select_boot_state).state == "Always On - Bright White")
-          kauf_light->set_restore_mode(LIGHT_ALWAYS_ON);
-        else if ( id(select_boot_state).state == "Always Off")
-          kauf_light->set_restore_mode(LIGHT_RESTORE_AND_OFF);
-        else
-          kauf_light->set_restore_mode(LIGHT_$light_restore_mode);
+      - lambda: global_preferences->sync();
 
   - id: script_do_nothing
     then:
