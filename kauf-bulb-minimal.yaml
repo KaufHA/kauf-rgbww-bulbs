@@ -15,7 +15,7 @@ esphome:
 
   project:
     name: "Kauf.RGBWW"
-    version: "1.84(m)"
+    version: "1.85(m)"
 
 
 wifi:
