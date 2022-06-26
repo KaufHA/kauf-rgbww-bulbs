@@ -58,7 +58,7 @@ Going to the bulb's URL in a web browser and adding /reset will completely wipe 
 
 
 ## Troubleshooting
-General troubleshooting ideas are located in the [Common repo's readme](https://github.com/KaufHA/common/blob/main/README.md) and [on our website](https://kaufha.com/troubleshooting/)
+General troubleshooting ideas applicable to all products are located in the [Common repo's readme](https://github.com/KaufHA/common/blob/main/README.md#troubleshooting).
 
 ## Recommended Tasmota Template
 
