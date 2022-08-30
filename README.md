@@ -67,6 +67,8 @@ General troubleshooting ideas applicable to all products are located in the [Com
 ```
 
 ## Links
+- [Purchase A15 bulbs on Amazon](https://www.amazon.com/dp/B0B3SCKQNL)
+- [Purchase A19 bulbs on Amazon](https://www.amazon.com/dp/B0B3SMC6TM)
 - [Purchase A21 bulbs on Amazon](https://www.amazon.com/dp/B09GV9FD3X)
 - [Purchase BR30 bulbs on Amazon](https://www.amazon.com/dp/B09L5P2MDD)
 - [KAUF YouTube Channel](https://www.youtube.com/channel/UCjgziIA-lXmcqcMIm8HDnYg)
