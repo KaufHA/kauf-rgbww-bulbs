@@ -2,10 +2,7 @@ substitutions:
   project_ver_let: f
 
 packages:
-  kauf_bulb_update:
-    url: https://github.com/KaufHA/kauf-rgbww-bulbs
-    files: kauf-bulb-update.yaml
-    refresh: 0s
+  kauf_bulb_update: !include kauf-bulb-update.yaml
 
 esphome:
 
@@ -87,7 +84,7 @@ esphome:
 
 globals:
 
-  # used to run routine at factory to confirm 
+  # used to run routine at factory to confirm
   # firmware is running.
   - id: first_boot
     type: bool
