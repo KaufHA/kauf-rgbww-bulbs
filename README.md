@@ -58,6 +58,8 @@ Going to the bulb's URL in a web browser and adding /reset will completely wipe 
 
 
 ## Troubleshooting
+Some bulbs may begin color cycling when initially powered on.  This is due to a failure to clear the factory test routine when the bulbs were manufactured.  The color cycling will automatically end after 10 minutes.  The color cycling can also be terminated by flashing the bulb via an update bin file or the ESPHome dashboard.
+
 General troubleshooting ideas applicable to all products are located in the [Common repo's readme](https://github.com/KaufHA/common/blob/main/README.md#troubleshooting).
 
 ## Recommended Tasmota Template
