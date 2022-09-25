@@ -1,3 +1,5 @@
 dev-common
 .esphome
 kauf-bulb-dev.yaml
+secrets.yaml
+__pycache__

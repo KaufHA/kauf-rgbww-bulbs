@@ -120,7 +120,12 @@ void LightState::dump_config() {
   }
 }
 void LightState::loop() {
- 
+  // Apply effect (if any)
+  auto *effect = this->get_active_effect_();
+  if (effect != nullptr) {
+    effect->apply();
+  }
+
   // run wled / ddp functions if enabled
   if ( this->use_wled_ ) {wled_apply();}
 
@@ -211,7 +216,7 @@ void LightState::wled_apply() {
 
 bool LightState::parse_frame_(const uint8_t *payload, uint16_t size) {
 
-  if ( this->ddp_debug_ > 0) { 
+  if ( this->ddp_debug_ > 0) {
     if ( size < 10 ) {
       ESP_LOGD("KAUF DDP Debug", "Invalid DDP packet received, too short (size=%d)", size);
     }
@@ -260,14 +265,14 @@ bool LightState::parse_frame_(const uint8_t *payload, uint16_t size) {
     scaled_r = (r * this->remote_values.get_brightness()) / max;
     scaled_g = (g * this->remote_values.get_brightness()) / max;
     scaled_b = (b * this->remote_values.get_brightness()) / max;
-  } else { 
+  } else {
 
     // if underlying light entity is off, just use received values directly.
     scaled_r = r;
     scaled_g = g;
     scaled_b = b;
   }
-  
+
   // modify current values to what we received.
   this->current_values.set_color_mode(ColorMode::RGB);
   this->current_values.set_state(1.0f);
@@ -285,7 +290,7 @@ bool LightState::parse_frame_(const uint8_t *payload, uint16_t size) {
 }
 
 float LightState::get_setup_priority() const { return setup_priority::HARDWARE - 1.0f; }
-uint32_t LightState::hash_base() { return 1114400283; }
+
 void LightState::publish_state() { this->remote_values_callback_.call(); }
 
 LightOutput *LightState::get_output() const { return this->output_; }

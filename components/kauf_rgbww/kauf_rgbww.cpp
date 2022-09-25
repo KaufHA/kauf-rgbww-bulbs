@@ -7,24 +7,24 @@ namespace kauf_rgbww {
 static const char *TAG = "kauf_rgbww.light";
 
 void KaufRGBWWLight::setup() {
-   
+
 }
 
 light::LightTraits KaufRGBWWLight::get_traits() {
     auto traits = light::LightTraits();
 
-    if ( this->is_aux() ) { 
+    if ( this->is_aux() ) {
         traits.set_supported_color_modes({light::ColorMode::RGB_WHITE});
     }
     else { // Main
-        traits.set_min_mireds(min_mireds); 
-        traits.set_max_mireds(max_mireds); 
+        traits.set_min_mireds(min_mireds);
+        traits.set_max_mireds(max_mireds);
 
         // RGB and Color Temperature are two separate color modes.  Not RGBCT as a single mode.
         traits.set_supported_color_modes({light::ColorMode::RGB, light::ColorMode::COLOR_TEMPERATURE});
     }
 
-    return traits;        
+    return traits;
 }
 
 void KaufRGBWWLight::write_state(light::LightState *state) {
@@ -54,8 +54,8 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
     // within the transition so we don't want to apply more gamma.
 
     // use_raw is now also used with values received via WLED DDP.
-    // Presumably WLED applies any desired gamma correction before sending out the values.  
-    if ( state->current_values.use_raw ) { 
+    // Presumably WLED applies any desired gamma correction before sending out the values.
+    if ( state->current_values.use_raw ) {
 
         // ESP_LOGD("Kauf Light", "Use Raw - Yes");
         // state->current_values.use_raw = false;
@@ -68,7 +68,7 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
     }
 
     // light bulb is off, all levels 0.  Don't need ct.
-    else if ( !state->current_values.is_on() ) { 
+    else if ( !state->current_values.is_on() ) {
 
         white_brightness = 0.0f;
         red = 0.0f;
@@ -88,7 +88,7 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
     }
 
     // RGB color mode.  Get rgb values with default gamma.  No white channel in RGB mode.
-    else {       
+    else {
 
         state->current_values_as_rgb(&red, &green, &blue);
         white_brightness = 0.0f;
