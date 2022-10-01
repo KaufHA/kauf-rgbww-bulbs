@@ -5,10 +5,7 @@ substitutions:
 
 
 packages:
-  kauf_bulb_base:
-    url: https://github.com/KaufHA/kauf-rgbww-bulbs
-    files: kauf-bulb.yaml
-    refresh: 0s
+  kauf_bulb_base: !include kauf-bulb.yaml
 
 
 dashboard_import:

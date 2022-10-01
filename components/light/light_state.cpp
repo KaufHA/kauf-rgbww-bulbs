@@ -217,25 +217,26 @@ void LightState::wled_apply() {
 bool LightState::parse_frame_(const uint8_t *payload, uint16_t size) {
 
   if ( this->ddp_debug_ > 0) {
-    if ( size < 10 ) {
+    if ( size < 10 )
       ESP_LOGD("KAUF DDP Debug", "Invalid DDP packet received, too short (size=%d)", size);
-    }
-    else if ( size == 10 ) {
+    else if ( size == 10 )
       ESP_LOGD("KAUF DDP Debug", "DDP packet received w/ no channel data, 3 channels required - %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x", payload[0], payload[1], payload[2], payload[3], payload[4], payload[5], payload[6], payload[7], payload[8], payload[9] );
-    }
-    else if ( size == 11 ) {
+    else if ( size == 11 )
       ESP_LOGD("KAUF DDP Debug", "DDP packet received w/ 1 channel data, 3 channels required - %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x", payload[0], payload[1], payload[2], payload[3], payload[4], payload[5], payload[6], payload[7], payload[8], payload[9], payload[10] );
-    }
-    else if ( size == 12 ) {
+    else if ( size == 12 )
       ESP_LOGD("KAUF DDP Debug", "DDP packet received w/ 2 channel data, 3 channels required - %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x", payload[0], payload[1], payload[2], payload[3], payload[4], payload[5], payload[6], payload[7], payload[8], payload[9], payload[10], payload[11] );
-    }
-    else if ( size > 13 ) {
+    else if ( size > 13 )
       ESP_LOGD("KAUF DDP Debug", "DDP packet received w/ >3 channel data, using first 3 channels (size=%d) - %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x [%02x %02x %02x] %02x", size, payload[0], payload[1], payload[2], payload[3], payload[4], payload[5], payload[6], payload[7], payload[8], payload[9], payload[10], payload[11], payload[12], payload[13] );
-    }
-
   }
 
   if (size < 13) {
+    return false;
+  }
+
+  // ignore packet if data offset != [00 00 00 00]
+  if ( (payload[4] != 0) || (payload[5] != 0) || (payload[6] != 0) || (payload[7] != 0) ) {
+    if ( this->ddp_debug_ > 0)
+      ESP_LOGD("KAUF DDP Debug", "Ignoring DDP packet w/ non-zero data offset: %02x %02x %02x %02x [%02x %02x %02x %02x] %02x %02x %02x %02x %02x", payload[0], payload[1], payload[2], payload[3], payload[4], payload[5], payload[6], payload[7], payload[8], payload[9], payload[10], payload[11], payload[12] );
     return false;
   }
 
