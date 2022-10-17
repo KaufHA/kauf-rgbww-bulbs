@@ -8,16 +8,6 @@ packages:
   kauf_bulb_base: !include kauf-bulb.yaml
 
 
-# import local versions to overwrite github versions
-external_components:
-  - source:
-      type: local
-      path: ../common/components
-  - source:
-      type: local
-      path: components
-
-
 dashboard_import:
   package_import_url: github://KaufHA/kauf-rgbww-bulbs/kauf-bulb.yaml
 
