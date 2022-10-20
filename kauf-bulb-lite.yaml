@@ -24,7 +24,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.85"
+  project_ver_num: "1.86"
   project_ver_let: l
 
   sub_on_turn_on:  script_do_nothing
@@ -37,6 +37,14 @@ esp8266:
   restore_from_flash: true
 
 
+# https://esphome.io/guides/automations.html#global-variables
+globals:
+  - id: global_quick_boot_count
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+
 # https://esphome.io/components/esphome.html
 esphome:
 
@@ -45,6 +53,10 @@ esphome:
   project:
     name: $project_name
     version: $project_ver_num($project_ver_let)
+
+  on_boot:
+    then:
+      - script.execute: script_quick_boot
 
 
 # https://esphome.io/components/button/index.html
@@ -103,27 +115,27 @@ web_server:
 output:
   - platform: esp8266_pwm
     pin: GPIO4
-    frequency: 1000 Hz
+    frequency: 200 Hz
     id: pwm_red
     max_power: .85
   - platform: esp8266_pwm
     pin: GPIO12
-    frequency: 1000 Hz
+    frequency: 200 Hz
     id: pwm_green
     max_power: .85
   - platform: esp8266_pwm
     pin: GPIO14
-    frequency: 1000 Hz
+    frequency: 200 Hz
     id: pwm_blue
     max_power: .85
   - platform: esp8266_pwm
     pin: GPIO5
-    frequency: 1000 Hz
+    frequency: 400 Hz
     id: pwm_cw
     max_power: .85
   - platform: esp8266_pwm
     pin: GPIO13
-    frequency: 1000 Hz
+    frequency: 400 Hz
     id: pwm_ww
     max_power: .85
 
@@ -173,7 +185,6 @@ select:
             kauf_light->set_restore_mode(LIGHT_RESTORE_AND_OFF);
           else
             kauf_light->set_restore_mode(LIGHT_$light_restore_mode);
-          kauf_light->save_remote_values_();
       - script.execute: script_save_changes
     entity_category: config
 
@@ -203,7 +214,6 @@ number:      # set max power output for PWMs
           id(pwm_blue).set_max_power(new_power);
           id(pwm_ww).set_max_power(new_power);
           id(pwm_cw).set_max_power(new_power);
-          id(kauf_light)->set_next_write();
       - script.execute: script_save_changes
 
   - platform: template
@@ -273,3 +283,76 @@ script:
   - id: script_do_nothing
     then:
       lambda: return;
+
+    # increment global_quick_boot_count if bulb stays on less than 10 seconds or never connects to wifi
+    # reset wifi credentials if the counter gets to 5
+  - id: script_quick_boot
+    then:
+
+      # if quick boot count is 5, overwrite wifi credentials to force AP
+      - if:
+          condition:
+            lambda: return ( id(global_quick_boot_count) >= 5 );
+          then:
+
+            - lambda: |-
+                ESP_LOGD("kauf-bulb.yaml", "quick boot count variable is now 5, overwriting credentials and rebooting");
+
+                // overwrite wifi credentials
+                wifi::global_wifi_component->save_wifi_sta("initial_ap","asdfasdfasdfasdf");
+
+                // reset counter and immediately save
+                id(global_quick_boot_count) = 0;
+                global_quick_boot_count->loop();
+                global_preferences->sync();
+
+                // turn on red light
+                auto call = id(kauf_light).turn_on();
+                call.set_transition_length(500);
+                call.set_brightness(0.6);
+                call.set_rgb(1.0, 0.0, 0.0); // color in RGB order, this example is purple
+                call.perform();
+
+              # short delay
+            - delay: 5s
+
+              # reboot
+            - button.press: restart_button
+
+
+      # increment quick boot counter so it will stay incremented if device reboots
+      - lambda: |-
+          ESP_LOGD("kauf-bulb.yaml", "quick boot count variable is now %d.  Need 5 to overwrite credentials", id(global_quick_boot_count));
+          id(global_quick_boot_count) += 1;
+          global_quick_boot_count->loop();
+          global_preferences->sync();
+
+      # if quick boot count gets over 1 (don't flash on first occurance in case it's an accident), flash light to indicate we are in process
+      - if:
+          condition:
+            lambda: return ( id(global_quick_boot_count) > 2 );
+          then:
+            - light.turn_on:
+                id: kauf_light
+                brightness: 50%
+                red:   100%
+                green: 100%
+                blue:    0%
+                transition_length: 1s
+            - delay: 2s
+            - light.turn_off: kauf_light
+
+      # wait 10 seconds
+      - delay: 10s
+      - lambda: ESP_LOGD("kauf-bulb.yaml", "quick boot script, 10 seconds up");
+
+      # wait until wifi is connected
+      - wait_until: wifi.connected
+      - lambda: ESP_LOGD("kauf-bulb.yaml", "quick boot script, wifi connected");
+
+      # any time boot is greater than 10 seconds and also connects to wifi, reset quick boot count to 0
+      - lambda: |-
+          id(global_quick_boot_count) = 0;
+          global_quick_boot_count->loop();
+          global_preferences->sync();
+

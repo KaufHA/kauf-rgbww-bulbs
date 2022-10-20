@@ -10,12 +10,10 @@ esp8266:                       # https://esphome.io/components/esp8266.html
   restore_from_flash: true
 
 esphome:
-
   name: $name
-
   project:
     name: "Kauf.RGBWW"
-    version: "1.85(m)"
+    version: "1.86(m)"
 
 
 wifi:
@@ -24,17 +22,6 @@ wifi:
   ssid: initial_ap2          # !secret my_wifi_ssid
   password: asdfasdfasdfasdf # !secret my_wifi_pass
 
-  # Uncomment below to set a static IP
-  # manual_ip:
-  #   static_ip: !secret kauf_bulb_rgb_ip_address
-  #   gateway: !secret wifi_gateway
-  #   subnet: !secret wifi_subnet
-  #   dns1: !secret wifi_dns1
-
-  # use_address allows wireless programming through dashboard.
-  # Set to the bulb's IP Address.  Remove after programming.
-#  use_address: 192.168.86.244
-
   # default is 20, 17 is recommended.
   output_power: 17
 
@@ -42,46 +29,37 @@ wifi:
   # feel free to change or override.
   fast_connect: true
 
+
 logger:                               # Enable logging
-#  baud_rate: 0                       # Disable UART logging since TX pad not easily available
-
 api:                                  # Enable Home Assistant API
-  # password: !secret api_password    # optional password field for Home Assistant API.
-
 ota:
-  # password: !secret ota_password    # optional password for OTA updates.
-
 debug:                                # outputs additional debug info when logs start
-
 web_server:                           # web server allows access to device with a web browser
-  # auth:                             # optional login details for web interface
-  #   username: admin
-  #   password: !secret web_server_password
-
 
 
 # PWM outputs for each LED channel
 output:
   - platform: esp8266_pwm
     pin: GPIO4
-    frequency: 1000 Hz
+    frequency: 200 Hz
     id: pwm_red
   - platform: esp8266_pwm
     pin: GPIO12
-    frequency: 1000 Hz
+    frequency: 200 Hz
     id: pwm_green
   - platform: esp8266_pwm
     pin: GPIO14
-    frequency: 1000 Hz
+    frequency: 200 Hz
     id: pwm_blue
   - platform: esp8266_pwm
     pin: GPIO5
-    frequency: 1000 Hz
+    frequency: 400 Hz
     id: pwm_cw
   - platform: esp8266_pwm
     pin: GPIO13
-    frequency: 1000 Hz
+    frequency: 400 Hz
     id: pwm_ww
+
 
 light:
   - platform: rgbww
