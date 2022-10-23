@@ -32,6 +32,14 @@ This repo contains files for the KAUF RGBWW Smart Bulbs.
 
 ***kauf-bulb-factory.yaml*** - The yaml file to build the factory bin file. Generally not useful to end users.
 
+## DDP Functionality for WLED, xLights, etc.
+DDP functionality needs to be enabled by changing the "Effect" select entity to "WLED / DDP".  Once enabled, the bulb will listen for DDP packets and change color as indicated by any received DDP packet.  The DDP packet should have 3 channels: Red, Green Blue.  
+
+**Interaction with Home Assistant:** With DDP enabled, the bulbs will always be listening for commands both from Home Assistant and DDP.  Any command from either will change the color of the bulb until another command from either is received.  If you are seeing glitches in your DDP effects, you might have a Home Assistant automation messing with the light while you are trying to control with DDP.
+
+**DDP Brightness:** If the corresponding light entity in Home Assistant is on, then received DDP packets will be scaled to the brightness of the Home Assistant light entity.  If the corresponding light entity is off in Home Assistant, then the DDP packet will be displayed as-is without brightness scaling.
+
+**Chaining:** As of update v1.863, the bulbs will now "chain" DDP packets.  If a DDP packet has enough channel data for more than one bulb, the bulb will take the first three channels (R,G,B) for itself and send the remaining data to the next higher IP address.
 
 ## Advanced Settings
 When using kauf-bulb.yaml as a package in the ESPHome dashboard, you can configure the following aspects by adding substitutions. The substitutions section of kauf-bulb.yaml has comments with more explanation as well.
