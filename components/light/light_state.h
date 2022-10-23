@@ -11,11 +11,13 @@
 #include "light_transformer.h"
 
 
-// following includes needed for monitoring UDP to get WLED / DDP packets.
+// following needed for receiving and sending DDP packets.
 #include <vector>
 #include <memory>
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
+#include "esphome/components/network/ip_address.h"
+#include "esphome/components/wifi/wifi_component.h"
 
 namespace esphome {
 namespace light {
