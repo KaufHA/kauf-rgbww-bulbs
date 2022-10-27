@@ -24,7 +24,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.86"
+  project_ver_num: "1.863"
   project_ver_let: l
 
   sub_on_turn_on:  script_do_nothing
@@ -107,7 +107,7 @@ ota:
 
 # https://esphome.io/components/web_server.html
 web_server:
-  local: true
+  # local: true
 
 
 # PWM outputs for each LED channel
