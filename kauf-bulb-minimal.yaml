@@ -24,7 +24,7 @@ esphome:
 wifi:
 
   # **** ENTER WI-FI CREDENTIALS HERE, USING SECRETS.YAML RECOMMENDED ****
-  ssid: initial_ap2          # !secret my_wifi_ssid
+  ssid: initial_ap           # !secret my_wifi_ssid
   password: asdfasdfasdfasdf # !secret my_wifi_pass
 
   # default is 20, 17 is recommended.
