@@ -30,6 +30,12 @@ substitutions:
   sub_on_turn_on:  script_do_nothing
   sub_on_turn_off: script_do_nothing
 
+  sub_red_pin:    GPIO4
+  sub_green_pin:  GPIO12
+  sub_blue_pin:   GPIO14
+  sub_cw_pin:     GPIO5
+  sub_ww_pin:     GPIO13
+
 
 # https://esphome.io/components/esp8266.html
 esp8266:
@@ -114,27 +120,27 @@ web_server:
 # https://esphome.io/components/output/esp8266_pwm.html
 output:
   - platform: esp8266_pwm
-    pin: GPIO4
+    pin: $sub_red_pin
     frequency: 200 Hz
     id: pwm_red
     max_power: .85
   - platform: esp8266_pwm
-    pin: GPIO12
+    pin: $sub_green_pin
     frequency: 200 Hz
     id: pwm_green
     max_power: .85
   - platform: esp8266_pwm
-    pin: GPIO14
+    pin: $sub_blue_pin
     frequency: 200 Hz
     id: pwm_blue
     max_power: .85
   - platform: esp8266_pwm
-    pin: GPIO5
+    pin: $sub_cw_pin
     frequency: 400 Hz
     id: pwm_cw
     max_power: .85
   - platform: esp8266_pwm
-    pin: GPIO13
+    pin: $sub_ww_pin
     frequency: 400 Hz
     id: pwm_ww
     max_power: .85
