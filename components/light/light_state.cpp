@@ -51,9 +51,9 @@ void LightState::setup() {
   LightStateRTCState recovered{};
 
   // set up rtc_ no matter what in case mode changes later on.
-  if ( this->output_->has_global_forced_addr ) { id(output_->global_forced_addr) = this->output_->forced_addr; }
-  if ( this->output_->has_forced_hash ) {
-    this->rtc_ = global_preferences->make_preference<LightStateRTCState>(this->output_->forced_hash);
+  if ( this->has_global_forced_addr ) { id(this->global_forced_addr) = this->forced_addr; }
+  if ( this->has_forced_hash ) {
+    this->rtc_ = global_preferences->make_preference<LightStateRTCState>(this->forced_hash);
   } else {
     this->rtc_ = global_preferences->make_preference<LightStateRTCState>(this->get_object_id_hash());
   }

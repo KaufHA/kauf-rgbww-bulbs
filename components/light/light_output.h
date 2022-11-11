@@ -39,25 +39,6 @@ class LightOutput {
 
   bool aux = true;
 
-  bool has_forced_hash = false;
-  uint32_t forced_hash = 0;
-  void set_forced_hash(uint32_t hash_value) {
-    forced_hash = hash_value;
-    has_forced_hash = true;
-  }
-
-  uint32_t forced_addr = 12345;
-  void set_forced_addr(uint32_t addr_value) {
-    forced_addr = addr_value;
-  }
-
-  bool has_global_forced_addr = false;
-  globals::GlobalsComponent<int> *global_forced_addr;
-  void set_global_addr(globals::GlobalsComponent<int> *ga_in) {
-    has_global_forced_addr = true;
-    global_forced_addr = ga_in;
-  }
-
 };
 
 }  // namespace light

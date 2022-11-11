@@ -1,5 +1,6 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
+import esphome.final_validate as fv
 from esphome.components import light, output
 from esphome.const import (
     CONF_BLUE,
@@ -69,9 +70,6 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional("cold_rgb"): cv.use_id(light.LightState),
             cv.Optional("warm_rgb"): cv.use_id(light.LightState),
             cv.Optional("aux", default=False): cv.boolean,
-            cv.Optional("forced_hash"): cv.int_,
-            cv.Optional("forced_addr", default="12345"): cv.int_,
-            cv.Optional("global_addr"): cv.use_id(globals),            
         }
     ),
     cv.has_none_or_all_keys(
@@ -81,19 +79,36 @@ CONFIG_SCHEMA = cv.All(
     validate_kauf_light
 )
 
+
+def final_validate(config):
+    if ("esp8266" in fv.full_config.get()):
+        esp8266_config = fv.full_config.get()["esp8266"]
+        if ( ("start_free" in esp8266_config) and ("forced_addr" in config)):
+            if ( (esp8266_config["start_free"] <= config["forced_addr"] + 11) ):
+                start_free_num = esp8266_config["start_free"]
+                forced_addr_num = config["forced_addr"]
+                raise cv.Invalid(
+                    f"Forced address ({forced_addr_num}) conflicts with esp8266: start_free ({start_free_num})"
+                )
+    else:
+        if ("forced_addr" in config):
+            raise cv.Invalid(
+                "Forced_addr is only compatible with esp8266 platform"
+            )
+
+    if "forced_addr" in config and "global_addr" not in config:
+        raise cv.Invalid(
+            "Forced_addr requires global_addr"
+        )
+
+FINAL_VALIDATE_SCHEMA = cv.All(
+    final_validate,
+)
+
+
 async def to_code(config):
 
     var = cg.new_Pvariable(config[CONF_OUTPUT_ID])
-
-    # set forced hash if it exists
-    if "forced_hash" in config:
-        cg.add(var.set_forced_hash(config["forced_hash"]))
-
-    cg.add(var.set_forced_addr(config["forced_addr"]))
-
-    if "global_addr" in config:
-        ga = await cg.get_variable(config["global_addr"])
-        cg.add(var.set_global_addr(ga))
 
     # for main light
     if not config["aux"] :
