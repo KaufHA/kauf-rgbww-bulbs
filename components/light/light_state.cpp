@@ -181,7 +181,8 @@ void LightState::loop() {
 }
 
 
-// KAUF - most of this function came from the stock ESPHome WLED component, but I changed the port.
+// KAUF - shell of this function came from the stock ESPHome WLED component.
+// We changed the port and added DDP functionality.
 void LightState::wled_apply() {
 
   // Init UDP lazily
@@ -191,7 +192,7 @@ void LightState::wled_apply() {
     ESP_LOGD("KAUF WLED", "Starting UDP listening");
 
     if (!udp_->begin(4048)) {   // always listen on DDP port
-      ESP_LOGD(TAG, "Cannot bind WLEDLightEffect to port 4048.");
+      ESP_LOGE(TAG, "Cannot bind WLEDLightEffect to port 4048.");
       return;
     }
 
@@ -202,57 +203,104 @@ void LightState::wled_apply() {
     payload.resize(packet_size);
 
     if (!udp_->read(&payload[0], payload.size())) {
-      continue;
+      return;
     }
 
     if (!this->parse_frame_(&payload[0], payload.size())) {
-      //ESP_LOGD(TAG, "Frame: Invalid (size=%zu, first=0x%02X).", payload.size(), payload[0]);
-      continue;
-
-    // send remainder of packet to next IP address if possible.  Copied and edited from WLED's udp.cpp.
-    //  * else means we received a good ddp packet
-    //  * size >= 6 means we have at least enough data for 2 pixels (this bulb and another bulb to send to)
-    } else if ( payload.size() >= 6 ) {
-
-      // grab IP address and check if we have room to increment
-      network::IPAddress addr = wifi::global_wifi_component->get_ip_address();
-      if ( addr[3] >= 254 ) {
-        ESP_LOGD("KAUF WLED", "DDP chaining force stopped at address *.254");
-        return;
-      }
-
-      // create object to send upd packet
-      WiFiUDP udp2;
-
-      // increment IP address
-      addr[3]++;
-
-      if (!udp2.beginPacket(addr.str().c_str(), 4048)) {
-        ESP_LOGD("KAUF WLED", "Error beginning DDP packet!");
-        return;
-      }
-
-      udp2.write(payload[0]);                // flags, keep same
-      udp2.write(payload[1]);                // sequence number, keep same
-      udp2.write(payload[2]);                // data type, keep same
-      udp2.write(payload[3]);                // Source or Destination ID, keep same
-      udp2.write(payload[4]);                // data offset, keep same.  Should always be 0 anyway.
-      udp2.write(payload[5]);                // data offset, keep same.  Should always be 0 anyway.
-      udp2.write(payload[6]);                // data offset, keep same.  Should always be 0 anyway.
-      udp2.write(payload[7]);                // data offset, keep same.  Should always be 0 anyway.
-      udp2.write(0);                         // first byte of length always 0, doesn't matter since next pixel doesn't care.
-      udp2.write(payload.size()-13);         // data length, subtract 10 for header and 3 for just-displayed pixel
-
-      // write out all the payload data starting with byte 13 (4th RGB channel).
-      for (uint16_t i = 13; i < payload.size(); i++) {
-        udp2.write(payload[i]);
-      }
-
-      if (!udp2.endPacket()) {
-        ESP_LOGD("KAUF WLED", "Error ending DDP packet!");
-        return;
-      }
+      return;
     }
+
+    // need at least 16 bytes to be able to forward anything.
+    // 10 for header, 3 this pixel's data, 3 to forward to next pixel.
+    if ( payload.size() < 16 ) {
+      return;
+    }
+
+    // get current ip address, quit if 254.  Not going to forward to 255.
+    network::IPAddress addr = wifi::global_wifi_component->get_ip_address();
+    if ( addr[3] >= 254 ) {
+      ESP_LOGE("KAUF WLED", "DDP chaining force stopped at address *.254");
+      return;
+    }
+
+    // increment address so its on the next pixel (first forwarded pixel)
+    addr[3]++;
+
+    // forward remaining ddp data.  split into 2 packets if more than one pixel to forward.
+    // payload size - 13 gives you total number of data bytes to forward (after subtracting header and first pixel)
+    // divide by 3 gives you number of pixels
+    // divide by 2 gives you number for one of two packets.
+    // handle odd total by subtracting packet2 from total to get packet1 instead of dividing by 2 again.
+    // packet 2 length is calculated first so that its always the smaller (we don't want packet 1 to be zero is really the issue)
+    uint16_t packet2_length = ((payload.size()-13)/3)/2;
+    uint16_t packet1_length = ((payload.size()-13)/3)-packet2_length;
+
+    // send first packet
+    WiFiUDP udp2;
+
+    if (!udp2.beginPacket(addr.str().c_str(), 4048)) {
+      ESP_LOGE("KAUF WLED", "Error beginning first DDP packet!");
+      return;
+    }
+
+    udp2.write(payload[0]);                // flags, keep same
+    udp2.write(payload[1]);                // sequence number, keep same
+    udp2.write(payload[2]);                // data type, keep same
+    udp2.write(payload[3]);                // Source or Destination ID, keep same
+    udp2.write(payload[4]);                // data offset, keep same.  Should always be 0 anyway.
+    udp2.write(payload[5]);                // data offset, keep same.  Should always be 0 anyway.
+    udp2.write(payload[6]);                // data offset, keep same.  Should always be 0 anyway.
+    udp2.write(payload[7]);                // data offset, keep same.  Should always be 0 anyway.
+    udp2.write(0);                         // first byte of length always 0, doesn't matter since next pixel doesn't care.
+    udp2.write(10 + (packet1_length * 3)); // data length, add 10 for header
+
+    // write out payload data starting with byte 13 (4th RGB channel), and going for packet1_length * 3 (3 bytes per pixel).
+    for (uint16_t i = 13; i < ((packet1_length*3)+13); i++) {
+      udp2.write(payload[i]);
+    }
+
+    if (!udp2.endPacket()) {
+      ESP_LOGE("KAUF WLED", "Error ending first DDP packet!");
+      return;
+    }
+
+    // send second packet if needed
+    if ( packet2_length == 0 ) {
+      return;
+    }
+
+    if ( addr[3] + packet1_length >= 255 ) {
+      return;
+    } else {
+      addr[3] += packet1_length;
+    }
+
+    if (!udp2.beginPacket(addr.str().c_str(), 4048)) {
+      ESP_LOGE("KAUF WLED", "Error beginning second DDP packet!");
+      return;
+    }
+
+    udp2.write(payload[0]);                // flags, keep same
+    udp2.write(payload[1]);                // sequence number, keep same
+    udp2.write(payload[2]);                // data type, keep same
+    udp2.write(payload[3]);                // Source or Destination ID, keep same
+    udp2.write(payload[4]);                // data offset, keep same.  Should always be 0 anyway.
+    udp2.write(payload[5]);                // data offset, keep same.  Should always be 0 anyway.
+    udp2.write(payload[6]);                // data offset, keep same.  Should always be 0 anyway.
+    udp2.write(payload[7]);                // data offset, keep same.  Should always be 0 anyway.
+    udp2.write(0);                         // first byte of length always 0, doesn't matter since next pixel doesn't care.
+    udp2.write(10 + (packet2_length * 3)); // data length, add 10 for header
+
+    // write out all the payload data starting with byte 13 plus packet1_length*3 (RGB channel after first packet).
+    for (uint16_t i = 13+(packet1_length*3); i < payload.size(); i++) {
+      udp2.write(payload[i]);
+    }
+
+    if (!udp2.endPacket()) {
+      ESP_LOGE("KAUF WLED", "Error ending second DDP packet!");
+      return;
+    }
+
   }
 }
 
