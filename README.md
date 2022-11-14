@@ -39,7 +39,7 @@ DDP functionality needs to be enabled by changing the "Effect" select entity to 
 
 **DDP Brightness:** If the corresponding light entity in Home Assistant is on, then received DDP packets will be scaled to the brightness of the Home Assistant light entity.  If the corresponding light entity is off in Home Assistant, then the DDP packet will be displayed as-is without brightness scaling.
 
-**Chaining:** As of update v1.863, the bulbs will now "chain" DDP packets.  If a DDP packet has enough channel data for more than one bulb, the bulb will take the first three channels (R,G,B) for itself and send the remaining data to the next higher IP address.
+**Chaining:** As of update v1.863, the bulbs will now "chain" DDP packets.  If a DDP packet has enough channel data for more than one bulb, the bulb will take the first three channels (R,G,B) for itself and send the remaining data to the next higher IP address.  Starting with v1.865, each bulb will split up excess DDP packets into two new DDP packets, allowing the DDP chain to tree out much faster than the linear propagation originally implemented.
 
 ## Advanced Settings
 When using kauf-bulb.yaml as a package in the ESPHome dashboard, you can configure the following aspects by adding substitutions. The substitutions section of kauf-bulb.yaml has comments with more explanation as well.
