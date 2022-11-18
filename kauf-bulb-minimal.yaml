@@ -24,7 +24,7 @@ esphome:
   name: $name
   project:
     name: "Kauf.RGBWW"
-    version: "1.863(m)"
+    version: "1.87(m)"
 
 
 # https://esphome.io/components/wifi.html
