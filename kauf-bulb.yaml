@@ -14,7 +14,8 @@ substitutions:
 
   friendly_name: Kauf Bulb     # **** CHANGE FRIENDLY NAME TO SOMETHING UNIQUE PER DEVICE ****
 
-  disable_entities: "true"     # set to "false" to have all entities show up in Home Assistant automatically
+  disable_entities:  "true"    # set to "false" to have all entities show up in Home Assistant automatically
+  disable_webserver: "false"   # set to "true" to disable webserver listening on port 80.
 
   # https://esphome.io/components/light/index.html#base-light-configuration
   light_restore_mode: RESTORE_INVERTED_DEFAULT_OFF  # change power-on action for main light entity
@@ -24,7 +25,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.87"
+  project_ver_num: "1.871"
   project_ver_let: y
 
   sub_on_turn_on:  script_do_nothing
@@ -50,7 +51,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/KaufHA/common
-      ref: v2022.11.18
+      ref: v2022.11.23
     refresh: 365250d
   - source:
       type: git
@@ -133,6 +134,7 @@ ota:
 # https://esphome.io/components/web_server.html
 web_server:
   local: true
+  disable: $disable_webserver
 
 
 # PWM outputs for each LED channel
