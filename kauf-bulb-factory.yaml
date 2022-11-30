@@ -11,7 +11,9 @@ esphome:
           condition:
             lambda: return (id(first_boot));
           then:
-           - script.execute: script_factory_test
+            - script.execute: script_factory_test
+          else:
+            - lambda: wifi_wificomponent->disable_scanning = false;
 
 
 button:
@@ -23,24 +25,11 @@ button:
     entity_category: diagnostic
     on_press:
       then:
-        - globals.set:
-            id: first_boot
-            value: 'false'
-        - lambda: global_preferences->sync();
-        - script.stop: script_factory_test
         - light.turn_on:
             id: kauf_light
             brightness: 1.0
             color_temperature: 150 mireds
-        - lambda: id(button_factory_stop).set_internal(true);
-        - lambda: |-
-            float new_power = ((float)id(number_max_power).state)/100.0f;
-            id(pwm_red).set_max_power(new_power);
-            id(pwm_green).set_max_power(new_power);
-            id(pwm_blue).set_max_power(new_power);
-            id(pwm_ww).set_max_power(new_power);
-            id(pwm_cw).set_max_power(new_power);
-            id(kauf_light)->set_next_write();
+        - script.execute: script_factory_test_stop
 
 
 script:
@@ -115,17 +104,28 @@ script:
                 ESP_LOGD("KAUF Test", "[0] Test Pattern Completed %d/30", id(test_count) );
 
 
-      - lambda: |-
-          // clear quick boot counter so user gets a fresh count
-          id(global_quick_boot_count) = 0;
-          global_quick_boot_count->loop();
+      - script.execute: script_factory_test_stop
 
-          // clear first_boot variable so it doesn't run again
-          id(first_boot) = false;
-          first_boot->loop();
-          global_preferences->sync();
 
-          id(button_factory_stop).set_internal(true);
+  - id: script_factory_test_stop
+    then:
+        - globals.set:
+            id: first_boot
+            value: 'false'
+        - globals.set:
+            id: global_quick_boot_count
+            value: '0'
+        - lambda: global_preferences->sync();
+        - script.stop: script_factory_test
+        - lambda: id(button_factory_stop).set_internal(true);
+        - lambda: |-
+            float new_power = ((float)id(number_max_power).state)/100.0f;
+            id(pwm_red).set_max_power(new_power);
+            id(pwm_green).set_max_power(new_power);
+            id(pwm_blue).set_max_power(new_power);
+            id(pwm_ww).set_max_power(new_power);
+            id(pwm_cw).set_max_power(new_power);
+            id(kauf_light)->set_next_write();
 
 
 globals:
@@ -137,3 +137,8 @@ globals:
     type: int
     restore_value: no
     initial_value: '0'
+
+
+# disable scanning during factory test
+wifi:
+  disable_scanning: true
