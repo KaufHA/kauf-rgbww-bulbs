@@ -31,7 +31,6 @@ void LightCall::perform() {
   const char *name = this->parent_->get_name().c_str();
   LightColorValues v = this->validate_();
 
-
   // determine if call is superfluous.  i.e., a second call when the light is still in a transition
   // for another call with the same target values.  Basically looking for if new values are same as
   // remote values already being reported to Home Assistant and if transition is still ongoing.
@@ -98,7 +97,7 @@ void LightCall::perform() {
       ESP_LOGD("KAUF Transition Filter","Double light call detected, skipping second call while first is still ongoing");
       return; }
 
-  }  
+  }
 
   ESP_LOGV("KAUF Transition Filter","--------------------------done, going ahead with call");
 

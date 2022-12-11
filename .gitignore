@@ -3,3 +3,4 @@ dev-common
 kauf-bulb-dev.yaml
 secrets.yaml
 __pycache__
+ddp-strip-test.yaml
