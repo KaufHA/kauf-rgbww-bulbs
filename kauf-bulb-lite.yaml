@@ -158,6 +158,7 @@ light:
     cold_white: pwm_cw
     cold_white_color_temperature: 6500 K
     warm_white_color_temperature: 2700 K
+    restore_mode: RESTORE_DEFAULT_ON
 
 
 # https://esphome.io/components/select/index.html
@@ -251,6 +252,7 @@ switch:
     entity_category: config
     disabled_by_default: $disable_entities
     icon: mdi:toggle-switch-off-outline
+    restore_mode: RESTORE_DEFAULT_ON
     on_turn_on:
       - lambda: id(kauf_api)->set_reboot_timeout(0);
       - script.execute: script_save_changes

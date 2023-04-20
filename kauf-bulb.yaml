@@ -25,7 +25,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.876"
+  project_ver_num: "1.877"
   project_ver_let: y
 
   sub_on_turn_on:  script_do_nothing
@@ -51,7 +51,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/KaufHA/common
-      ref: v2023.03.14
+      ref: v2023.04.18
     refresh: never
   - source:
       type: git
@@ -144,27 +144,27 @@ output:
     pin: $sub_red_pin
     frequency: 200 Hz
     id: pwm_red
-    max_power: .85
+    max_power: .8
   - platform: esp8266_pwm
     pin: $sub_green_pin
     frequency: 200 Hz
     id: pwm_green
-    max_power: .85
+    max_power: .8
   - platform: esp8266_pwm
     pin: $sub_blue_pin
     frequency: 200 Hz
     id: pwm_blue
-    max_power: .85
+    max_power: .8
   - platform: esp8266_pwm
     pin: $sub_cw_pin
     frequency: 400 Hz
     id: pwm_cw
-    max_power: .85
+    max_power: .8
   - platform: esp8266_pwm
     pin: $sub_ww_pin
     frequency: 400 Hz
     id: pwm_ww
-    max_power: .85
+    max_power: .8
 
 
 # https://esphome.io/components/light/index.html
@@ -182,6 +182,7 @@ light:
     forced_addr: 28
     global_addr: global_forced_addr
     disabled_by_default: $disable_entities
+    restore_mode: RESTORE_DEFAULT_OFF
 
 # Additive RGB light for Cold White
   - platform: kauf_rgbww
@@ -195,6 +196,7 @@ light:
     forced_addr: 40
     global_addr: global_forced_addr
     disabled_by_default: $disable_entities
+    restore_mode: RESTORE_DEFAULT_OFF
 
   # Main RGBWW light
   - platform: kauf_rgbww
@@ -305,7 +307,7 @@ number:      # set max power output for PWMs
     min_value: 1
     max_value: 100
     step: 1
-    initial_value: 85
+    initial_value: 80
     id: number_max_power
     entity_category: config
     disabled_by_default: $disable_entities
@@ -363,6 +365,7 @@ switch:
     forced_hash: 706743398
     forced_addr: 70
     global_addr: global_forced_addr
+    restore_mode: RESTORE_DEFAULT_ON
     on_turn_on:
       - lambda: id(kauf_api)->set_reboot_timeout(0);
       - script.execute: script_save_changes

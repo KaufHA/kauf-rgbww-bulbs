@@ -91,5 +91,6 @@ light:
     warm_white: pwm_ww
     cold_white_color_temperature: 6500 K
     warm_white_color_temperature: 2700 K
+    restore_mode: RESTORE_DEFAULT_ON
     # constant_brightness: true
     # color_interlock: true
