@@ -60,7 +60,7 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
         // ESP_LOGD("Kauf Light", "Use Raw - Yes");
         // state->current_values.use_raw = false;
 
-        state->current_values.as_ct(150, 350, &ct, &white_brightness);
+        state->current_values.as_ct(min_mireds, max_mireds, &ct, &white_brightness);
         red   = state->current_values.get_red();
         green = state->current_values.get_green();
         blue  = state->current_values.get_blue();

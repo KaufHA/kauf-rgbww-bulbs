@@ -6,3 +6,4 @@ secrets.yaml
 __pycache__
 ddp-strip-test.yaml
 test_components
+pantry-bulb.yaml

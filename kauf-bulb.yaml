@@ -25,7 +25,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.878"
+  project_ver_num: "1.879"
   project_ver_let: y
 
   sub_on_turn_on:  script_do_nothing
@@ -36,6 +36,9 @@ substitutions:
   sub_blue_pin:   GPIO14
   sub_cw_pin:     GPIO5
   sub_ww_pin:     GPIO13
+
+  sub_warm_white_temp: 350 mireds
+  sub_cold_white_temp: 150 mireds
 
 
 # https://esphome.io/components/esp8266.html
@@ -210,6 +213,8 @@ light:
     cold_white: pwm_cw
     warm_rgb: warm_rgb
     cold_rgb: cold_rgb
+    warm_white_color_temperature: $sub_warm_white_temp
+    cold_white_color_temperature: $sub_cold_white_temp
     forced_hash: 2723974766
     forced_addr: 52
     global_addr: global_forced_addr

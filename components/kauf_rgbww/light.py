@@ -112,6 +112,7 @@ async def to_code(config):
 
     # for main light
     if not config["aux"] :
+
         # set cold and warm rgb lights first
         crgb = await cg.get_variable(config["cold_rgb"])
         cg.add(var.set_cold_rgb(crgb))
@@ -120,6 +121,13 @@ async def to_code(config):
 
         # then set aux false after rgb light pointers set
         cg.add(var.set_aux(False))
+
+        # set min/max color temp
+        if CONF_WARM_WHITE_COLOR_TEMPERATURE in config:
+            cg.add(var.set_warm_white_temperature(config[CONF_WARM_WHITE_COLOR_TEMPERATURE]))
+        if CONF_COLD_WHITE_COLOR_TEMPERATURE in config:
+            cg.add(var.set_cold_white_temperature(config[CONF_COLD_WHITE_COLOR_TEMPERATURE]))
+
 
         # add RGBWW PWM, but wait until they exist using await
         red = await cg.get_variable(config[CONF_RED])
