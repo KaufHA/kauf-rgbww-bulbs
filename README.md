@@ -60,6 +60,8 @@ When using kauf-bulb.yaml as a package in the ESPHome dashboard, you can configu
 
 ***sub_on_turn_off*** - define an ESPHome script to execute when the light turns off.
 
+***sub_warm_white_temp*** - Define a new warm white color temperature.  Defaults to 350 mireds.  Can be in mireds or Kelvin, must give units with value.
+***sub_cold_white_temp*** - Define a new cold white color temperature.  Defaults to 150 mireds.  Can be in mireds or Kelvin, must give units with value.
 
 ## Factory Reset
 Going to the bulb's URL in a web browser and adding /reset will completely wipe all settings from flash memory.
