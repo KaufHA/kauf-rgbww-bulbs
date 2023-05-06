@@ -60,8 +60,13 @@ When using kauf-bulb.yaml as a package in the ESPHome dashboard, you can configu
 
 ***sub_on_turn_off*** - define an ESPHome script to execute when the light turns off.
 
+
 ***sub_warm_white_temp*** - Define a new warm white color temperature.  Defaults to 350 mireds.  Can be in mireds or Kelvin, must give units with value.
+
 ***sub_cold_white_temp*** - Define a new cold white color temperature.  Defaults to 150 mireds.  Can be in mireds or Kelvin, must give units with value.
+
+- **Note:** The warm_white_temp and cold_white_temp do not have any impact on what the bulb looks like at min/max temp settings, only how the min/max settings are expressed in Home Assistant.  There will be a lot of conversion between Kelvin and mireds due to Home Assistant operating in Kelvin and ESPHome operating in mired behind the scenes.  You may need to play around with these values to get something that will get the cold and warm white channels to go completely to 0.0/1.0 in both directions.  Due to rounding in the conversions, some substitution values will result in the warm or cold channel never going to 0.0 and never shutting completely off no matter what the temperature setting is in Home Assistant.
+
 
 ## Factory Reset
 Going to the bulb's URL in a web browser and adding /reset will completely wipe all settings from flash memory.
