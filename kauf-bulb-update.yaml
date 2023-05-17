@@ -1,6 +1,6 @@
 substitutions:
   project_ver_let: u
-  default_power_on_state: "Always On - Bright White"
+  default_power_on_state: "Always On - Last Value"
   wifi_ap_timeout: 15s    # default to 15 second timeout for update bin file
 
 
