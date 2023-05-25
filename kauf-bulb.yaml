@@ -25,7 +25,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.90"
+  project_ver_num: "1.91"
   project_ver_let: y
 
   sub_on_turn_on:  script_do_nothing
@@ -39,6 +39,12 @@ substitutions:
 
   sub_warm_white_temp: 350 mireds
   sub_cold_white_temp: 150 mireds
+
+  sub_red_freq:   200 hz
+  sub_green_freq: 200 hz
+  sub_blue_freq:  200 hz
+  sub_cw_freq:    400 hz
+  sub_ww_freq:    400 hz
 
 
 # https://esphome.io/components/esp8266.html
@@ -145,27 +151,27 @@ web_server:
 output:
   - platform: esp8266_pwm
     pin: $sub_red_pin
-    frequency: 200 Hz
+    frequency: $sub_red_freq
     id: pwm_red
     max_power: .8
   - platform: esp8266_pwm
     pin: $sub_green_pin
-    frequency: 200 Hz
+    frequency: $sub_green_freq
     id: pwm_green
     max_power: .8
   - platform: esp8266_pwm
     pin: $sub_blue_pin
-    frequency: 200 Hz
+    frequency: $sub_blue_freq
     id: pwm_blue
     max_power: .8
   - platform: esp8266_pwm
     pin: $sub_cw_pin
-    frequency: 400 Hz
+    frequency: $sub_cw_freq
     id: pwm_cw
     max_power: .8
   - platform: esp8266_pwm
     pin: $sub_ww_pin
-    frequency: 400 Hz
+    frequency: $sub_ww_freq
     id: pwm_ww
     max_power: .8
 
