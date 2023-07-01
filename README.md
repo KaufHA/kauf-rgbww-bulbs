@@ -32,6 +32,12 @@ This repo contains files for the KAUF RGBWW Smart Bulbs.
 
 ***kauf-bulb-factory.yaml*** - The yaml file to build the factory bin file. Generally not useful to end users.
 
+***tasmota-kauf-bulb-v13.0.0.1.bin.gz*** - Tasmota bin.gz file, recommended for flashing our bulbs to Tasmota.  This firmware is stock tasmota.bin with a bunch of unnecessary code removed, DDP enabled, the proper template for our bulbs enabled by default, and default Wi-Fi credentials of initial_ap / asdfasdfasdfasdf.
+
+***tasmota-kauf-bulb-v13.0.0.1.bin*** - Tasmota bin file corresponding to the bin.gz file.
+
+***user_config_override.h*** - config file used to build the Tasmota binaries.
+
 ## DDP Functionality for WLED, xLights, etc.
 DDP functionality needs to be enabled by changing the "Effect" select entity to "WLED / DDP".  Once enabled, the bulb will listen for DDP packets and change color as indicated by any received DDP packet.  The DDP packet should have 3 channels: Red, Green Blue.  
 
@@ -40,6 +46,8 @@ DDP functionality needs to be enabled by changing the "Effect" select entity to 
 **DDP Brightness:** If the corresponding light entity in Home Assistant is on, then received DDP packets will be scaled to the brightness of the Home Assistant light entity.  If the corresponding light entity is off in Home Assistant, then the DDP packet will be displayed as-is without brightness scaling.
 
 **Chaining:** As of update v1.863, the bulbs will now "chain" DDP packets.  If a DDP packet has enough channel data for more than one bulb, the bulb will take the first three channels (R,G,B) for itself and send the remaining data to the next higher IP address.  Starting with v1.865, each bulb will split up excess DDP packets into two new DDP packets, allowing the DDP chain to tree out much faster than the linear propagation originally implemented.
+
+**Tasmota:** For Tasmota, the command `scheme 5` enables DDP and `scheme 0` disables DDP.
 
 ## Advanced Settings
 When using kauf-bulb.yaml as a package in the ESPHome dashboard, you can configure the following aspects by adding substitutions. The substitutions section of kauf-bulb.yaml has comments with more explanation as well.
@@ -81,6 +89,8 @@ Some bulbs may begin color cycling when initially powered on.  This is due to a 
 General troubleshooting ideas applicable to all products are located in the [Common repo's readme](https://github.com/KaufHA/common/blob/main/README.md#troubleshooting).
 
 ## Recommended Tasmota Template
+
+We recommend that use the Tasmota bin.gz file in this repository to flash the bulbs to Tasmota.  Our binary files have the template built in.  If you are flashing stock Tasmota you can use the following template.
 
 ```
 {"NAME":"Kauf Bulb", "GPIO":[0,0,0,0,416,419,0,0,417,420,418,0,0,0], "FLAG":0, "BASE":18, "CMND":"SO105 1|RGBWWTable 204,204,122,153,153"}
