@@ -25,7 +25,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.914"
+  project_ver_num: "1.92"
   project_ver_let: y
 
   sub_on_turn_on:  script_do_nothing
@@ -60,7 +60,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/KaufHA/common
-      ref: v2023.09.21
+      ref: v2023.10.01
     refresh: never
   - source:
       type: git
@@ -445,6 +445,7 @@ script:
                 call.set_transition_length(500);
                 call.set_brightness(0.6);
                 call.set_rgb(1.0, 0.0, 0.0);
+                call.set_save(false);
                 call.perform();
 
               # short delay
@@ -466,14 +467,14 @@ script:
           condition:
             lambda: return ( id(global_quick_boot_count) > 2 );
           then:
-            - light.turn_on:
-                id: kauf_light
-                brightness: 50%
-                red:   100%
-                green: 100%
-                blue:    0%
-                transition_length: 1s
-            - delay: 2s
+            - lambda: |-
+                auto call = id(kauf_light).turn_on();
+                call.set_transition_length(500);
+                call.set_brightness(0.5);
+                call.set_rgb(1.0, 1.0, 0.0);
+                call.set_save(false);
+                call.perform();
+            - delay: 4s
             - light.turn_off: kauf_light
 
       # wait 10 seconds
