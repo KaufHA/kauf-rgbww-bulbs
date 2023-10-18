@@ -217,13 +217,15 @@ void LightState::wled_apply() {
 
     // get current ip address, quit if 254.  Not going to forward to 255.
     network::IPAddress addr = wifi::global_wifi_component->get_ip_address();
-    if ( addr[3] >= 254 ) {
+    uint8_t addr4 = ip4_addr4_val(addr.ip_addr_);
+
+    if ( addr4 >= 254 ) {
       ESP_LOGE("KAUF WLED", "DDP chaining force stopped at address *.254");
       return;
     }
 
     // increment address so its on the next pixel (first forwarded pixel)
-    addr[3]++;
+    addr += 1;
 
     // forward remaining ddp data.  split into 2 packets if more than one pixel to forward.
     // payload size - 13 gives you total number of data bytes to forward (after subtracting header and first pixel)
@@ -268,10 +270,10 @@ void LightState::wled_apply() {
       return;
     }
 
-    if ( addr[3] + packet1_length >= 255 ) {
+    if ( addr4 + packet1_length + 1 >= 255 ) {
       return;
     } else {
-      addr[3] += packet1_length;
+      addr += packet1_length;
     }
 
     if (!udp2.beginPacket(addr.str().c_str(), 4048)) {
