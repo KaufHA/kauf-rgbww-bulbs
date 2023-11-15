@@ -7,3 +7,6 @@ __pycache__
 ddp-strip-test.yaml
 test_components
 pantry-bulb.yaml
+kauf-bulb-local-update-all.yaml
+kauf-bulb-local-update-common.yaml
+kauf-bulb-local-update-light.yaml
