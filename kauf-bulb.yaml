@@ -240,7 +240,7 @@ select:
     id: effect
     optimistic: true
     options:
-      # List your custom effects here to have them show up in HomeAssistant.
+      # List your custom effects here by name to have them show up in HomeAssistant.
       # Note that it is not required to list it here to use it from
       # HomeAssistant, you can still change the effect with a service call.
       - "None"
