@@ -240,6 +240,9 @@ select:
     id: effect
     optimistic: true
     options:
+      # List your custom effects here to have them show up in HomeAssistant.
+      # Note that it is not required to list it here to use it from
+      # HomeAssistant, you can still change the effect with a service call.
       - "None"
       - "WLED / DDP"
     initial_option: "None"
@@ -247,8 +250,23 @@ select:
     icon: mdi:string-lights
     on_value:
       - lambda: |-
-          if ( x == "WLED / DDP" ) { id(kauf_light)->set_use_wled(true); }
-          else                     { id(kauf_light)->set_use_wled(false); }
+          // Always clear any effect we may have running.
+          auto call = id(kauf_light).make_call();
+          call.set_transition_length(0); // For the code path in light_call.cpp
+          call.set_effect(0);
+          call.perform();
+
+          if ( x == "WLED / DDP" ) {
+            id(kauf_light)->set_use_wled(true);
+          } else if ( x == "None" ) {
+            id(kauf_light)->set_use_wled(false);
+          } else {
+            id(kauf_light)->set_use_wled(false);
+            auto call = id(kauf_light).make_call();
+            call.set_transition_length(0);
+            call.set_effect(x);
+            call.perform();
+          }
       - script.execute: script_save_changes
 
     entity_category: config
