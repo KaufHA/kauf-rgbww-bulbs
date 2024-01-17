@@ -82,6 +82,21 @@ Going to the bulb's URL in a web browser and adding /reset will completely wipe 
 ## Clearing Wi-Fi Credentials to Get Wi-Fi AP Back
 You can clear the bulb's Wi-Fi credentials and get the Wi-Fi AP back to configure new credentials by rebooting the bulb five times in a row, with each boot lasting less than 10 seconds.  On the 2nd, 3rd, and 4th such boot the bulb will flash yellow to let you know its working.  On the 5th such boot the bulb will turn red, reset the credentials, and reboot to put up its Wi-Fi AP
 
+## Adding Effects
+Effects can be added to the main light entity while using yaml packages with the following yaml.  The effects listed below are just for example and can be edited or removed.
+
+```
+light:
+  - id: !extend kauf_light
+    effects:
+      - flicker:
+          alpha: 94%
+          intensity: 12%
+      - strobe:
+      - pulse:
+      - random:
+```
+
 
 ## Troubleshooting
 Some bulbs may begin color cycling when initially powered on.  This is due to a failure to clear the factory test routine when the bulbs were manufactured.  The color cycling will automatically end after 10 minutes.  The color cycling can also be terminated by flashing the bulb via an update bin file or the ESPHome dashboard.  Firmware version 1.86 adds a button in the web interface to stop the factory test routine.
