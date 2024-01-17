@@ -42,8 +42,15 @@ void LightCall::perform() {
 
     bool super = true;
 
+    // is the effect being set/cleared?
+    if (this->has_effect_())
+    {
+      super = false;
+      ESP_LOGD("KAUF Transition Filter", "Want to set an effect @ index %ud", this->effect_);
+    }
+
     // is color mode the same?
-    if ( v.get_color_mode() != this->parent_->remote_values.get_color_mode()) {
+    else if ( v.get_color_mode() != this->parent_->remote_values.get_color_mode()) {
       super = false;
       ESP_LOGV("KAUF Transition Filter","Color Mode different");
     }
