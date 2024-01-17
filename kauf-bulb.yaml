@@ -252,7 +252,6 @@ select:
       - lambda: |-
           // Always clear any effect we may have running.
           auto call = id(kauf_light).make_call();
-          call.set_transition_length(0); // For the code path in light_call.cpp
           call.set_effect(0);
           call.perform();
 
@@ -263,7 +262,6 @@ select:
           } else {
             id(kauf_light)->set_use_wled(false);
             auto call = id(kauf_light).make_call();
-            call.set_transition_length(0);
             call.set_effect(x);
             call.perform();
           }
