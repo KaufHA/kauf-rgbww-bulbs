@@ -1,7 +1,8 @@
-# Enabling and Developing Effects
+# Enabling and Developing Custom Effects
 
 This guide will walk through enabling the built-in ESPHome
-light effects. This requires building custom firmware
+light effects, as well as provide a sample custom lambda effect.
+This requires building custom firmware
 and flashing your bulb and as such you should be familiar
 with code development.
 
@@ -162,13 +163,13 @@ after the "-random" effect:
           update_interval: 1000ms
           lambda: |-
             // static to maintain the value from run-to-run.
-            static bool isLightOn = false;
+            static bool is_light_on = false;
 
             // Example of how to write to the debug log and do something only the first time.
-            static ColorMode startColorMode = ColorMode::UNKNOWN;
+            static ColorMode start_color_mode = ColorMode::UNKNOWN;
             if (initial_run) {
               // ESP_LOGD("lambda", "Initial Run");
-              startColorMode = id(kauf_light).current_values.get_color_mode();
+              start_color_mode = id(kauf_light).current_values.get_color_mode();
             }
 
             auto light = id(kauf_light);
@@ -184,15 +185,15 @@ after the "-random" effect:
             call.set_color_mode(ColorMode::RGB);
             call.set_transition_length(0);
 
-            if (isLightOn) {
+            if (is_light_on) {
               call.set_brightness(0.0);
               call.set_state(true);
-              isLightOn = false;
+              is_light_on = false;
             } else {
               call.set_brightness(1.0);
               call.set_rgbw(1.0, 0.0, 0.0, 0.0);
               call.set_state(true);
-              isLightOn = true;
+              is_light_on = true;
             }
 
             call.perform();
