@@ -73,7 +73,8 @@ git checkout with-custom-effects
 
 ### Do a Test Build
 
-Before making changes, ensure the build succeeds.
+Before making changes, ensure you have a working build
+environment and that the build succeeds.
 
 ```shell
 esphome run kauf-bulb-factory.yaml
@@ -97,21 +98,39 @@ example below with the IP of your Kauf bulb:
 192.168.0.34    kauf-bulb.local
 ```
 
-To make your life easy, edit `kauf-bulb.yaml` to have your
-WiFi information. Otherwise you may need to perform the
-initial setup for the bulb and add it to the WiFi network
-again. Look for and edit this section:
+### Create a Custom Config
+
+Copy the `kauf-bulb-update.yaml` to a new file. This will
+allow you to keep pulling updates from github while you
+play with your effects. It will also enable you to create
+a .bin.gz which you can update your bulbs with via the
+web interface.
+
+```shell
+cp kauf-bulb-update.yaml kauf-bulb-with-custom-effects.yaml
+```
+
+You may *optionally* alter the wifi section in your
+copied file to have your access
+point information. This should not be needed with the
+"forced_hash" but acts as extra insurance that you will
+not need to re-add your bulb.
 
 ```yaml
 wifi:
-  ssid: initial_ap
-  password: asdfasdfasdfasdf
+  ssid: SomeSID
+  password: secret
 ```
 
 ### Build and Upload
 
-With your bulb powered on, run the above esphome
-command and select the "Over The Air" option
+With your bulb powered on, run:
+
+```shell
+esphome run kauf-bulb-with-custom-effects.yaml
+```
+
+and select the "Over The Air" option
 to upload the new firmware. After it has uploaded
 and the bulb has rebooted, it should behave as
 before.
@@ -121,7 +140,7 @@ before.
 
 ## Adding Stock Effects
 
-Edit `kauf-bulb-factory.yaml` and add the following to the end:
+Edit your `kauf-bulb-with-custom-effects.yaml` and add the following to the end:
 
 ```yaml
 light:
@@ -206,19 +225,14 @@ If you want to write your effects directly, a couple of points.
 The core effects are in `components/light/base_light_effects.h` which is part of
 the ESPHome source tree.
 
-You will need to edit kauf-bulb.yaml to not pull the c++ code
-every time a build is done. This is done by editing the
+You will need to modify your custom config file to not pull the c++ code
+every time a build is done. This is done by overriding the
 `external_components` section to reference a local
-components tree:
+components tree. The override is done by adding this to your
+custom configuration:
 
 ```yaml
-# https://esphome.io/components/external_components.html
 external_components:
-  - source:
-      type: git
-      url: https://github.com/KaufHA/common
-      ref: v2023.12.20
-    refresh: never
   - source:
       type: local
       path: ./components
