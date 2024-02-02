@@ -1,15 +1,21 @@
 # Enabling and Developing Custom Effects
 
+> NOTE: You could brick or otherwise damage your Kauf bulbs.
+> Only attempt this if you accept the risks.
+
 This guide will walk through enabling the built-in ESPHome
 light effects, as well as provide a sample custom lambda effect.
 This requires building custom firmware
 and flashing your bulb and as such you should be familiar
 with code development.
 
-> NOTE: You could brick or otherwise damage your Kauf bulbs.
-> Only attempt this if you accept the risks.
-
 This guide assumes your build environment is Linux.
+
+> NOTE: If you already have the ESPHome dashboard setup, you can
+> skip directly to the "Adding Stock Effects" section
+> which describes using !extend and use said dashboard
+> to add effects. (Using the ESPHome dashboard is outside
+> the scope of this guide.)
 
 ## Overview
 
