@@ -4,7 +4,7 @@
 > Only attempt this if you accept the risks.
 
 This guide will walk through enabling the built-in ESPHome
-light effects, as well as provide a sample custom lambda effect.
+light effects, as well as creating a sample custom effect.
 This requires building custom firmware
 and flashing your bulb and as such you should be familiar
 with code development.
@@ -24,6 +24,7 @@ This guide assumes your build environment is Linux.
 - Send un-altered firmware over the air (OTA)
 - Enable built-in ESPHome effects.
 - Create simple lambda effect.
+- Convert the lambda to c++ with configurable options
 
 ## Setup Build
 
@@ -120,13 +121,16 @@ You may *optionally* alter the wifi section in your
 copied file to have your access
 point information. This should not be needed with the
 "forced_hash" but acts as extra insurance that you will
-not need to re-add your bulb.
+not need to re-add your bulb to the network.
 
 ```yaml
 wifi:
   ssid: SomeSID
   password: secret
 ```
+
+> Remember: Do not push your custom config to a public
+> git repository if you put a password in the config file.
 
 ### Build and Upload
 
@@ -200,9 +204,13 @@ after the "-random" effect:
             auto light = id(kauf_light);
             if (light->transformer_active) {
               // Still in the middle of a transition, so do nothing.
-              // Also of note: If a new transition is started before
+              //
+              // NOTE: If a new transition is started before
               // the running one finishes, it will cause an off-on
               // blink of the light.
+              //
+              // NOTE: transformer_active is in the kauf source only.
+              // See https://github.com/esphome/esphome/pull/6157
               return;
             }
 
@@ -226,16 +234,25 @@ after the "-random" effect:
 
 ## Direct c++ Development
 
-If you want to write your effects directly, a couple of points.
+We will re-implement the red alert in c++.
 
-The core effects are in `components/light/base_light_effects.h` which is part of
-the ESPHome source tree.
+The core effects are in `components/light/base_light_effects.h`
+which is originally from the ESPHome source tree.
+This is a good place to get code hints.
 
-You will need to modify your custom config file to not pull the c++ code
-every time a build is done. This is done by overriding the
-`external_components` section to reference a local
-components tree. The override is done by adding this to your
-custom configuration:
+The .h file contains full class definitions with methods to simplify
+development by not needing to keep a .cpp file and .h file in sync.
+We will follow that paradigm in our code as well for simplicity.
+In other words: if you name our effects file with the .cpp extension, you will need
+to create a .h file with class/method signatures for compilation
+to succeed.
+
+### Use Local Components
+
+We need to modify the custom config file to not pull the c++ code
+every time a build is done, and more importantly to use the local components directory.
+This is accomplished by overriding the `external_components` section to reference a local
+components tree. Add the following to your custom configuration:
 
 ```yaml
 external_components:
@@ -243,5 +260,188 @@ external_components:
       type: local
       path: ./components
 ```
+
+### Create an Effects C++ Source File
+
+To allow us to continue to pull updates from upstream, we
+will put our effects in a new file.
+As mentioned above, to simplify our development,
+we will follow the lead of ESPHome and put the full class
+and method implementation in a .h file.
+We will call it `custom_light_effects.h`.
+
+```c++
+#include <utility>
+#include <vector>
+
+#include "esphome/core/automation.h"
+#include "esphome/core/log.h"
+#include "light_effect.h"
+#include "color_mode.h"
+namespace esphome
+{
+  namespace light
+  {
+    class RedAlertEffect : public LightEffect
+    {
+    public:
+      explicit RedAlertEffect(const std::string &name) : LightEffect(name) {}
+
+      void start() override
+      {
+        this->is_light_on_ = true;
+
+        // We do not use this...this is here as an example.
+        this->state_->current_values.get_color_mode();
+
+        if (this->red_ > 0.0f || this->green_ > 0.0f || this->blue_ > 0.0f)
+        {
+          ESP_LOGD("RedAlertEffect", "Have a custom color  R: %.2f  G: %.2f  B: %.2f", this->red_, this->green_,
+                   this->blue_);
+        }
+        else
+        {
+          ESP_LOGD("RedAlertEffect", "No custom color, using red.");
+          this->red_ = 1.0f;
+          this->green_ = 0.0f;
+          this->blue_ = 0.0f;
+        }
+      }
+
+      void stop() override
+      {
+        ESP_LOGD("RedAlertEffect", "stop");
+      }
+
+      void apply() override
+      {
+        if (this->state_->transformer_active)
+        {
+          // Still in the middle of a transition, so do nothing.
+          //
+          // NOTE: If a new transition is started before
+          // the running one finishes, it will cause an off-on
+          // blink of the light.
+          //
+          // NOTE: transformer_active is in the kauf source only.
+          // See https://github.com/esphome/esphome/pull/6157
+          return;
+        }
+
+        // Lifted from lambda to only change on the given frequency.
+        const uint32_t now = millis();
+        if (now - this->last_run_ < this->update_interval_)
+        {
+          return;
+        }
+        this->last_run_ = now;
+
+        auto call = this->state_->make_call();
+        call.set_color_mode(ColorMode::RGB);
+        call.set_transition_length(0);
+
+        if (this->is_light_on_)
+        {
+          call.set_brightness(0.0);
+          call.set_state(true);
+          this->is_light_on_ = false;
+        }
+        else
+        {
+          call.set_brightness(1.0);
+          call.set_rgbw(this->red_, this->green_, this->blue_, 0.0f);
+          call.set_state(true);
+          this->is_light_on_ = true;
+        }
+        call.perform();
+      }
+
+      void set_red(float red) { this->red_ = red; }
+      void set_green(float green) { this->green_ = green; }
+      void set_blue(float blue) { this->blue_ = blue; }
+
+    protected:
+      // State
+      bool is_light_on_ = true;
+      ColorMode start_color_mode_ = ColorMode::UNKNOWN;
+      uint32_t last_run_{0};
+
+      // Config
+      uint32_t update_interval_ = 1000;
+      float red_;
+      float green_;
+      float blue_;
+    };
+
+  } // namespace light
+} // namespace esphome
+```
+
+> It is left as an exercise to the reader to make the update interval configurable.
+
+### Expose New Effect in Python
+
+For this effect to become visible, types.py and effects.py need to be updated in a few places.
+
+First, edit `types.py` and add a line in the '#Effects' section right after 'FlickerLightEffect'
+for the RedAlert:
+
+```python
+RedAlertEffect = light_ns.class_("RedAlertEffect", LightEffect)
+```
+
+In `effects.py` find the `from .types import` section and add `RedLightEffect` to the list.
+
+Next add a monochromatic effect in `effects.py`. This can be added anywhere in the file after
+the variables are defined. It is suggested to add it right after the `FlickerLightEffect`
+to keep it grouped with other monochromatic effects.
+
+```python
+@register_monochromatic_effect(
+    "red_alert",
+    RedAlertEffect,
+    "RedAlert",
+    {
+        cv.Optional(CONF_RED, default=0.0):  cv.percentage,
+        cv.Optional(CONF_GREEN, default=0.0): cv.percentage,
+        cv.Optional(CONF_BLUE, default=0.0): cv.percentage,
+    },
+)
+async def candle_effect_to_code(config, effect_id):
+    var = cg.new_Pvariable(effect_id, config[CONF_NAME])
+    cg.add(var.set_red(config[CONF_RED]))
+    cg.add(var.set_green(config[CONF_GREEN]))
+    cg.add(var.set_blue(config[CONF_BLUE]))
+    return var
+```
+
+### Enable the Effect in the YAML File
+
+Remove the lambda from your custom configuration file
+and add the configurable c++ effect.
+
+```yaml
+light:
+  - id: !extend kauf_light
+    #https://esphome.io/components/light/#light-effects
+    effects:
+      - flicker:
+          name: Flicker 12%
+          alpha: 94%
+          intensity: 12%
+      - red_alert:
+          name: Red Alert
+      - red_alert:
+          name: Green Alert
+          green: 100%
+```
+
+Finally build, upload, and test.
+
+## Closing Thoughts
+
+You should now be enabled to create your own effects.
+Please share any you create on the Home Assistant
+or ESPHome forums and thank you for your support.
 
 ## END OF LINE
