@@ -269,6 +269,7 @@ As mentioned above, to simplify our development,
 we will follow the lead of ESPHome and put the full class
 and method implementation in a .h file.
 We will call it `custom_light_effects.h`.
+The file should be placed in `./components/light`.
 
 ```c++
 #include <utility>
