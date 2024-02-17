@@ -202,15 +202,12 @@ after the "-random" effect:
             }
 
             auto light = id(kauf_light);
-            if (light->transformer_active) {
+            if (light->is_transformer_active()) {
               // Still in the middle of a transition, so do nothing.
               //
               // NOTE: If a new transition is started before
               // the running one finishes, it will cause an off-on
               // blink of the light.
-              //
-              // NOTE: transformer_active is in the kauf source only.
-              // See https://github.com/esphome/esphome/pull/6157
               return;
             }
 
@@ -316,16 +313,13 @@ namespace esphome
 
       void apply() override
       {
-        if (this->state_->transformer_active)
+        if (this->state_->is_transformer_active())
         {
           // Still in the middle of a transition, so do nothing.
           //
           // NOTE: If a new transition is started before
           // the running one finishes, it will cause an off-on
           // blink of the light.
-          //
-          // NOTE: transformer_active is in the kauf source only.
-          // See https://github.com/esphome/esphome/pull/6157
           return;
         }
 
