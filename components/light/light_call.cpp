@@ -38,7 +38,7 @@ void LightCall::perform() {
   // Can't figure out why Home Assistant is sending two calls in a row sometimes.  Screwing with fade.
 
   // don't do any checks if not in transition
-  if ( this->parent_->transformer_active ) {
+  if ( this->parent_->is_transformer_active() ) {
 
     bool super = true;
 
