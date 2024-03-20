@@ -216,7 +216,7 @@ void LightState::wled_apply() {
     }
 
     // get current ip address, quit if 254.  Not going to forward to 255.
-    network::IPAddress addr = wifi::global_wifi_component->get_ip_address();
+    network::IPAddress addr = wifi::global_wifi_component->get_ip_addresses()[0];
     uint8_t addr4 = ip4_addr4_val(addr.ip_addr_);
 
     if ( addr4 >= 254 ) {
