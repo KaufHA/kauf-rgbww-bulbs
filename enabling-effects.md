@@ -433,6 +433,60 @@ light:
 
 Finally build, upload, and test.
 
+## Custom Power-On State
+
+If you want a custom color or state when the bulb is powered
+on (i.e. by a physical switch), then you will need to create
+a custom `on_boot` script.
+
+First, copy and rename the existing `script_quick_boot` from
+`kaulf-bulb.yaml` into your custom YAML file.
+Then add the settings you want before the 10 second delay. Here is what
+the script looks like with parts removed for brevity.
+
+```yaml
+script:
+    # increment global_quick_boot_count if bulb stays on less than 10 seconds or never connects to wifi
+    # reset wifi credentials if the counter gets to 5
+  - id: script_quick_boot_custom
+    then:
+    # ...code skipped...
+            - delay: 4s
+            - light.turn_off: kauf_light
+
+      # Custom boot code
+      - lambda: |-
+          auto call = id(kauf_light).turn_on();
+          call.set_transition_length(500);
+          call.set_brightness(0.5);
+          call.set_rgb(1.0, 0.5, 0.0);
+          call.set_save(false);
+          call.perform();
+      # End custom boot code, the next line is in the original script.
+      # wait 10 seconds
+      - delay: 10s
+```
+
+Now configure `on_boot` to use this new script in your custom YAML file
+(this section already exists toward the top):
+
+```yaml
+esphome:
+  name_add_mac_suffix: true
+
+  on_boot:
+    then:
+      - script.execute: script_quick_boot_custom
+```
+
+Other useful methods are:
+
+```yaml
+  call.set_color_mode_if_supported(ColorMode::COLOR_TEMPERATURE);
+  call.set_color_temperature_if_supported(454.0f); // Warm White
+  call.set_effect("Red Alert");
+```
+
 ## Deploy to Other Bulbs
 
 Once you are happy with your firmware, you can do OTA
