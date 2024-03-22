@@ -24,7 +24,9 @@ This guide assumes your build environment is Linux.
 - Send un-altered firmware over the air (OTA)
 - Enable built-in ESPHome effects.
 - Create simple lambda effect.
-- Convert the lambda to c++ with configurable options
+- Convert the lambda to c++ with configurable options.
+- Custom power-on state.
+- Deploy to other bulbs.
 
 ## Setup Build
 
