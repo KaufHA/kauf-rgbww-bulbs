@@ -493,10 +493,11 @@ Other useful methods are:
 
 Once you are happy with your firmware, you can do OTA
 updates to other Kauf bulbs using a bulb's web interface.
-Use the esphome 'build' command to build the firmware without uploading it.
+Use the esphome 'compile' command to build the firmware without uploading it.
 
 ```shell
-esphome build kauf-bulb-with-custom-effects.yaml
+esphome compile kauf-bulb-with-custom-effects.yaml
+gzip -9vf .esphome/build/kauf-bulb/.pioenvs/kauf-bulb/firmware.bin
 cp .esphome/build/kauf-bulb/.pioenvs/kauf-bulb/firmware.bin.gz ~/kauf-firmware-with-effects-v01.bin.gz
 ```
 
