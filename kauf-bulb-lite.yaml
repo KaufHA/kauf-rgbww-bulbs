@@ -301,18 +301,18 @@ script:
       lambda: return;
 
     # increment global_quick_boot_count if bulb stays on less than 10 seconds or never connects to wifi
-    # reset wifi credentials if the counter gets to 5
+    # reset wifi credentials if the counter gets to 15
   - id: script_quick_boot
     then:
 
-      # if quick boot count is 5, overwrite wifi credentials to force AP
+      # if quick boot count is 15, overwrite wifi credentials to force AP
       - if:
           condition:
-            lambda: return ( id(global_quick_boot_count) >= 5 );
+            lambda: return ( id(global_quick_boot_count) >= 15 );
           then:
 
             - lambda: |-
-                ESP_LOGD("kauf-bulb.yaml", "quick boot count variable is now 5, overwriting credentials and rebooting");
+                ESP_LOGD("kauf-bulb.yaml", "quick boot count variable is now 15, overwriting credentials and rebooting");
 
                 // overwrite wifi credentials
                 wifi::global_wifi_component->save_wifi_sta("initial_ap","asdfasdfasdfasdf");
@@ -338,12 +338,12 @@ script:
 
       # increment quick boot counter so it will stay incremented if device reboots
       - lambda: |-
-          ESP_LOGD("kauf-bulb.yaml", "quick boot count variable is now %d.  Need 5 to overwrite credentials", id(global_quick_boot_count));
+          ESP_LOGD("kauf-bulb.yaml", "quick boot count variable is now %d.  Need 15 to overwrite credentials", id(global_quick_boot_count));
           id(global_quick_boot_count) += 1;
           global_quick_boot_count->loop();
           global_preferences->sync();
 
-      # if quick boot count gets over 1 (don't flash on first occurance in case it's an accident), flash light to indicate we are in process
+      # if quick boot count gets over 1 (don't flash on first occurrence in case it's an accident), flash light to indicate we are in process
       - if:
           condition:
             lambda: return ( id(global_quick_boot_count) > 2 );

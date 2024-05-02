@@ -449,7 +449,7 @@ the script looks like with parts removed for brevity.
 ```yaml
 script:
     # increment global_quick_boot_count if bulb stays on less than 10 seconds or never connects to wifi
-    # reset wifi credentials if the counter gets to 5
+    # reset wifi credentials if the counter gets to 15
   - id: script_quick_boot_custom
     then:
     # ...code skipped...
