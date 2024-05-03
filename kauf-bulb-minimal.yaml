@@ -24,7 +24,7 @@ esphome:
   name: $name
   project:
     name: "Kauf.RGBWW"
-    version: "1.87(m)"
+    version: "1.93(m)"
 
 
 # https://esphome.io/components/wifi.html
@@ -57,27 +57,27 @@ output:
     pin: $sub_red_pin
     frequency: 200 Hz
     id: pwm_red
-    max_power: .85
+    max_power: .8
   - platform: esp8266_pwm
     pin: $sub_green_pin
     frequency: 200 Hz
     id: pwm_green
-    max_power: .85
+    max_power: .8
   - platform: esp8266_pwm
     pin: $sub_blue_pin
     frequency: 200 Hz
     id: pwm_blue
-    max_power: .85
+    max_power: .8
   - platform: esp8266_pwm
     pin: $sub_cw_pin
     frequency: 400 Hz
     id: pwm_cw
-    max_power: .85
+    max_power: .8
   - platform: esp8266_pwm
     pin: $sub_ww_pin
     frequency: 400 Hz
     id: pwm_ww
-    max_power: .85
+    max_power: .8
 
 # https://esphome.io/components/light/index.html
 light:

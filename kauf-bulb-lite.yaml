@@ -14,17 +14,13 @@ substitutions:
 
   friendly_name: Kauf Bulb     # **** CHANGE FRIENDLY NAME TO SOMETHING UNIQUE PER DEVICE ****
 
-  disable_entities: "true"     # set to "false" to have all entities show up in Home Assistant automatically
-
-  # https://esphome.io/components/light/index.html#base-light-configuration
-  light_restore_mode: RESTORE_INVERTED_DEFAULT_OFF  # change power-on action for main light entity
-  default_power_on_state: "Restore Power Off State"
+  disable_entities:  "true"    # set to "false" to have all entities show up in Home Assistant automatically
 
   wifi_ap_timeout: 2min    # default to 2 minute timeout for yaml file as package.
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.913"
+  project_ver_num: "1.93"
   project_ver_let: l
 
   sub_on_turn_on:  script_do_nothing
@@ -44,6 +40,14 @@ substitutions:
   sub_blue_freq:  200 hz
   sub_cw_freq:    400 hz
   sub_ww_freq:    400 hz
+
+  sub_reboot_req: '9'
+
+  # removed config entities
+  sub_max_power: '0.8'
+  sub_default_transition_length: 250ms
+  sub_api_reboot_timeout: 0s
+  light_restore_mode: RESTORE_DEFAULT_ON  # change power-on action for main light entity (https://esphome.io/components/light/index.html#base-light-configuration)
 
 
 # https://esphome.io/components/esp8266.html
@@ -111,6 +115,7 @@ logger:
 # https://esphome.io/components/api.html
 api:
   id: kauf_api
+  reboot_timeout: $sub_api_reboot_timeout
 
 
 # https://esphome.io/components/ota.html
@@ -132,141 +137,47 @@ output:
     pin: $sub_red_pin
     frequency: $sub_red_freq
     id: pwm_red
-    max_power: .8
+    max_power: $sub_max_power
   - platform: esp8266_pwm
     pin: $sub_green_pin
     frequency: $sub_green_freq
     id: pwm_green
-    max_power: .8
+    max_power: $sub_max_power
   - platform: esp8266_pwm
     pin: $sub_blue_pin
     frequency: $sub_blue_freq
     id: pwm_blue
-    max_power: .8
+    max_power: $sub_max_power
   - platform: esp8266_pwm
     pin: $sub_cw_pin
     frequency: $sub_cw_freq
     id: pwm_cw
-    max_power: .8
+    max_power: $sub_max_power
   - platform: esp8266_pwm
     pin: $sub_ww_pin
     frequency: $sub_ww_freq
     id: pwm_ww
-    max_power: .8
+    max_power: $sub_max_power
 
 
 # https://esphome.io/components/light/index.html
 light:
   - platform: rgbww
-    name: $friendly_name
     id: kauf_light
+    default_transition_length: $sub_default_transition_length
+    name: $friendly_name
     red: pwm_red
     green: pwm_green
     blue: pwm_blue
     warm_white: pwm_ww
     cold_white: pwm_cw
-    cold_white_color_temperature: 6500 K
-    warm_white_color_temperature: 2700 K
-    restore_mode: RESTORE_DEFAULT_ON
-
-
-# https://esphome.io/components/select/index.html
-# https://esphome.io/components/select/template.html
-select:
-
-  # default light state on boot
-  - platform: template
-    name: $friendly_name Power On State
-    id: select_boot_state
-    optimistic: true
-    options:
-      - "Restore Power Off State"
-      - "Always On - Last Value"
-      - "Always On - Bright White"
-      - "Always Off"
-      - "YAML Configured ($light_restore_mode)"
-    # defaulting to always on is nice so you know new bulbs are working
-    initial_option: $default_power_on_state
-    restore_value: true
-    icon: mdi:restart-alert
-    on_value:
-      - lambda: |-
-          if ( x == "Restore Power Off State")
-            kauf_light->set_restore_mode(LIGHT_RESTORE_DEFAULT_OFF);
-          else if ( x == "Always On - Last Value")
-            kauf_light->set_restore_mode(LIGHT_RESTORE_AND_ON);
-          else if ( x == "Always On - Bright White")
-            kauf_light->set_restore_mode(LIGHT_ALWAYS_ON);
-          else if ( x == "Always Off")
-            kauf_light->set_restore_mode(LIGHT_RESTORE_AND_OFF);
-          else
-            kauf_light->set_restore_mode(LIGHT_$light_restore_mode);
-      - script.execute: script_save_changes
-    entity_category: config
-
-
-# https://esphome.io/components/number/index.html
-# https://esphome.io/components/number/template.html
-number:      # set max power output for PWMs
-  - platform: template
-    name: ${friendly_name} Max Power
-    min_value: 1
-    max_value: 100
-    step: 1
-    initial_value: 80
-    id: number_max_power
-    entity_category: config
-    disabled_by_default: $disable_entities
-    icon: mdi:brightness-percent
-    optimistic: true
-    restore_value: true
-    unit_of_measurement: "%"
-    mode: box
-    on_value:
-      - lambda: |-
-          float new_power = ((float)x)/100.0f;
-          id(pwm_red).set_max_power(new_power);
-          id(pwm_green).set_max_power(new_power);
-          id(pwm_blue).set_max_power(new_power);
-          id(pwm_ww).set_max_power(new_power);
-          id(pwm_cw).set_max_power(new_power);
-      - script.execute: script_save_changes
-
-  - platform: template
-    name: ${friendly_name} Default Fade
-    min_value: 0
-    max_value: 5000
-    step: 50
-    initial_value: 250
-    id: number_default_fade
-    entity_category: config
-    icon: mdi:timer-outline
-    optimistic: true
-    restore_value: true
-    unit_of_measurement: "ms"
-    mode: box
-    on_value:
-      - lambda: id(kauf_light)->set_default_transition_length(x);
-      - script.execute: script_save_changes
-
-
-# https://esphome.io/components/switch/index.html
-# https://esphome.io/components/switch/template.html
-switch:
-  - platform: template
-    id: switch_no_hass
-    name: $friendly_name No HASS
-    optimistic: true
-    entity_category: config
-    disabled_by_default: $disable_entities
-    icon: mdi:toggle-switch-off-outline
-    restore_mode: RESTORE_DEFAULT_ON
+    warm_white_color_temperature: $sub_warm_white_temp
+    cold_white_color_temperature: $sub_cold_white_temp
+    restore_mode: $light_restore_mode
     on_turn_on:
-      - lambda: id(kauf_api)->set_reboot_timeout(0);
-      - script.execute: script_save_changes
+      - script.execute: $sub_on_turn_on
     on_turn_off:
-      - lambda: id(kauf_api)->set_reboot_timeout(900000);
-      - script.execute: script_save_changes
+      - script.execute: $sub_on_turn_off
 
 
 # https://esphome.io/components/sensor/uptime.html
@@ -301,18 +212,19 @@ script:
       lambda: return;
 
     # increment global_quick_boot_count if bulb stays on less than 10 seconds or never connects to wifi
-    # reset wifi credentials if the counter gets to 5
+    # reset wifi credentials if the counter gets to $sub_reboot_req
   - id: script_quick_boot
     then:
 
-      # if quick boot count is 5, overwrite wifi credentials to force AP
+      # if quick boot count is $sub_reboot_req, overwrite wifi credentials to force AP
       - if:
           condition:
-            lambda: return ( id(global_quick_boot_count) >= 5 );
+            lambda: return ( id(global_quick_boot_count) >= $sub_reboot_req );
           then:
+            - delay: 1500ms
 
             - lambda: |-
-                ESP_LOGD("kauf-bulb.yaml", "quick boot count variable is now 5, overwriting credentials and rebooting");
+                ESP_LOGD("kauf-bulb.yaml", "quick boot count variable is now $sub_reboot_req, overwriting credentials and rebooting");
 
                 // overwrite wifi credentials
                 wifi::global_wifi_component->save_wifi_sta("initial_ap","asdfasdfasdfasdf");
@@ -324,9 +236,10 @@ script:
 
                 // turn on red light
                 auto call = id(kauf_light).turn_on();
-                call.set_transition_length(500);
                 call.set_brightness(0.6);
-                call.set_rgb(1.0, 0.0, 0.0); // color in RGB order, this example is purple
+                call.set_rgb(1.0, 0.0, 0.0);
+                call.set_save(false);
+                call.set_flash_length(1500);
                 call.perform();
 
               # short delay
@@ -338,7 +251,7 @@ script:
 
       # increment quick boot counter so it will stay incremented if device reboots
       - lambda: |-
-          ESP_LOGD("kauf-bulb.yaml", "quick boot count variable is now %d.  Need 5 to overwrite credentials", id(global_quick_boot_count));
+          ESP_LOGD("kauf-bulb.yaml", "quick boot count variable is now %d.  Need $sub_reboot_req to overwrite credentials", id(global_quick_boot_count));
           id(global_quick_boot_count) += 1;
           global_quick_boot_count->loop();
           global_preferences->sync();
@@ -348,15 +261,14 @@ script:
           condition:
             lambda: return ( id(global_quick_boot_count) > 2 );
           then:
-            - light.turn_on:
-                id: kauf_light
-                brightness: 50%
-                red:   100%
-                green: 100%
-                blue:    0%
-                transition_length: 1s
-            - delay: 2s
-            - light.turn_off: kauf_light
+            - lambda: |-
+                auto call = id(kauf_light).turn_on();
+                call.set_brightness(0.5);
+                call.set_rgb(1.0, 1.0, 0.0);
+                call.set_save(false);
+                call.set_flash_length(1500);
+                call.perform();
+
 
       # wait 10 seconds
       - delay: 10s
