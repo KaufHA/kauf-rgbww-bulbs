@@ -43,7 +43,7 @@ select:
     on_value:
       - lambda: |-
           if ( x == "Restore Power Off State")
-            kauf_light->set_restore_mode(LIGHT_RESTORE_DEFAULT_OFF);
+            kauf_light->set_restore_mode(LIGHT_RESTORE_DEFAULT_ON);
           else if ( x == "Always On - Last Value")
             kauf_light->set_restore_mode(LIGHT_RESTORE_AND_ON);
           else if ( x == "Always On - Bright White")
