@@ -28,6 +28,8 @@ This repo contains files for the KAUF RGBWW Smart Bulbs.
 
 ***kauf-bulb.yaml*** - The yaml file recommended to import a bulb into your ESPHome dashboard. This is the yaml file incorporated automatically when the dashboard import feature is used.
 
+***kauf-bulb-plus.yaml*** - A yaml file that adds in additional config entities from the precompiled binaries.
+
 ***kauf-bulb-lite.yaml*** - A yaml file without any Kauf custom components but otherwise keeping as much functionality from kauf-bulb.yaml as possible.
 
 ***kauf-bulb-minimal.yaml*** - A yaml file to import a bulb into your ESPHome dashboard with only basic RGBWW Bulb functionality.  Copy and paste the contents of this to your local yaml file as a template if you are looking to do your own thing.

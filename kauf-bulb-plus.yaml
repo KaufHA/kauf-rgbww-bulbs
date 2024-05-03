@@ -1,0 +1,137 @@
+packages:
+  kauf_bulb_base: !include kauf-bulb.yaml
+
+
+# https://esphome.io/components/select/index.html
+# https://esphome.io/components/select/template.html
+select:
+
+  # default light state on boot
+  - platform: template
+    name: $friendly_name Power On State
+    id: select_boot_state
+    optimistic: true
+    options:
+      - "Restore Power Off State"
+      - "Always On - Last Value"
+      - "Always On - Bright White"
+      - "Always Off"
+      - "Invert State"
+    # defaulting to always on is nice so you know new bulbs are working
+    initial_option: Always On - Last Value
+    restore_value: true
+    icon: mdi:restart-alert
+    on_value:
+      - lambda: |-
+          if ( x == "Restore Power Off State")
+            kauf_light->set_restore_mode(LIGHT_RESTORE_DEFAULT_ON);
+          else if ( x == "Always On - Last Value")
+            kauf_light->set_restore_mode(LIGHT_RESTORE_AND_ON);
+          else if ( x == "Always On - Bright White")
+            kauf_light->set_restore_mode(LIGHT_ALWAYS_ON);
+          else if ( x == "Always Off")
+            kauf_light->set_restore_mode(LIGHT_RESTORE_AND_OFF);
+          else if ( x == "Invert State")
+            kauf_light->set_restore_mode(LIGHT_RESTORE_INVERTED_DEFAULT_ON );
+          kauf_light->save_remote_values_();
+      - script.execute: script_save_changes
+    entity_category: config
+    forced_hash: 3524332562
+    forced_addr: 64
+    global_addr: global_forced_addr
+
+
+# https://esphome.io/components/number/index.html
+# https://esphome.io/components/number/template.html
+number:      # set max power output for PWMs
+  - platform: template
+    name: ${friendly_name} Max Power
+    min_value: 1
+    max_value: 100
+    step: 1
+    initial_value: 80
+    id: number_max_power
+    entity_category: config
+    disabled_by_default: $disable_entities
+    icon: mdi:brightness-percent
+    optimistic: true
+    restore_value: true
+    unit_of_measurement: "%"
+    mode: box
+    forced_hash: 4189052763
+    forced_addr: 74
+    global_addr: global_forced_addr
+    on_value:
+      - lambda: |-
+          float new_power = ((float)x)/100.0f;
+          id(pwm_red).set_max_power(new_power);
+          id(pwm_green).set_max_power(new_power);
+          id(pwm_blue).set_max_power(new_power);
+          id(pwm_ww).set_max_power(new_power);
+          id(pwm_cw).set_max_power(new_power);
+          id(kauf_light).set_next_write();
+      - script.execute: script_save_changes
+
+  - platform: template
+    name: ${friendly_name} Default Fade
+    min_value: 0
+    max_value: 5000
+    step: 50
+    initial_value: 250
+    id: number_default_fade
+    entity_category: config
+    icon: mdi:timer-outline
+    optimistic: true
+    restore_value: true
+    unit_of_measurement: "ms"
+    mode: box
+    forced_hash: 3133748577
+    forced_addr: 72
+    global_addr: global_forced_addr
+    on_value:
+      - lambda: id(kauf_light).set_default_transition_length(x);
+      - script.execute: script_save_changes
+
+
+# https://esphome.io/components/switch/index.html
+# https://esphome.io/components/switch/template.html
+switch:
+  - platform: template
+    id: switch_no_hass
+    name: $friendly_name No HASS
+    optimistic: true
+    entity_category: config
+    disabled_by_default: $disable_entities
+    icon: mdi:toggle-switch-off-outline
+    forced_hash: 706743398
+    forced_addr: 70
+    global_addr: global_forced_addr
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      - lambda: |-
+          id(kauf_api).set_reboot_timeout(0);
+          id(kauf_api).status_clear_warning();
+      - script.execute: script_save_changes
+    on_turn_off:
+      - lambda: id(kauf_api).set_reboot_timeout(900000);
+      - script.execute: script_save_changes
+
+
+
+
+# Current reserved flash memory:
+#  = inherited from kauf-bulb.yaml
+## = added in this file
+
+
+# 00-25: Wi-Fi Credentials
+
+# 28-39: Warm RGB
+# 40-51: Cold RGB
+# 52-63: Main Light
+## 64-65: Power On State select
+# 66-67: Effect select
+
+## 70-71: No HASS switch
+## 72-73: Default Fade Length
+## 74-75: Max Power

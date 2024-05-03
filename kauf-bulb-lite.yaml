@@ -32,8 +32,8 @@ substitutions:
   sub_cw_pin:     GPIO5
   sub_ww_pin:     GPIO13
 
-  sub_warm_white_temp: 350 mireds
-  sub_cold_white_temp: 150 mireds
+  sub_warm_white_temp: 2800 Kelvin
+  sub_cold_white_temp: 6600 Kelvin
 
   sub_red_freq:   200 hz
   sub_green_freq: 200 hz
@@ -42,6 +42,7 @@ substitutions:
   sub_ww_freq:    400 hz
 
   sub_reboot_req: '9'
+  sub_ota_num_attempts: '15'
 
   # removed config entities
   sub_max_power: '0.8'
@@ -120,6 +121,7 @@ api:
 
 # https://esphome.io/components/ota.html
 ota:
+  num_attempts: $sub_ota_num_attempts
   on_error:
     then:
       - button.press: restart_button
@@ -221,32 +223,30 @@ script:
           condition:
             lambda: return ( id(global_quick_boot_count) >= $sub_reboot_req );
           then:
-            - delay: 1500ms
 
             - lambda: |-
                 ESP_LOGD("kauf-bulb.yaml", "quick boot count variable is now $sub_reboot_req, overwriting credentials and rebooting");
-
-                // overwrite wifi credentials
-                wifi::global_wifi_component->save_wifi_sta("initial_ap","asdfasdfasdfasdf");
-
-                // reset counter and immediately save
-                id(global_quick_boot_count) = 0;
-                global_quick_boot_count->loop();
-                global_preferences->sync();
 
                 // turn on red light
                 auto call = id(kauf_light).turn_on();
                 call.set_brightness(0.6);
                 call.set_rgb(1.0, 0.0, 0.0);
                 call.set_save(false);
-                call.set_flash_length(1500);
                 call.perform();
 
-              # short delay
-            - delay: 5s
+                // reset counter and immediately save
+                id(global_quick_boot_count) = 0;
+                global_quick_boot_count->loop();
+                global_preferences->sync();
 
-              # reboot
-            - button.press: restart_button
+            # short delay
+            - delay: 2s
+
+            # the save_wifi_sta function reboots.
+            - lambda: |-
+                // overwrite wifi credentials
+                wifi::global_wifi_component->save_wifi_sta("initial_ap","asdfasdfasdfasdf");
+
 
 
       # increment quick boot counter so it will stay incremented if device reboots
@@ -266,7 +266,6 @@ script:
                 call.set_brightness(0.5);
                 call.set_rgb(1.0, 1.0, 0.0);
                 call.set_save(false);
-                call.set_flash_length(1500);
                 call.perform();
 
 
@@ -283,4 +282,3 @@ script:
           id(global_quick_boot_count) = 0;
           global_quick_boot_count->loop();
           global_preferences->sync();
-
