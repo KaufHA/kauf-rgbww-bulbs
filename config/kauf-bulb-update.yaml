@@ -1,0 +1,20 @@
+substitutions:
+  project_ver_let: u
+
+
+packages:
+  kauf_bulb_plus: !include kauf-bulb-plus.yaml
+
+
+dashboard_import:
+  package_import_url: github://KaufHA/kauf-rgbww-bulbs/kauf-bulb.yaml
+
+
+esphome:
+  name_add_mac_suffix: true
+
+
+wifi:
+  # add forced hash which isn't needed for dashboard import.
+  # Allows saving wifi credentials across update.
+  forced_hash: 2048874009

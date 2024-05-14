@@ -1,0 +1,154 @@
+substitutions:
+  project_ver_let: f
+
+packages:
+  kauf_bulb_update: !include kauf-bulb-update.yaml
+
+esphome:
+  on_boot:
+    then:
+      - if:
+          condition:
+            lambda: return (id(first_boot));
+          then:
+            - script.execute: script_factory_test
+          else:
+            - lambda: wifi_wificomponent->disable_scanning = false;
+
+
+button:
+  - platform: template
+    id: button_factory_stop
+    name: Stop Factory Routine
+    internal: true
+    disabled_by_default: true
+    entity_category: diagnostic
+    on_press:
+      then:
+        - light.turn_on:
+            id: kauf_light
+            brightness: 1.0
+            color_temperature: 150 mireds
+        - script.execute: script_factory_test_stop
+
+
+script:
+  - id: script_factory_test
+    then:
+        # show button to disable factory test
+      - lambda: id(button_factory_stop).set_internal(false);
+      - while:               # repeat test pattern 30 times total to get to 10 minutes
+          condition:
+            lambda: return (id(test_count) < 30);
+          then:
+
+            - lambda: |-
+                id(pwm_red).set_max_power(1.0f);
+                id(pwm_green).set_max_power(1.0f);
+                id(pwm_blue).set_max_power(1.0f);
+                id(pwm_ww).set_max_power(1.0f);
+                id(pwm_cw).set_max_power(1.0f);
+
+            - lambda: ESP_LOGD("KAUF Test", "[1] Test Pattern to Red");
+
+              # light on to red
+            - lambda: |-
+                auto call = id(kauf_light).turn_on();
+                call.set_transition_length(2000);
+                call.set_brightness(1.0);
+                call.set_rgb(1.0, 0.0, 0.0);
+                call.set_save(false);
+                call.perform();
+            - delay: 4s
+
+            - lambda: ESP_LOGD("KAUF Test", "[2]  Test Pattern to Warm White");
+
+              # light on to warm white
+            - lambda: |-
+                auto call = id(kauf_light).turn_on();
+                call.set_transition_length(2000);
+                call.set_brightness(1.0);
+                call.set_color_temperature(350);
+                call.set_save(false);
+                call.perform();
+            - delay: 4s
+
+            - lambda: ESP_LOGD("KAUF Test", "[3] Test Pattern to Green");
+
+            # light on to green
+            - lambda: |-
+                auto call = id(kauf_light).turn_on();
+                call.set_transition_length(2000);
+                call.set_brightness(1.0);
+                call.set_rgb(0.0, 1.0, 0.0);
+                call.set_save(false);
+                call.perform();
+            - delay: 4s
+
+            - lambda: ESP_LOGD("KAUF Test", "[4] Test Pattern to Cold White");
+
+              # light on to cold white
+            - lambda: |-
+                auto call = id(kauf_light).turn_on();
+                call.set_transition_length(2000);
+                call.set_brightness(1.0);
+                call.set_color_temperature(150);
+                call.set_save(false);
+                call.perform();
+            - delay: 4s
+
+            - lambda: ESP_LOGD("KAUF Test", "[5] Test Pattern to Blue");
+
+            # light on to blue
+            - lambda: |-
+                auto call = id(kauf_light).turn_on();
+                call.set_transition_length(2000);
+                call.set_brightness(1.0);
+                call.set_rgb(0.0, 0.0, 1.0);
+                call.set_save(false);
+                call.perform();
+            - delay: 4s
+
+            - lambda: |-
+                id(test_count) += 1;
+                ESP_LOGD("KAUF Test", "[0] Test Pattern Completed %d/30", id(test_count) );
+
+
+      - script.execute: script_factory_test_stop
+
+
+  - id: script_factory_test_stop
+    then:
+        - globals.set:
+            id: first_boot
+            value: 'false'
+        - globals.set:
+            id: global_quick_boot_count
+            value: '0'
+        - lambda: global_preferences->sync();
+        - script.stop: script_factory_test
+        - lambda: id(button_factory_stop).set_internal(true);
+        - lambda: |-
+            float new_power = ((float)id(number_max_power).state)/100.0f;
+            id(pwm_red).set_max_power(new_power);
+            id(pwm_green).set_max_power(new_power);
+            id(pwm_blue).set_max_power(new_power);
+            id(pwm_ww).set_max_power(new_power);
+            id(pwm_cw).set_max_power(new_power);
+            id(kauf_light)->set_next_write();
+
+
+globals:
+  - id: first_boot
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: test_count
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+
+# disable scanning during factory test
+wifi:
+  disable_scanning: true
