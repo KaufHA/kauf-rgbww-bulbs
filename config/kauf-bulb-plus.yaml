@@ -1,6 +1,5 @@
 packages:
-  kauf_bulb_base: !include kauf-bulb.yaml
-
+  kauf.rgbww: github://KaufHA/kauf-rgbww-bulbs/kauf-bulb.yaml
 
 # https://esphome.io/components/select/index.html
 # https://esphome.io/components/select/template.html
