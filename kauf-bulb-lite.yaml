@@ -20,7 +20,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.93"
+  project_ver_num: "1.931"
   project_ver_let: l
 
   sub_on_turn_on:  script_do_nothing
@@ -97,9 +97,6 @@ wifi:
 
   # default is 20, 17 is recommended.
   output_power: 17
-
-  # using fast_connect as default since it is required for hidden networks.
-  fast_connect: true
 
   ap:
     ap_timeout: $wifi_ap_timeout

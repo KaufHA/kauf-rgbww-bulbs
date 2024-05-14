@@ -65,7 +65,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/KaufHA/common
-      ref: v2024.05.08
+      ref: v2024.05.13
     refresh: never
   - source:
       type: git
@@ -114,9 +114,6 @@ wifi:
 
   ssid: initial_ap
   password: asdfasdfasdfasdf
-
-  # using fast_connect as default since it is required for hidden networks.
-  fast_connect: true
 
   forced_addr: 0
   global_addr: global_forced_addr

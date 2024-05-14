@@ -1,6 +1,5 @@
 substitutions:
   project_ver_let: u
-  wifi_ap_timeout: 15s    # default to 15 second timeout for update bin file
 
 
 packages:

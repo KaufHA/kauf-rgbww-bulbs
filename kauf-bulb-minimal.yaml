@@ -37,10 +37,6 @@ wifi:
   # default is 20, 17 is recommended.
   output_power: 17
 
-  # using fast_connect as default since it is required for hidden networks.
-  # feel free to change or override.
-  fast_connect: true
-
   ap:
 
 captive_portal:     # https://esphome.io/components/captive_portal.html
