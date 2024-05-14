@@ -98,6 +98,7 @@ esphome:
     then:
       - script.execute: script_quick_boot
 
+  min_version: 2024.5.0
 
 # https://esphome.io/components/button/index.html
 # https://esphome.io/components/button/restart.html
