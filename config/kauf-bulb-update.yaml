@@ -7,7 +7,7 @@ packages:
 
 
 dashboard_import:
-  package_import_url: github://KaufHA/kauf-rgbww-bulbs/kauf-bulb.yaml
+  package_import_url: $sub_import_url
 
 
 esphome:
