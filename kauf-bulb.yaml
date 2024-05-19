@@ -21,8 +21,11 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.931"
+  project_ver_num: "1.933"
   project_ver_let: y
+
+  sub_4m: "false"
+  sub_import_url: github://KaufHA/kauf-rgbww-bulbs/kauf-bulb.yaml
 
   sub_on_turn_on:  script_do_nothing
   sub_on_turn_off: script_do_nothing
@@ -69,6 +72,12 @@ external_components:
     refresh: never
   - source:
       type: git
+      url: https://github.com/KaufHA/common
+      ref: v2024.04.16
+    components: [web_server, web_server_base]
+    refresh: never
+  - source:
+      type: git
       url: https://github.com/KaufHA/kauf-rgbww-bulbs
     refresh: always
 
@@ -96,6 +105,11 @@ esphome:
 
   on_boot:
     then:
+        # set default values for template sensors, otherwise they are unknown.
+      - binary_sensor.template.publish:
+          id: sensor_4m
+          state: $sub_4m
+
       - script.execute: script_quick_boot
 
   min_version: 2024.5.0
@@ -149,6 +163,7 @@ ota:
 web_server:
   local: true
   disable: $disable_webserver
+  sensor_4m: $sub_4m
 
 
 # PWM outputs for each LED channel
@@ -279,6 +294,13 @@ select:
           if      ( x == "Print no packets" )        { id(kauf_light).set_ddp_debug(0); }
           else if ( x == "Print imperfect packets" ) { id(kauf_light).set_ddp_debug(1); }
           else if ( x == "Print all packets" )       { id(kauf_light).set_ddp_debug(2); }
+
+
+binary_sensor:
+  - platform: template
+    name: $friendly_name 4MiB
+    id: sensor_4m
+    disabled_by_default: $disable_entities
 
 
 # https://esphome.io/components/sensor/uptime.html
