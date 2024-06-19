@@ -21,7 +21,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.935"
+  project_ver_num: "1.936"
   project_ver_let: y
 
   sub_4m: "false"
@@ -108,6 +108,7 @@ esphome:
 
   min_version: 2024.6.0
 
+
 # https://esphome.io/components/button/index.html
 # https://esphome.io/components/button/restart.html
 button:
@@ -160,9 +161,9 @@ safe_mode:
 
 # https://esphome.io/components/web_server.html
 web_server:
-  local: true
   disable: $disable_webserver
   sensor_4m: $sub_4m
+  js_url: https://kaufha.com/v2/www.js
 
 
 # PWM outputs for each LED channel

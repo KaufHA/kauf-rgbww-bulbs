@@ -24,7 +24,9 @@ esphome:
   name: $name
   project:
     name: "Kauf.RGBWW"
-    version: "1.93(m)"
+    version: "1.936(m)"
+
+  min_version: 2024.6.0
 
 
 # https://esphome.io/components/wifi.html
@@ -43,6 +45,8 @@ captive_portal:     # https://esphome.io/components/captive_portal.html
 logger:             # https://esphome.io/components/logger.html
 api:                # https://esphome.io/components/api.html
 ota:                # https://esphome.io/components/ota.html
+  platform: esphome
+safe_mode:
 web_server:         # https://esphome.io/components/web_server.html
 
 
