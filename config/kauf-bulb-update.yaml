@@ -18,3 +18,8 @@ wifi:
   # add forced hash which isn't needed for dashboard import.
   # Allows saving wifi credentials across update.
   forced_hash: 2048874009
+
+
+# embed the web server's js file for binary update files
+web_server:
+  local: true
