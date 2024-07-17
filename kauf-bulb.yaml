@@ -21,7 +21,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.936"
+  project_ver_num: "1.937"
   project_ver_let: y
 
   sub_4m: "false"
@@ -68,7 +68,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/KaufHA/common
-      ref: v2024.06.18
+      ref: v2024.07.16
     refresh: never
   - source:
       type: git
@@ -148,10 +148,10 @@ api:
 
 # https://esphome.io/components/ota.html
 ota:
-  platform: esphome
-  on_error:
-    then:
-      - button.press: restart_button
+  - platform: esphome
+    on_error:
+      then:
+        - button.press: restart_button
 
 
 safe_mode:
