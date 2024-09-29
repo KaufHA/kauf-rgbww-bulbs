@@ -4,17 +4,32 @@ The recommended way to import a bulb into your ESPHome dashboard is through the 
 
 The friendly_name substitution is recommended and will not be automatically created by the ESPHome dashboard import.
 
+
+### Manually Creating YAML Config
+
+You can manually create a yaml file for new bulbs using the following yaml code.  Of note, there are now bulbs with 4m flash, whereas originally all bulbs had only 1m flash.  The housing of the bulb will indicate (4m) after the model number if the bulb has 4m flash.  As of September 2024, only BR-30 bulbs are being sold with 4m flash and have only just started being sold.  If your bulb has 4m flash, uncomment the 4m package line below and delete the 1m package line.
+
+Optionally, uncomment the use_address line and set it to the IP address of the corresponding bulb to initially flash the bulb.  Delete the use_address line after flashing once.
+
 ```
 substitutions:
   name: bedroom-lamp
   friendly_name: Bedroom Lamp
 
 packages:
+
+  # Bulbs with 1m flash use this package:
   kauf.rgbww: github://KaufHA/kauf-rgbww-bulbs/kauf-bulb.yaml
+
+  # Bulbs with 4m flash use this package instead:
+  # kauf.rgbww: github://KaufHA/kauf-rgbww-bulbs/config/kauf-bulb-4m.yaml
+
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+
+  # use_address: 192.168.x.x
 ```
 
 ## Repo Contents
