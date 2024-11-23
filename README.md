@@ -197,6 +197,29 @@ light:
 
 See [enabling-effects.md](https://github.com/KaufHA/kauf-rgbww-bulbs/blob/main/enabling-effects.md) for more details.
 
+
+## Change the Default On-State
+ESPHome's [initial_state](https://esphome.io/components/light/#base-light-configuration) light option can be used by importing a bulb into the ESPHome dashboard and adding the following yaml.  The substitution section should already exist, so just copy/paste the restore mode substitution into that existing section.  Edit the options under initial_state: to your liking.  After you recompile and upload the firmware, the bulb will always restore from loss of power to those settings.
+
+```
+substitutions:
+  light_restore_mode: ALWAYS_ON
+
+
+light:
+  - id: !extend kauf_light
+    initial_state:
+      state: on
+      brightness: 75%
+      color_mode: color_temperature
+      color_temperature: 2800K
+
+      # color_mode: rgb
+      # red: 100%
+      # green: 0%
+      # blue: 0%
+```
+
 ## Troubleshooting
 Some bulbs may begin color cycling when initially powered on.  This is due to a failure to clear the factory test routine when the bulbs were manufactured.  The color cycling will automatically end after 10 minutes.  The color cycling can also be terminated by flashing the bulb via an update bin file or the ESPHome dashboard.  Firmware version 1.86 adds a button in the web interface to stop the factory test routine.
 
