@@ -12,8 +12,9 @@ esphome:
             lambda: return (id(first_boot));
           then:
             - script.execute: script_factory_test
+            - lambda: wifi_wificomponent_id->set_fast_connect(true);
           else:
-            - lambda: wifi_wificomponent->disable_scanning = false;
+            - lambda: wifi_wificomponent_id->disable_scanning = false;
 
 
 button:
