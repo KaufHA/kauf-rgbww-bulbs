@@ -221,8 +221,14 @@ light:
 ```
 
 ## Troubleshooting
+
+### xLights Setup
+Check [this link](https://lightsonpreserve.com/configuring-kauf-bulbs/) for a third-part write-up of how to set up xLights to work with our bulbs.
+
+### Factory Routine
 Some bulbs may begin color cycling when initially powered on.  This is due to a failure to clear the factory test routine when the bulbs were manufactured.  The color cycling will automatically end after 10 minutes.  The color cycling can also be terminated by flashing the bulb via an update bin file or the ESPHome dashboard.  Firmware version 1.86 adds a button in the web interface to stop the factory test routine.
 
+### Other
 General troubleshooting ideas applicable to all products are located in the [Common repo's readme](https://github.com/KaufHA/common/blob/main/README.md#troubleshooting).
 
 ## Recommended Tasmota Template
