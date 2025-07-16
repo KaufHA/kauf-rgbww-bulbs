@@ -72,7 +72,7 @@ class LightTransitionTransformer : public LightTransformer {
 
     // RGB variables.  CT F for float value, CT I for integer mired value
     float red, green, blue, ct_f, ct_i, wb;
-    
+
     // ct is just straight linear interpolation.
     ct_f = ((end_ct-start_ct)*p) + start_ct;
     ct_i = 200*ct_f + 150; // need mireds for set_color_temperature function
@@ -88,7 +88,7 @@ class LightTransitionTransformer : public LightTransformer {
     LightColorValues kauf_display;
     kauf_display.set_color_mode(this->end_values_.get_color_mode());
     kauf_display.set_state(((this->end_values_.get_state() - this->start_values_.get_state()) * p) + this->start_values_.get_state());
-      
+
     kauf_display.set_red(red);
     kauf_display.set_green(green);
     kauf_display.set_blue(blue);
@@ -116,7 +116,7 @@ class LightTransitionTransformer : public LightTransformer {
 
     //  linear interpolation of the reversed gamma points, and then re-applying gamma.
     return kauf_gamma( ((end_rev-start_rev)*progress)+start_rev  );
-  
+
   }
 
 
@@ -133,10 +133,10 @@ class LightTransitionTransformer : public LightTransformer {
     float i1 = 384.0f/1023.0f;
     float i2 = 768.0f/1023.0f;
     float o1 = 192.0f/1023.0f;
-    float o2 = 576.0f/1023.0f;    
+    float o2 = 576.0f/1023.0f;
 
     if ( (x >= 0.0f) && (x <= i1) ) {
-      return x*(o1/i1);  
+      return x*(o1/i1);
     }
     else if ( x <= i2 ) {
       // compared to first section, everything has to subtract i1 or o1 to shift baseline down to 0 before doing the math
@@ -157,7 +157,7 @@ class LightTransitionTransformer : public LightTransformer {
     float o1 = 384.0f/1023.0f;
     float o2 = 768.0f/1023.0f;
     float i1 = 192.0f/1023.0f;
-    float i2 = 576.0f/1023.0f;    
+    float i2 = 576.0f/1023.0f;
 
     //everything else is the same
     if ( (x >= 0.0f) && (x <= i1) ) { return    x    *(  o1    /   i1); }
@@ -168,9 +168,9 @@ class LightTransitionTransformer : public LightTransformer {
   }
 
 
-  bool changing_color_mode_{false};
   LightColorValues end_values_{};
   LightColorValues intermediate_values_{};
+  bool changing_color_mode_{false};
 };
 
 class LightFlashTransformer : public LightTransformer {
@@ -226,8 +226,8 @@ class LightFlashTransformer : public LightTransformer {
 
  protected:
   LightState &state_;
-  uint32_t transition_length_;
   std::unique_ptr<LightTransformer> transformer_{nullptr};
+  uint32_t transition_length_;
   bool begun_lightstate_restore_;
 };
 

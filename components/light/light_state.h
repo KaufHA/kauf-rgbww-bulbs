@@ -24,7 +24,7 @@ namespace light {
 
 class LightOutput;
 
-enum LightRestoreMode {
+enum LightRestoreMode : uint8_t {
   LIGHT_RESTORE_DEFAULT_OFF,
   LIGHT_RESTORE_DEFAULT_ON,
   LIGHT_ALWAYS_OFF,
@@ -38,9 +38,7 @@ enum LightRestoreMode {
 struct LightStateRTCState {
   LightStateRTCState(ColorMode color_mode, bool state, float brightness, float color_brightness, float red, float green,
                      float blue, float white, float color_temp, float cold_white, float warm_white)
-      : color_mode(color_mode),
-        state(state),
-        brightness(brightness),
+      : brightness(brightness),
         color_brightness(color_brightness),
         red(red),
         green(green),
@@ -48,10 +46,12 @@ struct LightStateRTCState {
         white(white),
         color_temp(color_temp),
         cold_white(cold_white),
-        warm_white(warm_white) {}
+        warm_white(warm_white),
+        effect(0),
+        color_mode(color_mode),
+        state(state) {}
   LightStateRTCState() = default;
-  ColorMode color_mode{ColorMode::UNKNOWN};
-  bool state{false};
+  // Group 4-byte aligned members first
   float brightness{1.0f};
   float color_brightness{1.0f};
   float red{1.0f};
@@ -62,6 +62,9 @@ struct LightStateRTCState {
   float cold_white{1.0f};
   float warm_white{1.0f};
   uint32_t effect{0};
+  // Group smaller members at the end
+  ColorMode color_mode{ColorMode::UNKNOWN};
+  bool state{false};
 };
 
 /** This class represents the communication layer between the front-end MQTT layer and the
@@ -235,7 +238,7 @@ class LightState : public EntityBase, public Component {
   }
 
 
-protected:
+ protected:
   friend LightOutput;
   friend LightCall;
   friend class AddressableLight;
@@ -257,15 +260,24 @@ protected:
 
   /// Store the output to allow effects to have more access.
   LightOutput *output_;
-  /// Value for storing the index of the currently active effect. 0 if no effect is active
-  uint32_t active_effect_index_{};
   /// The currently active transformer for this light (transition/flash).
   std::unique_ptr<LightTransformer> transformer_{nullptr};
-  /// Whether the light value should be written in the next cycle.
-  bool next_write_{true};
-
+  /// List of effects for this light.
+  std::vector<LightEffect *> effects_;
   /// Object used to store the persisted values of the light.
   ESPPreferenceObject rtc_;
+  /// Value for storing the index of the currently active effect. 0 if no effect is active
+  uint32_t active_effect_index_{};
+  /// Default transition length for all transitions in ms.
+  uint32_t default_transition_length_{};
+  /// Transition length to use for flash transitions.
+  uint32_t flash_transition_length_{};
+  /// Gamma correction factor for the light.
+  float gamma_correct_{};
+  /// Whether the light value should be written in the next cycle.
+  bool next_write_{true};
+  // for effects, true if a transformer (transition) is active.
+  bool is_transformer_active_ = false;
 
   /** Callback to call when new values for the frontend are available.
    *
@@ -281,21 +293,11 @@ protected:
    */
   CallbackManager<void()> target_state_reached_callback_{};
 
-  /// Default transition length for all transitions in ms.
-  uint32_t default_transition_length_{};
-  /// Transition length to use for flash transitions.
-  uint32_t flash_transition_length_{};
-  /// Gamma correction factor for the light.
-  float gamma_correct_{};
-  /// Restore mode of the light.
-  LightRestoreMode restore_mode_;
   /// Initial state of the light.
   optional<LightStateRTCState> initial_state_{};
-  /// List of effects for this light.
-  std::vector<LightEffect *> effects_;
 
-  // for effects, true if a transformer (transition) is active.
-  bool is_transformer_active_ = false;
+  /// Restore mode of the light.
+  LightRestoreMode restore_mode_;
 
   bool use_wled_ = false;
   uint32_t ddp_debug_ = 0;
