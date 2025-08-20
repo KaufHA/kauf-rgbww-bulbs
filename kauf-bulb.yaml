@@ -21,7 +21,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.957"
+  project_ver_num: "1.958"
   project_ver_let: y
 
   sub_4m: "false"
@@ -68,7 +68,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/KaufHA/common
-      ref: v2025.07.16
+      ref: v2025.08.20
     refresh: never
   - source:
       type: git
@@ -106,7 +106,7 @@ esphome:
 
       - script.execute: script_quick_boot
 
-  min_version: 2025.7.0
+  min_version: 2025.8.0
 
   platformio_options:
     build_flags:
