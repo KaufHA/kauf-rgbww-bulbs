@@ -21,7 +21,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.958"
+  project_ver_num: "1.96"
   project_ver_let: y
 
   sub_4m: "false"
@@ -68,7 +68,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/KaufHA/common
-      ref: v2025.08.20
+      ref: v2025.08.26
     refresh: never
   - source:
       type: git
@@ -92,7 +92,7 @@ globals:
 esphome:
 
   name: $name
-
+  friendly_name: $friendly_name
   project:
     name: $project_name
     version: $project_ver_num($project_ver_let)
@@ -106,7 +106,7 @@ esphome:
 
       - script.execute: script_quick_boot
 
-  min_version: 2025.8.0
+  min_version: 2025.8.1
 
   platformio_options:
     build_flags:
@@ -118,7 +118,7 @@ esphome:
 button:
   - platform: restart
     id: restart_button
-    name: $friendly_name Restart Firmware
+    name: Restart Firmware
     entity_category: diagnostic
     disabled_by_default: $disable_entities
 
@@ -210,7 +210,7 @@ light:
     default_transition_length: 0ms
     icon: mdi:store-cog
     aux: true
-    name: $friendly_name Warm RGB
+    name: Warm RGB
     forced_hash: 4077116474
     forced_addr: 28
     global_addr: global_forced_addr
@@ -224,7 +224,7 @@ light:
     default_transition_length: 0ms
     icon: mdi:store-cog-outline
     aux: true
-    name: $friendly_name Cold RGB
+    name: Cold RGB
     forced_hash: 301094535
     forced_addr: 40
     global_addr: global_forced_addr
@@ -260,7 +260,7 @@ light:
 select:
 
   - platform: template
-    name: $friendly_name Effect
+    name: Effect
     id: effect
     optimistic: true
     options:
@@ -281,7 +281,7 @@ select:
     global_addr: global_forced_addr
 
   - platform: template
-    name: $friendly_name DDP Debug
+    name: DDP Debug
     id: select_ddp_debug
     optimistic: true
     options:
@@ -302,7 +302,7 @@ select:
 
 binary_sensor:
   - platform: template
-    name: $friendly_name 4MiB
+    name: 4MiB
     id: sensor_4m
     disabled_by_default: $disable_entities
 
@@ -310,7 +310,7 @@ binary_sensor:
 # https://esphome.io/components/sensor/uptime.html
 sensor:
   - platform: uptime
-    name: $friendly_name Uptime
+    name: Uptime
     update_interval: 60s
     entity_category: diagnostic
     disabled_by_default: $disable_entities
@@ -321,7 +321,7 @@ sensor:
 text_sensor:
   - platform: wifi_info
     ip_address:
-      name: $friendly_name IP Address
+      name: IP Address
       entity_category: diagnostic
       disabled_by_default: $disable_entities
 

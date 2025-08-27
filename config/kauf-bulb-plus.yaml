@@ -7,7 +7,7 @@ select:
 
   # default light state on boot
   - platform: template
-    name: $friendly_name Power On State
+    name: Power On State
     id: select_boot_state
     optimistic: true
     options:
@@ -44,7 +44,7 @@ select:
 # https://esphome.io/components/number/template.html
 number:      # set max power output for PWMs
   - platform: template
-    name: ${friendly_name} Max Power
+    name: Max Power
     min_value: 1
     max_value: 100
     step: 1
@@ -72,7 +72,7 @@ number:      # set max power output for PWMs
       - script.execute: script_save_changes
 
   - platform: template
-    name: ${friendly_name} Default Fade
+    name: Default Fade
     min_value: 0
     max_value: 5000
     step: 50
@@ -97,7 +97,7 @@ number:      # set max power output for PWMs
 switch:
   - platform: template
     id: switch_no_hass
-    name: $friendly_name No HASS
+    name: No HASS
     optimistic: true
     entity_category: config
     disabled_by_default: $disable_entities
