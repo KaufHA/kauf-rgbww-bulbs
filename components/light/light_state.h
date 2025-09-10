@@ -13,12 +13,14 @@
 
 
 // following needed for receiving and sending DDP packets.
-#include <vector>
 #include <memory>
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include "esphome/components/network/ip_address.h"
 #include "esphome/components/wifi/wifi_component.h"
+
+#include <vector>
+#include <strings.h>
 
 namespace esphome {
 namespace light {
