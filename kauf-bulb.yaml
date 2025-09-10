@@ -149,10 +149,11 @@ api:
 # https://esphome.io/components/ota.html
 ota:
   - platform: web_server
+    on_error:
+      - button.press: restart_button
   - platform: esphome
     on_error:
-      then:
-        - button.press: restart_button
+      - button.press: restart_button
 
 
 safe_mode:
