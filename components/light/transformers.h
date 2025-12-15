@@ -7,8 +7,7 @@
 #include "light_state.h"
 #include "light_transformer.h"
 
-namespace esphome {
-namespace light {
+namespace esphome::light {
 
 class LightTransitionTransformer : public LightTransformer {
  public:
@@ -228,5 +227,4 @@ class LightFlashTransformer : public LightTransformer {
   bool begun_lightstate_restore_;
 };
 
-}  // namespace light
-}  // namespace esphome
+}  // namespace esphome::light

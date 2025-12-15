@@ -7,8 +7,7 @@
 
 #include "esphome/components/globals/globals_component.h"
 
-namespace esphome {
-namespace light {
+namespace esphome::light {
 
 /// Interface to write LightStates to hardware.
 class LightOutput {
@@ -41,5 +40,4 @@ class LightOutput {
 
 };
 
-}  // namespace light
-}  // namespace esphome
+}  // namespace esphome::light
