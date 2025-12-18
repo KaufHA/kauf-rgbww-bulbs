@@ -21,7 +21,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.965"
+  project_ver_num: "1.966"
   project_ver_let: y
 
   sub_4m: "false"
@@ -235,7 +235,7 @@ light:
   - platform: kauf_rgbww
     id: kauf_light
     default_transition_length: $sub_default_transition_length
-    name: $friendly_name
+    name: ""
     red: pwm_red
     green: pwm_green
     blue: pwm_blue
