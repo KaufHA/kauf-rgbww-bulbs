@@ -162,7 +162,6 @@ safe_mode:
   num_attempts: $sub_ota_num_attempts
 
 
-
 # https://esphome.io/components/web_server.html
 web_server:
   disable: $disable_webserver
