@@ -21,7 +21,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.966"
+  project_ver_num: "1.967"
   project_ver_let: y
 
   sub_4m: "false"
@@ -39,11 +39,11 @@ substitutions:
   sub_warm_white_temp: 2800 Kelvin
   sub_cold_white_temp: 6600 Kelvin
 
-  sub_red_freq:   200 hz
-  sub_green_freq: 200 hz
-  sub_blue_freq:  200 hz
-  sub_cw_freq:    400 hz
-  sub_ww_freq:    400 hz
+  sub_red_freq:   125 hz
+  sub_green_freq: 125 hz
+  sub_blue_freq:  125 hz
+  sub_cw_freq:    125 hz
+  sub_ww_freq:    125 hz
 
   sub_reboot_req: '9'
   sub_ota_num_attempts: '15'
@@ -73,7 +73,8 @@ external_components:
   - source:
       type: git
       url: https://github.com/KaufHA/kauf-rgbww-bulbs
-    refresh: always
+      ref: c2025.12.0
+    refresh: never
 
 
 
@@ -133,6 +134,9 @@ wifi:
     ap_timeout: $wifi_ap_timeout
 
   min_auth_mode: WPA2
+
+  output_power: 14
+
 
 # https://esphome.io/components/captive_portal.html
 captive_portal:
