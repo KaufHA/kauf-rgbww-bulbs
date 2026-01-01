@@ -551,7 +551,8 @@ void LightState::set_immediately_(const LightColorValues &target, bool set_remot
 
 void LightState::disable_loop_if_idle_() {
   // Only disable loop if both transformer and effect are inactive, and no pending writes
-  if (this->transformer_ == nullptr && this->get_active_effect_() == nullptr && !this->next_write_) {
+  // KAUF: and if not using WLED/DDP
+  if (this->transformer_ == nullptr && this->get_active_effect_() == nullptr && !this->next_write_ && !this->use_wled_) {
     this->disable_loop();
   }
 }

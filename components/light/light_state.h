@@ -126,9 +126,21 @@ class LightState : public EntityBase, public Component {
   // functions added for WLED / DDP support
   void wled_apply();
   bool parse_frame_(const uint8_t *payload, uint16_t size);
-  void set_use_wled(bool use_wled) { this->use_wled_ = use_wled; }
-  void set_use_wled() { this->use_wled_ = true; }
-  void clr_use_wled() { this->use_wled_ = false; }
+
+  void set_use_wled(bool use_wled) {
+    this->use_wled_ = use_wled;
+    this->enable_loop();
+  }
+
+  void set_use_wled() {
+    this->use_wled_ = true;
+    this->enable_loop();
+  }
+
+  void clr_use_wled() {
+    this->use_wled_ = false;
+    this->enable_loop();
+  }
 
   void set_ddp_debug(int ddp_debug) { this->ddp_debug_ = ddp_debug; }
 
