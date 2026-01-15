@@ -72,6 +72,7 @@ class LightColorValues {
     this->set_warm_white(warm_white);
   }
 
+  // KAUF:
   // Indicator to custom light that values should be sent to PWM outputs as-is.
   // This happens during transitions when we apply Tasmota's fast gamma table
   // Also happens with values received from WLED DDP.
@@ -87,26 +88,7 @@ class LightColorValues {
    * @param completion The completion value. 0 -> start, 1 -> end.
    * @return The linearly interpolated LightColorValues.
    */
-  static LightColorValues lerp(const LightColorValues &start, const LightColorValues &end, float completion) {
-    // Directly interpolate the raw values to avoid getter/setter overhead.
-    // This is safe because:
-    // - All LightColorValues have their values clamped when set via the setters
-    // - std::lerp guarantees output is in the same range as inputs
-    // - Therefore the output doesn't need clamping, so we can skip the setters
-    LightColorValues v;
-    v.color_mode_ = end.color_mode_;
-    v.state_ = std::lerp(start.state_, end.state_, completion);
-    v.brightness_ = std::lerp(start.brightness_, end.brightness_, completion);
-    v.color_brightness_ = std::lerp(start.color_brightness_, end.color_brightness_, completion);
-    v.red_ = std::lerp(start.red_, end.red_, completion);
-    v.green_ = std::lerp(start.green_, end.green_, completion);
-    v.blue_ = std::lerp(start.blue_, end.blue_, completion);
-    v.white_ = std::lerp(start.white_, end.white_, completion);
-    v.color_temperature_ = std::lerp(start.color_temperature_, end.color_temperature_, completion);
-    v.cold_white_ = std::lerp(start.cold_white_, end.cold_white_, completion);
-    v.warm_white_ = std::lerp(start.warm_white_, end.warm_white_, completion);
-    return v;
-  }
+  static LightColorValues lerp(const LightColorValues &start, const LightColorValues &end, float completion);
 
   /** Normalize the color (RGB/W) component.
    *
@@ -145,6 +127,7 @@ class LightColorValues {
 
   /// Convert these light color values to an RGB representation and write them to red, green, blue.
   void as_rgb(float *red, float *green, float *blue, float gamma = 0, bool color_interlock = false) const {
+    // KAUF: always return RGB values.
     float brightness = this->state_ * this->brightness_ * this->color_brightness_;
     *red = gamma_correct(brightness * this->red_, gamma);
     *green = gamma_correct(brightness * this->green_, gamma);
@@ -203,6 +186,7 @@ class LightColorValues {
   /// Convert these light color values to a CT+BR representation with the given parameters.
   void as_ct(float color_temperature_cw, float color_temperature_ww, float *color_temperature, float *white_brightness,
              float gamma = 0) const {
+    // KAUF: Always return values
     const float white_level = this->white_;
     *color_temperature =
         (this->color_temperature_ - color_temperature_cw) / (color_temperature_ww - color_temperature_cw);

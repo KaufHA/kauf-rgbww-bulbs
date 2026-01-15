@@ -12,7 +12,7 @@
 #include "light_transformer.h"
 
 
-// following needed for receiving and sending DDP packets.
+// KAUF: following needed for receiving and sending DDP packets.
 #include <memory>
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
@@ -102,7 +102,7 @@ class LightState : public EntityBase, public Component {
 
   LightTraits get_traits();
 
-  // lets the main light know whether the aux light has changed so it can update if so.
+  // KAUF: lets the main light know whether the aux light has changed so it can update if so.
   bool has_changed = false;
 
   /// Make a light state call
@@ -120,10 +120,10 @@ class LightState : public EntityBase, public Component {
   /// Shortly after HARDWARE.
   float get_setup_priority() const override;
 
-  // for receiving UDP packets
+  // KAUF: for receiving UDP packets
   std::unique_ptr<WiFiUDP> udp_;
 
-  // functions added for WLED / DDP support
+  // KAUF: functions added for WLED / DDP support
   void wled_apply();
   bool parse_frame_(const uint8_t *payload, uint16_t size);
 
@@ -177,9 +177,7 @@ class LightState : public EntityBase, public Component {
   LightOutput *get_output() const;
 
   /// Return the name of the current effect, or if no effect is active "None".
-  std::string get_effect_name();
-  /// Return the name of the current effect as StringRef (for API usage)
-  StringRef get_effect_name_ref();
+  StringRef get_effect_name();
 
   /** Add a listener for remote values changes.
    * Listener is notified when the light's remote values change (state, brightness, color, etc.)
@@ -228,11 +226,11 @@ class LightState : public EntityBase, public Component {
 
   /// Get effect index by name. Returns 0 if effect not found.
   uint32_t get_effect_index(const std::string &effect_name) const {
-    if (strcasecmp(effect_name.c_str(), "none") == 0) {
+    if (str_equals_case_insensitive(effect_name, "none")) {
       return 0;
     }
     for (size_t i = 0; i < this->effects_.size(); i++) {
-      if (strcasecmp(effect_name.c_str(), this->effects_[i]->get_name()) == 0) {
+      if (str_equals_case_insensitive(effect_name, this->effects_[i]->get_name())) {
         return i + 1;  // Effects are 1-indexed in active_effect_index_
       }
     }
@@ -255,7 +253,7 @@ class LightState : public EntityBase, public Component {
     if (index > this->effects_.size()) {
       return "";  // Invalid index
     }
-    return this->effects_[index - 1]->get_name();
+    return std::string(this->effects_[index - 1]->get_name());
   }
 
   /// The result of all the current_values_as_* methods have gamma correction applied.
@@ -288,10 +286,10 @@ class LightState : public EntityBase, public Component {
    */
   bool is_transformer_active();
 
-  /// Save the current remote_values to the preferences
+  // KAUF: Save the current remote_values to the preferences, moved from protected section
   void save_remote_values_();
 
-
+  // KAUF: forced addr/hash stuff
   bool has_forced_hash = false;
   uint32_t forced_hash = 0;
   void set_forced_hash(uint32_t hash_value) {
@@ -331,6 +329,8 @@ class LightState : public EntityBase, public Component {
 
   /// Internal method to set the color values to target immediately (with no transition).
   void set_immediately_(const LightColorValues &target, bool set_remote_values);
+
+  // KAUF: moved save_remote_valeus_() to public functions
 
   /// Disable loop if neither transformer nor effect is active
   void disable_loop_if_idle_();
@@ -387,6 +387,7 @@ class LightState : public EntityBase, public Component {
   /// Restore mode of the light.
   LightRestoreMode restore_mode_;
 
+  // KAUF: variables for wled/ddp
   bool use_wled_ = false;
   uint32_t ddp_debug_ = 0;
 

@@ -40,7 +40,7 @@ void LightState::setup() {
     recovered = *this->initial_state_;
   }
 
-  // set up rtc_ no matter what in case mode changes later on.
+  // KAUF: set up rtc_ no matter what in case mode changes later on.
   if ( this->has_global_forced_addr ) { id(this->global_forced_addr) = this->forced_addr; }
   if ( this->has_forced_hash ) {
     this->rtc_ = global_preferences->make_preference<LightStateRTCState>(this->forced_hash);
@@ -118,10 +118,10 @@ void LightState::loop() {
     effect->apply();
   }
 
-  // run wled / ddp functions if enabled
+  // KAUF: run wled / ddp functions if enabled
   if ( this->use_wled_ ) {wled_apply();}
 
-  // if not enabled but UPD is configured, stop UDP and reset bulb values
+  // KAUF: if not enabled but UPD is configured, stop UDP and reset bulb values
   else if (udp_) {
 
     // stop listening on udp port
@@ -162,7 +162,7 @@ void LightState::loop() {
     }
   }
 
-  // check if aux lights have changed and refresh main light if so.
+  // KAUF: check if aux lights have changed and refresh main light if so.
   if ( !this->output_->is_aux() ) {
     if ( this->output_->warm_rgb->has_changed || this->output_->cold_rgb->has_changed ) {
       ESP_LOGV("KAUF_OUTPUT","warm or cold rgb changed");
@@ -182,7 +182,7 @@ void LightState::loop() {
 }
 
 
-// KAUF - shell of this function came from the stock ESPHome WLED component.
+// KAUF: shell of this function came from the stock ESPHome WLED component.
 // We changed the port and added DDP functionality.
 void LightState::wled_apply() {
 
@@ -219,7 +219,8 @@ void LightState::wled_apply() {
 
     // get current ip address, quit if 254.  Not going to forward to 255.
     network::IPAddress addr = wifi::global_wifi_component->get_ip_addresses()[0];
-    uint8_t addr4 = ip4_addr4_val(addr.ip_addr_);
+    std::string ip_str = addr.str();
+    uint8_t addr4 = (uint8_t)atoi(ip_str.c_str() + ip_str.rfind('.') + 1);
 
     if ( addr4 >= 254 ) {
       ESP_LOGE("KAUF WLED", "DDP chaining force stopped at address *.254");
@@ -387,6 +388,7 @@ bool LightState::parse_frame_(const uint8_t *payload, uint16_t size) {
   return true;
 
 }
+// /KAUF:
 
 float LightState::get_setup_priority() const { return setup_priority::HARDWARE - 1.0f; }
 
@@ -403,19 +405,11 @@ void LightState::publish_state() {
 
 LightOutput *LightState::get_output() const { return this->output_; }
 
-static constexpr const char *EFFECT_NONE = "None";
 static constexpr auto EFFECT_NONE_REF = StringRef::from_lit("None");
 
-std::string LightState::get_effect_name() {
+StringRef LightState::get_effect_name() {
   if (this->active_effect_index_ > 0) {
     return this->effects_[this->active_effect_index_ - 1]->get_name();
-  }
-  return EFFECT_NONE;
-}
-
-StringRef LightState::get_effect_name_ref() {
-  if (this->active_effect_index_ > 0) {
-    return StringRef(this->effects_[this->active_effect_index_ - 1]->get_name());
   }
   return EFFECT_NONE_REF;
 }
@@ -559,7 +553,7 @@ void LightState::disable_loop_if_idle_() {
 
 void LightState::save_remote_values_() {
 
-  // don't actually save if not in a saving mode
+  // KAUF: don't actually save if not in a saving mode
   if ( (this->restore_mode_ != LIGHT_ALWAYS_OFF) && (this->restore_mode_ != LIGHT_ALWAYS_ON) ) {
     LightStateRTCState saved;
     saved.color_mode = this->remote_values.get_color_mode();
