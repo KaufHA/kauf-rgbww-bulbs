@@ -1,6 +1,5 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-import esphome.final_validate as fv
 from esphome.components import light, output
 from esphome.const import (
     CONF_BLUE,
@@ -77,32 +76,6 @@ CONFIG_SCHEMA = cv.All(
     ),
     light.validate_color_temperature_channels,
     validate_kauf_light
-)
-
-
-def final_validate(config):
-    if ("esp8266" in fv.full_config.get()):
-        esp8266_config = fv.full_config.get()["esp8266"]
-        if ( ("start_free" in esp8266_config) and ("forced_addr" in config)):
-            if ( (esp8266_config["start_free"] <= config["forced_addr"] + 11) ):
-                start_free_num = esp8266_config["start_free"]
-                forced_addr_num = config["forced_addr"]
-                raise cv.Invalid(
-                    f"Forced address ({forced_addr_num}) conflicts with esp8266: start_free ({start_free_num})"
-                )
-    else:
-        if ("forced_addr" in config):
-            raise cv.Invalid(
-                "Forced_addr is only compatible with esp8266 platform"
-            )
-
-    if "forced_addr" in config and "global_addr" not in config:
-        raise cv.Invalid(
-            "Forced_addr requires global_addr"
-        )
-
-FINAL_VALIDATE_SCHEMA = cv.All(
-    final_validate,
 )
 
 
