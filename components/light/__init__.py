@@ -270,13 +270,10 @@ async def setup_light_core_(light_var, output_var, config):
     if web_server_config := config.get(CONF_WEB_SERVER):
         await web_server.add_entity_config(light_var, web_server_config)
 
-    # set forced hash if it exists
+    # KAUF: forced addr/hash
     if "forced_hash" in config:
-        cg.add_define("KAUF_USE_FORCED_HASH")
         cg.add(light_var.set_forced_hash(config["forced_hash"]))
-
     if "forced_addr" in config:
-        cg.add_define("KAUF_USE_FORCED_ADDR")
         cg.add(light_var.set_forced_addr(config["forced_addr"]))
 
 
