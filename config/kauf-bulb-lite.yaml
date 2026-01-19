@@ -20,7 +20,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.966"
+  project_ver_num: "1.969"
   project_ver_let: l
 
   sub_4m: "false"
@@ -37,11 +37,11 @@ substitutions:
   sub_warm_white_temp: 2800 Kelvin
   sub_cold_white_temp: 6600 Kelvin
 
-  sub_red_freq:   200 hz
-  sub_green_freq: 200 hz
-  sub_blue_freq:  200 hz
-  sub_cw_freq:    400 hz
-  sub_ww_freq:    400 hz
+  sub_red_freq:   125 hz
+  sub_green_freq: 125 hz
+  sub_blue_freq:  125 hz
+  sub_cw_freq:    125 hz
+  sub_ww_freq:    125 hz
 
   sub_reboot_req: '9'
   sub_ota_num_attempts: '15'
@@ -85,7 +85,7 @@ esphome:
 
       - script.execute: script_quick_boot
 
-  min_version: 2025.10.0
+  min_version: 2026.1.0
 
 
 # https://esphome.io/components/button/index.html
@@ -104,11 +104,12 @@ wifi:
   ssid: initial_ap
   password: asdfasdfasdfasdf
 
-  # ESPHome default is 20, 17 is recommended.
-  output_power: 17
-
   ap:
     ap_timeout: $wifi_ap_timeout
+
+  min_auth_mode: WPA2
+
+  output_power: 14
 
 
 # https://esphome.io/components/captive_portal.html
@@ -259,6 +260,10 @@ script:
 
             # short delay
             - delay: 2s
+
+            # wait until attempt to load credentials has been made, that way we know the new ones can be saved properly.
+            - wait_until:
+                lambda: return ( wifi_wificomponent_id->is_in_loop_state() );
 
             # the save_wifi_sta function reboots.
             - lambda: |-

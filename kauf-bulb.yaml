@@ -21,7 +21,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.968"
+  project_ver_num: "1.969"
   project_ver_let: y
 
   sub_4m: "false"
@@ -60,7 +60,6 @@ esp8266:
   board: esp01_1m
   restore_from_flash: true
   start_free: 76
-  global_addr: global_forced_addr
 
 
 # https://esphome.io/components/external_components.html
@@ -68,22 +67,18 @@ external_components:
   - source:
       type: git
       url: https://github.com/KaufHA/common
-      ref: v2025.12.16
+      ref: v2026.01.16
     refresh: never
   - source:
       type: git
       url: https://github.com/KaufHA/kauf-rgbww-bulbs
-      ref: c2025.12.1
+      ref: c2026.1.2
     refresh: never
 
 
 
 # https://esphome.io/guides/automations.html#global-variables
 globals:
-  - id: global_forced_addr
-    type: int
-    restore_value: no
-    initial_value: '12345'
   - id: global_quick_boot_count
     type: int
     restore_value: yes
@@ -108,7 +103,7 @@ esphome:
 
       - script.execute: script_quick_boot
 
-  min_version: 2025.12.0
+  min_version: 2026.1.0
 
 
 # https://esphome.io/components/button/index.html
@@ -128,7 +123,6 @@ wifi:
   password: asdfasdfasdfasdf
 
   forced_addr: 0
-  global_addr: global_forced_addr
 
   ap:
     ap_timeout: $wifi_ap_timeout
@@ -216,7 +210,6 @@ light:
     name: Warm RGB
     forced_hash: 4077116474
     forced_addr: 28
-    global_addr: global_forced_addr
     disabled_by_default: $disable_entities
     restore_mode: RESTORE_DEFAULT_OFF
 
@@ -230,7 +223,6 @@ light:
     name: Cold RGB
     forced_hash: 301094535
     forced_addr: 40
-    global_addr: global_forced_addr
     disabled_by_default: $disable_entities
     restore_mode: RESTORE_DEFAULT_OFF
 
@@ -250,7 +242,6 @@ light:
     cold_white_color_temperature: $sub_cold_white_temp
     forced_hash: 2723974766
     forced_addr: 52
-    global_addr: global_forced_addr
     restore_mode: $light_restore_mode
     on_turn_on:
       - script.execute: $sub_on_turn_on
@@ -281,7 +272,6 @@ select:
     entity_category: config
     forced_hash: 5841966
     forced_addr: 66
-    global_addr: global_forced_addr
 
   - platform: template
     name: DDP Debug
@@ -372,7 +362,7 @@ script:
 
             # wait until attempt to load credentials has been made, that way we know the new ones can be saved properly.
             - wait_until:
-                lambda: return ( wifi_wificomponent_id->tried_loading_creds );
+                lambda: return ( wifi_wificomponent_id->is_in_loop_state() );
 
             # the save_wifi_sta function reboots.
             - lambda: |-

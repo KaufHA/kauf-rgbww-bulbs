@@ -1,5 +1,5 @@
 packages:
-  kauf.rgbww: github://KaufHA/kauf-rgbww-bulbs/kauf-bulb.yaml
+  kauf.rgbww: !include ../kauf-bulb.yaml # github://KaufHA/kauf-rgbww-bulbs/kauf-bulb.yaml
 
 # https://esphome.io/components/select/index.html
 # https://esphome.io/components/select/template.html
@@ -37,7 +37,6 @@ select:
     entity_category: config
     forced_hash: 3524332562
     forced_addr: 64
-    global_addr: global_forced_addr
 
 
 # https://esphome.io/components/number/index.html
@@ -59,7 +58,6 @@ number:      # set max power output for PWMs
     mode: box
     forced_hash: 4189052763
     forced_addr: 74
-    global_addr: global_forced_addr
     on_value:
       - lambda: |-
           float new_power = ((float)x)/100.0f;
@@ -86,7 +84,6 @@ number:      # set max power output for PWMs
     mode: box
     forced_hash: 3133748577
     forced_addr: 72
-    global_addr: global_forced_addr
     on_value:
       - lambda: id(kauf_light).set_default_transition_length(x);
       - script.execute: script_save_changes
@@ -104,7 +101,6 @@ switch:
     icon: mdi:toggle-switch-off-outline
     forced_hash: 706743398
     forced_addr: 70
-    global_addr: global_forced_addr
     restore_mode: RESTORE_DEFAULT_ON
     on_turn_on:
       - lambda: |-

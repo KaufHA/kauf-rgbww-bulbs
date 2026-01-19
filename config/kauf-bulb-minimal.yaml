@@ -24,9 +24,9 @@ esphome:
   name: $name
   project:
     name: "Kauf.RGBWW"
-    version: "1.936(m)"
+    version: "1.969(m)"
 
-  min_version: 2024.6.0
+  min_version: 2026.1.0
 
 
 # https://esphome.io/components/wifi.html
@@ -41,11 +41,15 @@ wifi:
 
   ap:
 
+  min_auth_mode: WPA2
+
+
 captive_portal:     # https://esphome.io/components/captive_portal.html
 logger:             # https://esphome.io/components/logger.html
 api:                # https://esphome.io/components/api.html
 ota:                # https://esphome.io/components/ota.html
-  platform: esphome
+  - platform: esphome
+  - platform: web_server
 safe_mode:
 web_server:         # https://esphome.io/components/web_server.html
 
@@ -55,42 +59,42 @@ web_server:         # https://esphome.io/components/web_server.html
 output:
   - platform: esp8266_pwm
     pin: $sub_red_pin
-    frequency: 200 Hz
+    frequency: 125 Hz
     id: pwm_red
     max_power: .8
   - platform: esp8266_pwm
     pin: $sub_green_pin
-    frequency: 200 Hz
+    frequency: 125 Hz
     id: pwm_green
     max_power: .8
   - platform: esp8266_pwm
     pin: $sub_blue_pin
-    frequency: 200 Hz
+    frequency: 125 Hz
     id: pwm_blue
     max_power: .8
   - platform: esp8266_pwm
     pin: $sub_cw_pin
-    frequency: 400 Hz
+    frequency: 125 Hz
     id: pwm_cw
     max_power: .8
   - platform: esp8266_pwm
     pin: $sub_ww_pin
-    frequency: 400 Hz
+    frequency: 125 Hz
     id: pwm_ww
     max_power: .8
 
 # https://esphome.io/components/light/index.html
 light:
   - platform: rgbww
-    name: $friendly_name
+    name: ""
     id: kauf_light
     red: pwm_red
     green: pwm_green
     blue: pwm_blue
     cold_white: pwm_cw
     warm_white: pwm_ww
-    cold_white_color_temperature: 6500 K
-    warm_white_color_temperature: 2700 K
+    cold_white_color_temperature: 6600 K
+    warm_white_color_temperature: 2800 K
     restore_mode: RESTORE_DEFAULT_ON
     # constant_brightness: true
     # color_interlock: true
