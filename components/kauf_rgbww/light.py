@@ -1,6 +1,7 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import light, output
+from esphome.core import CORE
 from esphome.const import (
     CONF_BLUE,
     CONF_COLOR_INTERLOCK,
@@ -12,10 +13,21 @@ from esphome.const import (
     CONF_WARM_WHITE,
     CONF_COLD_WHITE_COLOR_TEMPERATURE,
     CONF_WARM_WHITE_COLOR_TEMPERATURE,
+    CONF_FREQUENCY,
+    CONF_ID,
 )
 
 kauf_rgbww_ns = cg.esphome_ns.namespace('kauf_rgbww')
 KaufRGBWWLight = kauf_rgbww_ns.class_('KaufRGBWWLight', light.LightOutput)
+
+def get_pwm_steps_for_output(output_id):
+    """Look up output frequency and return PWM steps (1,000,000 / frequency)."""
+    for out_conf in CORE.config.get("output", []):
+        out_id = out_conf.get(CONF_ID)
+        if out_id and out_id.id == output_id:
+            freq = out_conf.get(CONF_FREQUENCY, 1000.0)
+            return int(1000000 / freq)
+    return 1000  # fallback default
 
 def validate_kauf_light(value):
     if (value["aux"]):
@@ -113,6 +125,14 @@ async def to_code(config):
         cg.add(var.set_cold_white(cwhite))
         wwhite = await cg.get_variable(config[CONF_WARM_WHITE])
         cg.add(var.set_warm_white(wwhite))
+
+        # Calculate PWM steps for each channel based on output frequency
+        # steps = 1,000,000 / frequency (e.g., 125Hz -> 8000 steps, 1000Hz -> 1000 steps)
+        cg.add_define("KAUF_PWM_STEPS_RED", get_pwm_steps_for_output(config[CONF_RED].id))
+        cg.add_define("KAUF_PWM_STEPS_GREEN", get_pwm_steps_for_output(config[CONF_GREEN].id))
+        cg.add_define("KAUF_PWM_STEPS_BLUE", get_pwm_steps_for_output(config[CONF_BLUE].id))
+        cg.add_define("KAUF_PWM_STEPS_COLD", get_pwm_steps_for_output(config[CONF_COLD_WHITE].id))
+        cg.add_define("KAUF_PWM_STEPS_WARM", get_pwm_steps_for_output(config[CONF_WARM_WHITE].id))
 
     # register light
     await light.register_light(var, config)

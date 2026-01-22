@@ -4,12 +4,11 @@
 #include "esphome/components/output/float_output.h"
 #include "esphome/components/light/light_output.h"
 
-namespace esphome {
-namespace kauf_rgbww {
+namespace esphome::kauf_rgbww {
 
 class KaufRGBWWLight : public light::LightOutput, public Component {
- public:
-  void setup() override;
+  public:
+
   light::LightTraits get_traits() override;
 
   void set_red(output::FloatOutput *red) { red_ = red; }
@@ -23,7 +22,6 @@ class KaufRGBWWLight : public light::LightOutput, public Component {
   void set_color_interlock(bool color_interlock) { color_interlock_ = color_interlock; }
 
   void write_state(light::LightState *state) override;
-  void dump_config() override;
 
   void set_outputs(float red, float green, float blue, float white_brightness = 0.0f);
 
@@ -43,12 +41,14 @@ class KaufRGBWWLight : public light::LightOutput, public Component {
   float min_mireds = 150.0f;
   float max_mireds = 350.0f;
 
-  float max_white = .75; // applies only to rgb blending into white.  Color temp mode will still go to 1.0 in combination
-  float max_blue  = .6;  // blue really overpowers red and green.  .6 scaling factor seems about right.
+  // limiting coefficients for white and blue.  Must be between 0.0 and 1.0.
+  float max_white = .75f; // applies only to rgb blending into white.  Color temp mode will still go to 1.0 in combination
+  float max_blue  = .6f;  // blue really overpowers red and green.  .6 scaling factor seems about right.
 
-  float ct = .5;         // CT variable declared up here so that it gets saved across calls to write_state.
+  // CT variable declared up here so that it gets saved across calls to write_state.
+  // that way we save most recent color temp for white blending when we switch over to RGB
+  float ct = .5f;
 
 };
 
-} //namespace kauf_rgbww
-} //namespace esphome
+} //namespace esphome::kauf_rgbww

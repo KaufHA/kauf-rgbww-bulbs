@@ -1,14 +1,9 @@
 #include "esphome/core/log.h"
 #include "kauf_rgbww.h"
 
-namespace esphome {
-namespace kauf_rgbww {
+namespace esphome::kauf_rgbww {
 
 static const char *TAG = "kauf_rgbww.light";
-
-void KaufRGBWWLight::setup() {
-
-}
 
 light::LightTraits KaufRGBWWLight::get_traits() {
     auto traits = light::LightTraits();
@@ -96,51 +91,75 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
     }
 
 
-    // grab values from aux lights.  defaults are rgb all 0 and white maxed out at 1.0.
-    float warm_red=0.0f, warm_green=0.0f, warm_blue=0.0f, warm_white=1.0f;
-    float cold_red=0.0f, cold_green=0.0f, cold_blue=0.0f, cold_white=1.0f;
-
-    // if aux light is on, get its values
-    if ( warm_rgb->current_values.is_on() ) { warm_rgb->current_values_as_rgbw(&warm_red, &warm_green, &warm_blue, &warm_white); }
-    if ( cold_rgb->current_values.is_on() ) { cold_rgb->current_values_as_rgbw(&cold_red, &cold_green, &cold_blue, &cold_white); }
-
-
-//     ESP_LOGV("Kauf Light", "Input RGBW: - R:%f G:%f B:%f W:%f CT:%f)", red, green, blue, white_brightness, ct);
-//     ESP_LOGV("Kauf Light", " Warm RGBW: - R:%f G:%f B:%f W:%f)", warm_red, warm_green, warm_blue, warm_white);
-//     ESP_LOGV("Kauf Light", " Cold RGBW: - R:%f G:%f B:%f W:%f)", cold_red, cold_green, cold_blue, cold_white);
-
-
     // get minimum of input rgb values for blending into white
     float min_val;
-    if ( (red <= green) && (red <= blue) ) { min_val = red; } else
+    if ( (red <= green) && (red <= blue) ) { min_val = red;   } else
     if ( green <= blue )                   { min_val = green; } else
-                                            { min_val = blue; }
+                                           { min_val = blue;  }
 
 
-    // calculate output values:
-    //                          color in
-    //                          |       reduced by amount going to white blend
-    //                          |       |         add cold_rgb scaled to white brightness and color temp
-    //                          |       |         |                                          add warm_rgb scaled to white brightness and color temp
-    //                          |       |         |                                          |                                        limit blue to make RGB more accurate
-    float scaled_red   = clamp( red   - min_val + (cold_red   * white_brightness * (1-ct)) + (warm_red   * white_brightness * ct) /*  |   */ , 0.0f, 1.0f);
-    float scaled_green = clamp( green - min_val + (cold_green * white_brightness * (1-ct)) + (warm_green * white_brightness * ct) /*  |   */ , 0.0f, 1.0f);
-    float scaled_blue  = clamp((blue  - min_val + (cold_blue  * white_brightness * (1-ct)) + (warm_blue  * white_brightness * ct)) * max_blue, 0.0f, 1.0f);
+    float scaled_red, scaled_green, scaled_blue, scaled_warm, scaled_cold;
 
-    //                            white blend amount, scale with max white since 100% white is too powerful for RGB colors
-    //                            |                     white brightness, scale with aux white in case aux light indicates to turn down white channel
-    //                            |                     |                                scale both previous values per color temp
-    float scaled_warm  = clamp( ((min_val*max_white) + (white_brightness*warm_white)) *    ct , 0.0f, 1.0f);
-    float scaled_cold  = clamp( ((min_val*max_white) + (white_brightness*cold_white)) * (1-ct), 0.0f, 1.0f);
+    // see whether aux light are both off so we can do a simplified path
+    if (!warm_rgb->current_values.is_on() && !cold_rgb->current_values.is_on()) {
+
+        scaled_red   =  red   - min_val;
+        scaled_green =  green - min_val;
+        scaled_blue  = (blue  - min_val) * max_blue;
+
+        float white_blend = (min_val * max_white) + white_brightness;
+        scaled_warm = white_blend * ct;
+        scaled_cold = white_blend * (1.0f - ct);
+       
+    }
+
+    else {
+
+        // grab values from aux lights.  defaults are rgb all 0 and white maxed out at 1.0.
+        float warm_red=0.0f, warm_green=0.0f, warm_blue=0.0f, warm_white=1.0f;
+        float cold_red=0.0f, cold_green=0.0f, cold_blue=0.0f, cold_white=1.0f;
+
+        // if aux light is on, get its values
+        if ( warm_rgb->current_values.is_on() ) { warm_rgb->current_values_as_rgbw(&warm_red, &warm_green, &warm_blue, &warm_white); }
+        if ( cold_rgb->current_values.is_on() ) { cold_rgb->current_values_as_rgbw(&cold_red, &cold_green, &cold_blue, &cold_white); }
 
 
-    // round up to the nearest thousandth
-    // PWM is set to 1000Hz which gives 1000 possible PWM steps
-    scaled_red   = ceil(scaled_red   * 1000)/1000;
-    scaled_green = ceil(scaled_green * 1000)/1000;
-    scaled_blue  = ceil(scaled_blue  * 1000)/1000;
-    scaled_cold  = ceil(scaled_cold  * 1000)/1000;
-    scaled_warm  = ceil(scaled_warm  * 1000)/1000;
+        // ESP_LOGV("Kauf Light", "Input RGBW: - R:%f G:%f B:%f W:%f CT:%f)", red, green, blue, white_brightness, ct);
+        // ESP_LOGV("Kauf Light", " Warm RGBW: - R:%f G:%f B:%f W:%f)", warm_red, warm_green, warm_blue, warm_white);
+        // ESP_LOGV("Kauf Light", " Cold RGBW: - R:%f G:%f B:%f W:%f)", cold_red, cold_green, cold_blue, cold_white);
+
+        // calculate output values:
+        //                    color in
+        //                    |       reduced by amount going to white blend
+        //                    |       |          add cold_rgb scaled to white brightness and color temp
+        //                    |       |          |                                             add warm_rgb scaled to white brightness and color temp
+        //                    |       |          |                                             |                                       reduce blue to make RGB more accurate
+        scaled_red   = clamp( red   - min_val + (cold_red   * white_brightness * (1.0f-ct)) + (warm_red   * white_brightness * ct) /*  |   */ , 0.0f, 1.0f);
+        scaled_green = clamp( green - min_val + (cold_green * white_brightness * (1.0f-ct)) + (warm_green * white_brightness * ct) /*  |   */ , 0.0f, 1.0f);
+        scaled_blue  = clamp((blue  - min_val + (cold_blue  * white_brightness * (1.0f-ct)) + (warm_blue  * white_brightness * ct)) * max_blue, 0.0f, 1.0f);
+
+        //                      white blend amount, scale with max white since 100% white is too powerful for RGB colors
+        //                      |                     white brightness, scale with aux white in case aux light indicates to turn down white channel
+        //                      |                     |                                     scale both previous values per color temp
+        scaled_warm  = clamp( ((min_val*max_white) + (white_brightness*warm_white)) *       ct , 0.0f, 1.0f);
+        scaled_cold  = clamp( ((min_val*max_white) + (white_brightness*cold_white)) * (1.0f-ct), 0.0f, 1.0f);
+
+    }
+
+    // round up to the nearest PWM step to prevent near-zero values from rounding to zero
+    // this might get moved into the warm_rgb/cold_rgb path because the simplified path just uses 
+    // values directly from the esphome light component more-or-less.   If someone sets a very low
+    // brightness on the simplified path, it's probably intentional and close to a "real" value,
+    // not a floating point artifact.  Keepin it here for now because I think the ct multiplication
+    // does end up giving some pretty low white values.
+
+    // I could also see removing these, but there were some complaints that long fades were turning off
+    // way too soon because the values rounded down to zero.
+    scaled_red   = ceil(scaled_red   * KAUF_PWM_STEPS_RED  ) / KAUF_PWM_STEPS_RED;
+    scaled_green = ceil(scaled_green * KAUF_PWM_STEPS_GREEN) / KAUF_PWM_STEPS_GREEN;
+    scaled_blue  = ceil(scaled_blue  * KAUF_PWM_STEPS_BLUE ) / KAUF_PWM_STEPS_BLUE;
+    scaled_cold  = ceil(scaled_cold  * KAUF_PWM_STEPS_COLD ) / KAUF_PWM_STEPS_COLD;
+    scaled_warm  = ceil(scaled_warm  * KAUF_PWM_STEPS_WARM ) / KAUF_PWM_STEPS_WARM;
 
 
     ESP_LOGV("Kauf Light", "Setting Levels - R:%f G:%f B:%f CW:%f WW:%f)", scaled_red, scaled_green, scaled_blue, scaled_cold, scaled_warm);
@@ -152,14 +171,6 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
     this->cold_white_->set_level(scaled_cold);
     this->warm_white_->set_level(scaled_warm);
 
-//  }
-
-
 }
 
-void KaufRGBWWLight::dump_config(){
-    ESP_LOGCONFIG(TAG, "Kauf RGBWW custom light");
-}
-
-} //namespace kauf_rgbww
-} //namespace esphome
+} //namespace esphome::kauf_rgbww
