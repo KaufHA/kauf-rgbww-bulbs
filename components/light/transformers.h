@@ -12,8 +12,13 @@ namespace esphome::light {
 class LightTransitionTransformer : public LightTransformer {
  public:
 
+  // KAUF: variables for start and end points
   float start_r, start_g, start_b, start_ct, start_wb;
   float end_r, end_g, end_b, end_ct, end_wb;
+
+  // KAUF: precomputed reverse gamma values (computed once in start(), used every frame)
+  float start_r_rev, start_g_rev, start_b_rev, start_wb_rev;
+  float end_r_rev, end_g_rev, end_b_rev, end_wb_rev;
 
   void start() override {
     // When turning light on from off state, use target state and only increase brightness from zero.
@@ -22,7 +27,7 @@ class LightTransitionTransformer : public LightTransformer {
       this->start_values_.set_brightness(0.0f);
     }
 
-    // if starting in RGB, clear white brightness and vice versa
+    // KAUF: if starting in RGB, clear white brightness and vice versa
     if ( this->start_values_.get_color_mode() & ColorCapability::RGB) {
       this->start_values_.set_white(0.0f);
       this->start_values_.set_color_temperature(this->target_values_.get_color_temperature());
@@ -42,7 +47,7 @@ class LightTransitionTransformer : public LightTransformer {
       this->end_values_ = LightColorValues(this->target_values_);
     }
 
-    // if ending in RGB, clear white brightness and vice versa
+    // KAUF: if ending in RGB, clear white brightness and vice versa
     if ( this->end_values_.get_color_mode() & ColorCapability::RGB) {
       this->end_values_.set_white(0.0f);
       this->end_values_.set_color_temperature(this->start_values_.get_color_temperature());
@@ -56,6 +61,15 @@ class LightTransitionTransformer : public LightTransformer {
     this->start_values_.as_rgbct( 150, 350, &start_r, &start_g, &start_b, &start_ct, &start_wb, 2.8f);
     this->end_values_.as_rgbct(150, 350,   &end_r,   &end_g,   &end_b,   &end_ct,   &end_wb, 2.8f);
 
+    // precompute reverse gamma values once, used every frame in apply()
+    start_r_rev = kauf_gamma_rev(start_r);
+    start_g_rev = kauf_gamma_rev(start_g);
+    start_b_rev = kauf_gamma_rev(start_b);
+    start_wb_rev = kauf_gamma_rev(start_wb);
+    end_r_rev = kauf_gamma_rev(end_r);
+    end_g_rev = kauf_gamma_rev(end_g);
+    end_b_rev = kauf_gamma_rev(end_b);
+    end_wb_rev = kauf_gamma_rev(end_wb);
 
     ESP_LOGV("KAUF Transformer","");
     ESP_LOGV("KAUF Transformer","/////////////////////////////////////////////////////////////////////////////");
@@ -77,10 +91,11 @@ class LightTransitionTransformer : public LightTransformer {
     ct_i = 200*ct_f + 150; // need mireds for set_color_temperature function
 
     // apply Tasmota's fast gamma between start and end
-    red = convert_to_kauf(start_r,end_r,p);
-    green = convert_to_kauf(start_g,end_g,p);
-    blue = convert_to_kauf(start_b,end_b,p);
-    wb = convert_to_kauf(start_wb,end_wb,p);
+    // uses precomputed reverse gamma values from start()
+    red = kauf_gamma((end_r_rev - start_r_rev) * p + start_r_rev);
+    green = kauf_gamma((end_g_rev - start_g_rev) * p + start_g_rev);
+    blue = kauf_gamma((end_b_rev - start_b_rev) * p + start_b_rev);
+    wb = kauf_gamma((end_wb_rev - start_wb_rev) * p + start_wb_rev);
 
 //    ESP_LOGD("KAUF Transformer","Progress Values: P:%f R:%f  G:%f  B:%f  CT:%f:%f  WB:%f", p, red, green, blue, ct_f, ct_i, wb);
 
@@ -103,64 +118,48 @@ class LightTransitionTransformer : public LightTransformer {
 
  protected:
 
-  static float convert_to_kauf(float start, float end, float progress) {
+  // Tasmota fast gamma table constants (precomputed at compile time)
+  // grabbing fast gamma table from Tasmota xdrv_04_light_utils.ino
+  // input < 0        :: output = 0
+  // input   0 -  384 :: output   0 -  192        2x
+  // input 384 -  768 :: output 192 -  576        1x (both are 384)
+  // input 768 - 1023 :: output 576 - 1023         255:447 = .57...
+  // input > 1023     :: output = 1023
+  static constexpr float GAMMA_I1 = 384.0f / 1023.0f;
+  static constexpr float GAMMA_I2 = 768.0f / 1023.0f;
+  static constexpr float GAMMA_O1 = 192.0f / 1023.0f;
+  static constexpr float GAMMA_O2 = 576.0f / 1023.0f;
 
-    // begin and end are actual output values for the start and end points with gamma and everything,
-    // so they need reverse gamma to figure out what would be the equivalent in Tasmota's fast gamma table
-    float start_rev = kauf_gamma_rev(start);
-    float end_rev = kauf_gamma_rev(end);
-
-    //  linear interpolation of the reversed gamma points, and then re-applying gamma.
-    return kauf_gamma( ((end_rev-start_rev)*progress)+start_rev  );
-
-  }
-
+  // precomputed slopes for each segment
+  static constexpr float GAMMA_SLOPE1 = GAMMA_O1 / GAMMA_I1;                         // segment 1: 0.5
+  static constexpr float GAMMA_SLOPE2 = (GAMMA_O2 - GAMMA_O1) / (GAMMA_I2 - GAMMA_I1); // segment 2: 1.0
+  static constexpr float GAMMA_SLOPE3 = (1.0f - GAMMA_O2) / (1.0f - GAMMA_I2);         // segment 3: ~1.75
 
   static float kauf_gamma(float x) {
-
-    // grabbing fast gamma table from Tasmota xdrv_04_light_utils.ino
-    // input < 0        :: output = 0
-    // input   0 -  384 :: output   0 -  192        2x
-    // input 384 -  768 :: output 192 -  576        1x (both are 384)
-    // input 768 - 1023 :: output 576 - 1023         255:447 = .57...
-    // input > 1023     :: output = 1023
-
-    // all the dividing by 1023 is to convert the above Tasmota numbers to floats between 0 and 1.
-    float i1 = 384.0f/1023.0f;
-    float i2 = 768.0f/1023.0f;
-    float o1 = 192.0f/1023.0f;
-    float o2 = 576.0f/1023.0f;
-
-    if ( (x >= 0.0f) && (x <= i1) ) {
-      return x*(o1/i1);
+    if (x >= 0.0f && x <= GAMMA_I1) {
+      return x * GAMMA_SLOPE1;
+    } else if (x <= GAMMA_I2) {
+      return (x - GAMMA_I1) * GAMMA_SLOPE2 + GAMMA_O1;
+    } else if (x <= 1.0f) {
+      return (x - GAMMA_I2) * GAMMA_SLOPE3 + GAMMA_O2;
     }
-    else if ( x <= i2 ) {
-      // compared to first section, everything has to subtract i1 or o1 to shift baseline down to 0 before doing the math
-      // and then o1 gets added back at the end to shift back up to the second range.
-      return ( (x-i1)*(o2-o1)/(i2-i1) + o1 );
-    }
-    else if ( x <= 1.0f ) {
-      // compared to second section, just use i2/o2 instead of i1/o1
-      return ( (x-i2)*(1.0f-o2)/(1.0f-i2) + o2 );
-    }
-    else {return 0.0f;}
+    return 0.0f;
   }
 
+  // reverse gamma: same piecewise function with inputs/outputs swapped
+  static constexpr float GAMMA_REV_SLOPE1 = GAMMA_I1 / GAMMA_O1;                         // 2.0
+  static constexpr float GAMMA_REV_SLOPE2 = (GAMMA_I2 - GAMMA_I1) / (GAMMA_O2 - GAMMA_O1); // 1.0
+  static constexpr float GAMMA_REV_SLOPE3 = (1.0f - GAMMA_I2) / (1.0f - GAMMA_O2);         // ~0.57
 
   static float kauf_gamma_rev(float x) {
-
-    // to reverse, same function but switch inputs and outputs.
-    float o1 = 384.0f/1023.0f;
-    float o2 = 768.0f/1023.0f;
-    float i1 = 192.0f/1023.0f;
-    float i2 = 576.0f/1023.0f;
-
-    //everything else is the same
-    if ( (x >= 0.0f) && (x <= i1) ) { return    x    *(  o1    /   i1); }
-    else if ( x <= i2 ) {             return ( (x-i1)*(  o2-o1)/(  i2-i1) + o1 ); }
-    else if ( x <= 1.0f ) {           return ( (x-i2)*(1.0f-o2)/(1.0f-i2) + o2 );
-    } else { return 0.0f; }
-
+    if (x >= 0.0f && x <= GAMMA_O1) {
+      return x * GAMMA_REV_SLOPE1;
+    } else if (x <= GAMMA_O2) {
+      return (x - GAMMA_O1) * GAMMA_REV_SLOPE2 + GAMMA_I1;
+    } else if (x <= 1.0f) {
+      return (x - GAMMA_O2) * GAMMA_REV_SLOPE3 + GAMMA_I2;
+    }
+    return 0.0f;
   }
 
 

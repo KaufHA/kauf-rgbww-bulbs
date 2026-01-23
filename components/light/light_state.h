@@ -316,7 +316,7 @@ class LightState : public EntityBase, public Component {
   /// Internal method to set the color values to target immediately (with no transition).
   void set_immediately_(const LightColorValues &target, bool set_remote_values);
 
-  // KAUF: moved save_remote_valeus_() to public functions
+  // KAUF: moved save_remote_values_() to public functions
 
   /// Disable loop if neither transformer nor effect is active
   void disable_loop_if_idle_();

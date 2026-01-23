@@ -217,6 +217,7 @@ class FlickerLightEffect : public LightEffect {
     out.set_warm_white(remote.get_warm_white() * beta + current.get_warm_white() * alpha +
                        (random_cubic_float() * this->intensity_));
 
+    // KAUF: restore color temp
     out.set_color_temperature(remote.get_color_temperature());
 
     auto call = this->state_->make_call();
