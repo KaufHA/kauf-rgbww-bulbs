@@ -32,9 +32,13 @@ class LightOutput {
   bool is_aux( ) {return aux;}
   void set_aux(bool aux_in) { aux = aux_in; }
 
-  // pointers to aux lights
-  light::LightState *warm_rgb;
-  light::LightState *cold_rgb;
+  // pointers to aux lights (used by main light)
+  light::LightState *warm_rgb{nullptr};
+  light::LightState *cold_rgb{nullptr};
+
+  // pointer to main light (used by aux lights to enable its loop)
+  light::LightState *main_light{nullptr};
+  void set_main_light(light::LightState *main_light_in) { main_light = main_light_in; }
 
   bool aux = true;
 

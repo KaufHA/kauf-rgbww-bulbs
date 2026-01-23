@@ -22,12 +22,25 @@ light::LightTraits KaufRGBWWLight::get_traits() {
     return traits;
 }
 
+void KaufRGBWWLight::setup_state(light::LightState *state) {
+    // main light sets itself on aux lights so they can wake it up when they change
+    if (!this->is_aux()) {
+        this->warm_rgb->get_output()->set_main_light(state);
+        this->cold_rgb->get_output()->set_main_light(state);
+    }
+}
+
 void KaufRGBWWLight::write_state(light::LightState *state) {
 
     if ( this->is_aux() ) {
 
         // tells main light that the aux light has changed so refresh.
         state->has_changed = true;
+
+        // enable main light's loop so it can check the has_changed flag
+        if (this->main_light != nullptr) {
+            this->main_light->enable_loop();
+        }
 
         ESP_LOGV("KAUF RGBWW","set has_changed to true");
 
