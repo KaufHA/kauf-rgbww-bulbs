@@ -93,6 +93,12 @@ void LightState::setup() {
     call.set_transition_length_if_supported(0);
   }
   call.perform();
+
+  // KAUF: Write to hardware immediately during setup so PWM outputs start
+  // before WiFi and other lower-priority components finish their setup().
+  // Without this, write_state() is deferred to loop() which doesn't run
+  // until all components complete setup.
+  this->output_->write_state(this);
 }
 void LightState::dump_config() {
   ESP_LOGCONFIG(TAG, "Light '%s'", this->get_name().c_str());
