@@ -35,18 +35,28 @@ void LightState::setup() {
     this->current_values.set_color_temperature(min_mireds);
   }
 
-  auto call = this->make_call();
-  LightStateRTCState recovered{};
-  if (this->initial_state_.has_value()) {
-    recovered = *this->initial_state_;
-  }
-
   // KAUF: set up rtc_ no matter what in case mode changes later on.
   // KAUF: forced addr/hash support
   if (this->forced_addr != 12345) esp8266::set_next_forced_addr(this->forced_addr);
   uint32_t key = (this->forced_hash != 0) ? this->forced_hash : this->get_preference_hash();
   this->rtc_ = global_preferences->make_preference<LightStateRTCState>(key);
 
+  this->restore_with_mode();
+
+  // KAUF: Write to hardware immediately during setup so PWM outputs start
+  // before WiFi and other lower-priority components finish their setup().
+  // Without this, write_state() is deferred to loop() which doesn't run
+  // until all components complete setup.
+  this->output_->write_state(this);
+}
+
+
+// KAUF: Restore light state from saved preferences, obeying the configured restore mode
+void LightState::restore_with_mode() {
+  LightStateRTCState recovered{};
+  if (this->initial_state_.has_value()) {
+    recovered = *this->initial_state_;
+  }
 
   switch (this->restore_mode_) {
     case LIGHT_RESTORE_DEFAULT_OFF:
@@ -76,6 +86,7 @@ void LightState::setup() {
       break;
   }
 
+  auto call = this->make_call();
   call.set_color_mode_if_supported(recovered.color_mode);
   call.set_state(recovered.state);
   call.set_brightness_if_supported(recovered.brightness);
@@ -92,13 +103,8 @@ void LightState::setup() {
   } else {
     call.set_transition_length_if_supported(0);
   }
+  call.set_save(false);
   call.perform();
-
-  // KAUF: Write to hardware immediately during setup so PWM outputs start
-  // before WiFi and other lower-priority components finish their setup().
-  // Without this, write_state() is deferred to loop() which doesn't run
-  // until all components complete setup.
-  this->output_->write_state(this);
 }
 void LightState::dump_config() {
   ESP_LOGCONFIG(TAG, "Light '%s'", this->get_name().c_str());
