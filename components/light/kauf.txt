@@ -1,0 +1,25 @@
+__init__.py
+  - forced addr and hash options
+
+base_light_effects.h
+  - restore color temp after flicker
+
+light_color_values.h
+  - add use_raw bool
+  - make as_rgb and as_ct return values no matter if the light is in that mode or not
+
+light_output.h
+  - add pointers between main and aux lights, also some related variables and functions
+
+light_state.cpp
+  - DDP support
+  - always load preferences but don't always save
+  - add linkage for aux lights to control main lights
+
+light_state.h
+  - includes, variables, functions needed for DDP support
+
+
+transformers.h
+  - changes gamma curve for transitions to tasmota's fast gamma table (the old one)
+  - changes fade so it doesn't go through off anymore when changing between RGB and CT.

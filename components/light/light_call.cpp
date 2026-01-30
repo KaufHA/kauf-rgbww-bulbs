@@ -87,85 +87,6 @@ void LightCall::perform() {
   LightColorValues v = this->validate_();
   const bool publish = this->get_publish_();
 
-  // KAUF:
-  // determine if call is superfluous.  i.e., a second call when the light is still in a transition
-  // for another call with the same target values.  Basically looking for if new values are same as
-  // remote values already being reported to Home Assistant and if transition is still ongoing.
-  // Can't figure out why Home Assistant is sending two calls in a row sometimes.  Screwing with fade.
-
-  // don't do any checks if not in transition
-  if ( this->parent_->is_transformer_active() ) {
-
-    bool super = true;
-
-    // is the effect being set/cleared?
-    if (this->has_effect_())
-    {
-      super = false;
-      ESP_LOGV("KAUF Transition Filter", "Want to set an effect @ index %ud", this->effect_);
-    }
-
-    // is color mode the same?
-    else if ( v.get_color_mode() != this->parent_->remote_values.get_color_mode()) {
-      super = false;
-      ESP_LOGV("KAUF Transition Filter","Color Mode different");
-    }
-
-    // if color mode is RGB, are r, g, and b values the same?
-    else if ( v.get_color_mode() == ColorMode::RGB) {
-
-      // get old and new rgb values.  as_rgb function applies brightness for us.
-      float new_r, new_g, new_b, old_r, old_g, old_b;
-      v.as_rgb(&new_r,&new_g,&new_b);
-      this->parent_->remote_values.as_rgb(&old_r,&old_g,&old_b);
-
-      if      ( new_r != old_r ) {
-        super = false;
-        ESP_LOGV("KAUF Transition Filter","Red channel different");
-      }
-      else if ( new_g != old_g ) {
-        super = false;
-        ESP_LOGV("KAUF Transition Filter","Green channel different");
-      }
-      else if ( new_b != old_b ) {
-        super = false;
-        ESP_LOGV("KAUF Transition Filter","Blue channel different");
-      }
-      else {
-        ESP_LOGV("KAUF Transition Filter","RGB values all the same");
-      }
-    }
-
-    // if in CT mode, compare color temp and white brightness
-    else if ( v.get_color_mode() == ColorMode::COLOR_TEMPERATURE) {
-
-      // get old and new color temp and white brightness values.
-      float new_ct, new_wb, old_ct, old_wb;
-      v.as_ct(150,350, &new_ct, &new_wb);
-      this->parent_->remote_values.as_ct(150,350, &old_ct, &old_wb);
-
-      if      ( new_wb != old_wb ) {
-        super = false;
-        ESP_LOGV("KAUF Transition Filter","White Brightness different");
-      }
-      else if ( new_ct != old_ct ) {
-        super = false;
-        ESP_LOGV("KAUF Transition Filter","Color Temp different");
-      }
-      else {
-        ESP_LOGV("KAUF Transition Filter","Color Temp values all the same");
-      }
-    }
-
-    if ( super == true ) {
-      ESP_LOGD("KAUF Transition Filter","Double light call detected, skipping second call while first is still ongoing");
-      return; }
-
-  }
-
-  ESP_LOGV("KAUF Transition Filter","--------------------------done, going ahead with call");
-  // /KAUF:
-
   if (publish) {
     ESP_LOGD(TAG, "'%s' Setting:", name);
 
@@ -470,7 +391,10 @@ void LightCall::transform_parameters_() {
       min_mireds > 0.0f && max_mireds > 0.0f) {
     ESP_LOGD(TAG, "'%s': setting cold/warm white channels using white/color temperature values",
              this->parent_->get_name().c_str());
-    if (this->has_color_temperature()) {
+    // Only compute cold_white/warm_white from color_temperature if they're not already explicitly set.
+    // This is important for state restoration, where both color_temperature and cold_white/warm_white
+    // are restored from flash - we want to preserve the saved cold_white/warm_white values.
+    if (this->has_color_temperature() && !this->has_cold_white() && !this->has_warm_white()) {
       const float color_temp = clamp(this->color_temperature_, min_mireds, max_mireds);
       const float range = max_mireds - min_mireds;
       const float ww_fraction = (color_temp - min_mireds) / range;
