@@ -52,7 +52,7 @@ void LightState::setup() {
 
 
 // KAUF: Restore light state from saved preferences, obeying the configured restore mode
-void LightState::restore_with_mode() {
+void LightState::restore_with_mode(uint32_t transition_length) {
   LightStateRTCState recovered{};
   if (this->initial_state_.has_value()) {
     recovered = *this->initial_state_;
@@ -101,7 +101,7 @@ void LightState::restore_with_mode() {
   if (recovered.effect != 0) {
     call.set_effect(recovered.effect);
   } else {
-    call.set_transition_length_if_supported(0);
+    call.set_transition_length_if_supported(transition_length);
   }
   call.set_save(false);
   call.perform();

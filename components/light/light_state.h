@@ -210,7 +210,7 @@ class LightState : public EntityBase, public Component {
   void set_initial_state(const LightStateRTCState &initial_state);
 
   // KAUF: Restore light state obeying the configured restore mode
-  void restore_with_mode();
+  void restore_with_mode(uint32_t transition_length = 0);
 
   /// Return whether the light has any effects that meet the trait requirements.
   bool supports_effects();
