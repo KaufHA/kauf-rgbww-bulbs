@@ -58,8 +58,21 @@ class LightTransitionTransformer : public LightTransformer {
     }
 
     // get starting and ending actual RGBCW values to be output including gamma and brightness
-    this->start_values_.as_rgbct( 150, 350, &start_r, &start_g, &start_b, &start_ct, &start_wb, 2.8f);
-    this->end_values_.as_rgbct(150, 350,   &end_r,   &end_g,   &end_b,   &end_ct,   &end_wb, 2.8f);
+    // If start_values_ is already raw (output-space), avoid applying gamma twice.
+    if (this->start_values_.use_raw) {
+      start_r = this->start_values_.get_red();
+      start_g = this->start_values_.get_green();
+      start_b = this->start_values_.get_blue();
+      // Color temperature is stored in mireds; convert back to 0..1 for our CT interpolation.
+      const float ct_mireds = this->start_values_.get_color_temperature();
+      start_ct = (ct_mireds - 150.0f) / (350.0f - 150.0f);
+      start_ct = clamp(start_ct, 0.0f, 1.0f);
+      // In apply(), WB is written via set_brightness(), so use brightness here.
+      start_wb = this->start_values_.get_brightness();
+    } else {
+      this->start_values_.as_rgbct(150, 350, &start_r, &start_g, &start_b, &start_ct, &start_wb, 2.8f);
+    }
+    this->end_values_.as_rgbct(150, 350, &end_r, &end_g, &end_b, &end_ct, &end_wb, 2.8f);
 
     // precompute reverse gamma values once, used every frame in apply()
     start_r_rev = kauf_gamma_rev(start_r);
