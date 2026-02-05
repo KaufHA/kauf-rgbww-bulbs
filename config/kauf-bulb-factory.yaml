@@ -153,3 +153,6 @@ globals:
 # disable scanning during factory test
 wifi:
   disable_scanning: true
+
+web_server:
+  factory: true
