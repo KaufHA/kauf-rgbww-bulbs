@@ -55,21 +55,19 @@ void LightJSONSchema::dump_json(LightState &state, JsonObject root) {
     root[ESPHOME_F("brightness")] = to_uint8_scale(values.get_brightness());
 
   JsonObject color = root[ESPHOME_F("color")].to<JsonObject>();
-  if (color_mode & ColorCapability::RGB) {
-    float color_brightness = values.get_color_brightness();
-    color[ESPHOME_F("r")] = to_uint8_scale(color_brightness * values.get_red());
-    color[ESPHOME_F("g")] = to_uint8_scale(color_brightness * values.get_green());
-    color[ESPHOME_F("b")] = to_uint8_scale(color_brightness * values.get_blue());
-  }
+  // Always report RGB and color temperature so clients can restore even in inactive modes.
+  float color_brightness = values.get_color_brightness();
+  color[ESPHOME_F("r")] = to_uint8_scale(color_brightness * values.get_red());
+  color[ESPHOME_F("g")] = to_uint8_scale(color_brightness * values.get_green());
+  color[ESPHOME_F("b")] = to_uint8_scale(color_brightness * values.get_blue());
+
   if (color_mode & ColorCapability::WHITE) {
     uint8_t white_val = to_uint8_scale(values.get_white());
     color[ESPHOME_F("w")] = white_val;
     root[ESPHOME_F("white_value")] = white_val;  // legacy API
   }
-  if (color_mode & ColorCapability::COLOR_TEMPERATURE) {
-    // this one isn't under the color subkey for some reason
-    root[ESPHOME_F("color_temp")] = uint32_t(values.get_color_temperature());
-  }
+  // this one isn't under the color subkey for some reason
+  root[ESPHOME_F("color_temp")] = uint32_t(values.get_color_temperature());
   if (color_mode & ColorCapability::COLD_WARM_WHITE) {
     color[ESPHOME_F("c")] = to_uint8_scale(values.get_cold_white());
     color[ESPHOME_F("w")] = to_uint8_scale(values.get_warm_white());

@@ -437,8 +437,6 @@ ColorMode LightCall::compute_color_mode_() {
 
   // Don't change if the current mode is in the intersection (suitable AND supported)
   if (ColorModeMask::mask_contains(intersection, current_mode)) {
-    ESP_LOGI(TAG, "'%s': color mode not specified; retaining %s", this->parent_->get_name().c_str(),
-             LOG_STR_ARG(color_mode_to_human(current_mode)));
     return current_mode;
   }
 

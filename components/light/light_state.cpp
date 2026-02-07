@@ -87,17 +87,40 @@ void LightState::restore_with_mode(uint32_t transition_length) {
   }
 
   auto call = this->make_call();
+  // Seed remote/current values with all recovered channels so inactive modes keep their saved values.
+  LightColorValues restored;
+  restored.set_color_mode(recovered.color_mode);
+  restored.set_state(recovered.state);
+  restored.set_brightness(recovered.brightness);
+  restored.set_color_brightness(recovered.color_brightness);
+  restored.set_red(recovered.red);
+  restored.set_green(recovered.green);
+  restored.set_blue(recovered.blue);
+  restored.set_white(recovered.white);
+  restored.set_color_temperature(recovered.color_temp);
+  restored.set_cold_white(recovered.cold_white);
+  restored.set_warm_white(recovered.warm_white);
+  this->remote_values = restored;
+  this->current_values = restored;
+
   call.set_color_mode_if_supported(recovered.color_mode);
   call.set_state(recovered.state);
-  call.set_brightness_if_supported(recovered.brightness);
-  call.set_color_brightness_if_supported(recovered.color_brightness);
-  call.set_red_if_supported(recovered.red);
-  call.set_green_if_supported(recovered.green);
-  call.set_blue_if_supported(recovered.blue);
-  call.set_white_if_supported(recovered.white);
-  call.set_color_temperature_if_supported(recovered.color_temp);
-  call.set_cold_white_if_supported(recovered.cold_white);
-  call.set_warm_white_if_supported(recovered.warm_white);
+  if (recovered.color_mode & ColorCapability::BRIGHTNESS)
+    call.set_brightness(recovered.brightness);
+  if (recovered.color_mode & ColorCapability::RGB) {
+    call.set_color_brightness(recovered.color_brightness);
+    call.set_red(recovered.red);
+    call.set_green(recovered.green);
+    call.set_blue(recovered.blue);
+  }
+  if (recovered.color_mode & ColorCapability::WHITE)
+    call.set_white(recovered.white);
+  if (recovered.color_mode & ColorCapability::COLOR_TEMPERATURE)
+    call.set_color_temperature(recovered.color_temp);
+  if (recovered.color_mode & ColorCapability::COLD_WARM_WHITE) {
+    call.set_cold_white(recovered.cold_white);
+    call.set_warm_white(recovered.warm_white);
+  }
   if (recovered.effect != 0) {
     call.set_effect(recovered.effect);
   } else {
