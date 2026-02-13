@@ -26,8 +26,6 @@ class KaufRGBWWLight : public light::LightOutput, public Component {
 
   void set_outputs(float red, float green, float blue, float white_brightness = 0.0f);
 
-  void set_cold_rgb(light::LightState *cold_rgb_in) { cold_rgb = cold_rgb_in; }
-  void set_warm_rgb(light::LightState *warm_rgb_in) { warm_rgb = warm_rgb_in; }
 
 
  protected:

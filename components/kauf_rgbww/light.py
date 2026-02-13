@@ -30,7 +30,9 @@ def get_pwm_steps_for_output(output_id):
     return 1000  # fallback default
 
 def validate_kauf_light(value):
-    if (value["aux"]):
+    is_main = value["aux"] in (False, "main")
+
+    if not is_main:
         if ( "red" in value ):
             raise cv.Invalid("Aux KAUF Light should not have a red PWM output.")
         if ( "green" in value ):
@@ -45,6 +47,10 @@ def validate_kauf_light(value):
             raise cv.Invalid("Aux KAUF Light should not have a warm_rgb light.")
         if ( "cold_rgb" in value ):
             raise cv.Invalid("Aux KAUF Light should not have a cold_rgb light.")
+        if value["aux"] in ("warm", "cold") and "main_light" not in value:
+            raise cv.Invalid("Aux KAUF Light with aux: warm/cold requires a main_light.")
+        if value["aux"] is True and "main_light" in value:
+            raise cv.Invalid("Use aux: warm or aux: cold instead of aux: true when specifying main_light.")
 
     else:
         if ( "red" not in value ):
@@ -57,10 +63,6 @@ def validate_kauf_light(value):
             raise cv.Invalid("Main KAUF Light requires a warm_white PWM output.")
         if ( "cold_white" not in value ):
             raise cv.Invalid("Main KAUF Light requires a cold_white PWM output.")
-        if ( "warm_rgb" not in value ):
-            raise cv.Invalid("Main KAUF Light requires a warm_rgb light.")
-        if ( "cold_rgb" not in value ):
-            raise cv.Invalid("Main KAUF Light requires a cold_rgb light.")
 
     return value
 
@@ -80,7 +82,8 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_COLOR_INTERLOCK, default=False): cv.boolean,
             cv.Optional("cold_rgb"): cv.use_id(light.LightState),
             cv.Optional("warm_rgb"): cv.use_id(light.LightState),
-            cv.Optional("aux", default=False): cv.boolean,
+            cv.Optional("aux", default=False): cv.Any(cv.boolean, cv.one_of("main", "warm", "cold", lower=True)),
+            cv.Optional("main_light"): cv.use_id(light.LightState),
         }
     ),
     cv.has_none_or_all_keys(
@@ -96,13 +99,15 @@ async def to_code(config):
     var = cg.new_Pvariable(config[CONF_OUTPUT_ID])
 
     # for main light
-    if not config["aux"] :
+    if config["aux"] in (False, "main") :
 
-        # set cold and warm rgb lights first
-        crgb = await cg.get_variable(config["cold_rgb"])
-        cg.add(var.set_cold_rgb(crgb))
-        wrgb = await cg.get_variable(config["warm_rgb"])
-        cg.add(var.set_warm_rgb(wrgb))
+        # set cold and warm rgb lights if configured
+        if "cold_rgb" in config and "warm_rgb" in config:
+            crgb = await cg.get_variable(config["cold_rgb"])
+            cg.add(var.set_cold_rgb(crgb))
+            wrgb = await cg.get_variable(config["warm_rgb"])
+            cg.add(var.set_warm_rgb(wrgb))
+            cg.add_define("KAUF_HAS_AUX")
 
         # then set aux false after rgb light pointers set
         cg.add(var.set_aux(False))
@@ -135,4 +140,15 @@ async def to_code(config):
         cg.add_define("KAUF_PWM_STEPS_WARM", get_pwm_steps_for_output(config[CONF_WARM_WHITE].id))
 
     # register light
-    await light.register_light(var, config)
+    light_state = await light.register_light(var, config)
+
+    # aux light registers itself with the main light
+    if config["aux"] in ("warm", "cold") and "main_light" in config:
+        ml = await cg.get_variable(config["main_light"])
+        cg.add(var.set_main_light(ml))
+        ls = await cg.get_variable(config[CONF_ID])
+        if config["aux"] == "warm":
+            cg.add(cg.RawExpression(f"{ml}->get_output()->set_warm_rgb({ls})"))
+        else:
+            cg.add(cg.RawExpression(f"{ml}->get_output()->set_cold_rgb({ls})"))
+        cg.add_define("KAUF_HAS_AUX")
