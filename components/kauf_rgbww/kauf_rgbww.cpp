@@ -139,7 +139,7 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
         //   scaled_warm = white blend amount (scaled with max_white since 100% white is too powerful for RGB colors)
         //               + white brightness scaled by aux warm_white (in case aux light indicates to turn down white channel)
         //               * color temp to scale for warm channel
-        scaled_warm = clamp( (mw + (white_brightness * warm_white)) * ct, 0.0f, 1.0f);
+        scaled_warm = (mw + (white_brightness * warm_white)) * ct;
     } else
 #endif
     //   warm aux off or absent: white blend (includes white brightness since warm_white defaults to 1.0) * color temp
@@ -158,22 +158,14 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
         //   scaled_cold = white blend amount (scaled with max_white since 100% white is too powerful for RGB colors)
         //               + white brightness scaled by aux cold_white (in case aux light indicates to turn down white channel)
         //               * inverse color temp to scale for cold channel
-        scaled_cold = clamp( (mw + (white_brightness * cold_white)) * inv_ct, 0.0f, 1.0f);
+        scaled_cold = (mw + (white_brightness * cold_white)) * inv_ct;
     } else
 #endif
     //   cold aux off or absent: white blend (includes white brightness since cold_white defaults to 1.0) * inverse color temp
     { scaled_cold = white_blend * inv_ct; }
 
-#ifdef KAUF_HAS_AUX
-    //   if any aux was on, clamp accumulated RGB values and reduce blue to make RGB more accurate
-    if ( warm_on || cold_on ) {
-        scaled_red   = clamp(scaled_red,             0.0f, 1.0f);
-        scaled_green = clamp(scaled_green,           0.0f, 1.0f);
-        scaled_blue  = clamp(scaled_blue * max_blue, 0.0f, 1.0f);
-    } else
-#endif
-    //   no aux: just reduce blue to make RGB more accurate (no clamp needed since values are already 0-1)
-    { scaled_blue *= max_blue; }
+    //   reduce blue to make RGB more accurate
+    scaled_blue *= max_blue;
 
     // Round up to the nearest PWM step to prevent near-zero values from rounding to zero.
     // Without this, long fades turn off too soon because small values round down to zero.
