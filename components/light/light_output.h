@@ -32,9 +32,13 @@ class LightOutput {
   bool is_aux( ) {return aux;}
   void set_aux(bool aux_in) { aux = aux_in; }
 
+#ifdef KAUF_HAS_AUX
   // pointers to aux lights (used by main light to get adjustment values)
   light::LightState *warm_rgb{nullptr};
   light::LightState *cold_rgb{nullptr};
+  void set_warm_rgb(light::LightState *warm_rgb_in) { warm_rgb = warm_rgb_in; }
+  void set_cold_rgb(light::LightState *cold_rgb_in) { cold_rgb = cold_rgb_in; }
+#endif
 
   // pointer to main light (used by aux lights to enable main light's loop)
   light::LightState *main_light{nullptr};

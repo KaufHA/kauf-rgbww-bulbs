@@ -24,17 +24,17 @@ class LightTransitionTransformer : public LightTransformer {
     // When turning light on from off state, use target state and only increase brightness from zero.
     if (!this->start_values_.is_on() && this->target_values_.is_on()) {
       this->start_values_ = LightColorValues(this->target_values_);
-      this->start_values_.set_brightness(0.0f);
+      this->start_values_.brightness_ = 0.0f;
     }
 
     // KAUF: if starting in RGB, clear white brightness and vice versa
-    if ( this->start_values_.get_color_mode() & ColorCapability::RGB) {
-      this->start_values_.set_white(0.0f);
-      this->start_values_.set_color_temperature(this->target_values_.get_color_temperature());
+    if ( this->start_values_.color_mode_ & ColorCapability::RGB) {
+      this->start_values_.white_ = 0.0f;
+      this->start_values_.color_temperature_ = this->target_values_.color_temperature_;
     } else {
-      this->start_values_.set_red(0.0f);
-      this->start_values_.set_green(0.0f);
-      this->start_values_.set_blue(0.0f);
+      this->start_values_.red_ = 0.0f;
+      this->start_values_.green_ = 0.0f;
+      this->start_values_.blue_ = 0.0f;
     }
 
 
@@ -42,19 +42,19 @@ class LightTransitionTransformer : public LightTransformer {
     // variable for transition end state, as overwriting target_values breaks LightState logic.
     if (this->start_values_.is_on() && !this->target_values_.is_on()) {
       this->end_values_ = LightColorValues(this->start_values_);
-      this->end_values_.set_brightness(0.0f);
+      this->end_values_.brightness_ = 0.0f;
     } else {
       this->end_values_ = LightColorValues(this->target_values_);
     }
 
     // KAUF: if ending in RGB, clear white brightness and vice versa
-    if ( this->end_values_.get_color_mode() & ColorCapability::RGB) {
-      this->end_values_.set_white(0.0f);
-      this->end_values_.set_color_temperature(this->start_values_.get_color_temperature());
+    if ( this->end_values_.color_mode_ & ColorCapability::RGB) {
+      this->end_values_.white_ = 0.0f;
+      this->end_values_.color_temperature_ = this->start_values_.color_temperature_;
     } else {
-      this->end_values_.set_red(0.0f);
-      this->end_values_.set_green(0.0f);
-      this->end_values_.set_blue(0.0f);
+      this->end_values_.red_ = 0.0f;
+      this->end_values_.green_ = 0.0f;
+      this->end_values_.blue_ = 0.0f;
     }
 
     // get starting and ending actual RGBCW values to be output including gamma and brightness
@@ -113,14 +113,13 @@ class LightTransitionTransformer : public LightTransformer {
 //    ESP_LOGD("KAUF Transformer","Progress Values: P:%f R:%f  G:%f  B:%f  CT:%f:%f  WB:%f", p, red, green, blue, ct_f, ct_i, wb);
 
     LightColorValues kauf_display;
-    kauf_display.set_color_mode(this->end_values_.get_color_mode());
-    kauf_display.set_state(((this->end_values_.get_state() - this->start_values_.get_state()) * p) + this->start_values_.get_state());
-
-    kauf_display.set_red(red);
-    kauf_display.set_green(green);
-    kauf_display.set_blue(blue);
-    kauf_display.set_color_temperature(ct_i);
-    kauf_display.set_brightness(wb);
+    kauf_display.color_mode_ = this->end_values_.color_mode_;
+    kauf_display.state_ = ((this->end_values_.state_ - this->start_values_.state_) * p) + this->start_values_.state_;
+    kauf_display.red_ = red;
+    kauf_display.green_ = green;
+    kauf_display.blue_ = blue;
+    kauf_display.color_temperature_ = ct_i;
+    kauf_display.brightness_ = wb;
     kauf_display.use_raw = true;
 
 //    ESP_LOGD("KAUF Transformer","Return Values: P:%f R:%f  G:%f  B:%f  CT:%f  WB:%f", p, red, green, blue, ct_i, wb);

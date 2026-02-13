@@ -35,30 +35,19 @@ void LightState::setup() {
     this->current_values.set_color_temperature(min_mireds);
   }
 
-  // KAUF: set up rtc_ no matter what in case mode changes later on.
-  // KAUF: forced addr/hash support
-  if (this->forced_addr != 12345) esp8266::set_next_forced_addr(this->forced_addr);
-  if (this->forced_hash != 0)
-    this->rtc_ = global_preferences->make_preference<LightStateRTCState>(this->forced_hash);
-  else
-    this->rtc_ = this->make_entity_preference<LightStateRTCState>();
-
-  this->restore_with_mode();
-
-  // KAUF: Write to hardware immediately during setup so PWM outputs start
-  // before WiFi and other lower-priority components finish their setup().
-  // Without this, write_state() is deferred to loop() which doesn't run
-  // until all components complete setup.
-  this->output_->write_state(this);
-}
-
-
-// KAUF: Restore light state from saved preferences, obeying the configured restore mode
-void LightState::restore_with_mode(uint32_t transition_length) {
+  auto call = this->make_call();
   LightStateRTCState recovered{};
   if (this->initial_state_.has_value()) {
     recovered = *this->initial_state_;
   }
+
+  // KAUF: set up rtc_ no matter what in case mode changes later on.
+  // KAUF: forced addr/hash support
+  if (this->forced_addr != 12345) esp8266::set_next_forced_addr(this->forced_addr);
+  uint32_t key = (this->forced_hash != 0) ? this->forced_hash : this->get_preference_hash();
+  this->rtc_ = global_preferences->make_preference<LightStateRTCState>(key);
+
+
   switch (this->restore_mode_) {
     case LIGHT_RESTORE_DEFAULT_OFF:
     case LIGHT_RESTORE_DEFAULT_ON:
@@ -87,21 +76,6 @@ void LightState::restore_with_mode(uint32_t transition_length) {
       break;
   }
 
-  // KAUF: Seed remote/current values with all recovered channels so inactive modes keep their saved values.
-  this->remote_values.set_color_mode(recovered.color_mode);
-  this->remote_values.set_state(recovered.state);
-  this->remote_values.set_brightness(recovered.brightness);
-  this->remote_values.set_color_brightness(recovered.color_brightness);
-  this->remote_values.set_red(recovered.red);
-  this->remote_values.set_green(recovered.green);
-  this->remote_values.set_blue(recovered.blue);
-  this->remote_values.set_white(recovered.white);
-  this->remote_values.set_color_temperature(recovered.color_temp);
-  this->remote_values.set_cold_white(recovered.cold_white);
-  this->remote_values.set_warm_white(recovered.warm_white);
-  this->current_values = this->remote_values;
-
-  auto call = this->make_call();
   call.set_color_mode_if_supported(recovered.color_mode);
   call.set_state(recovered.state);
   call.set_brightness_if_supported(recovered.brightness);
@@ -116,10 +90,15 @@ void LightState::restore_with_mode(uint32_t transition_length) {
   if (recovered.effect != 0) {
     call.set_effect(recovered.effect);
   } else {
-    call.set_transition_length_if_supported(transition_length); // KAUF: default 0
+    call.set_transition_length_if_supported(0);
   }
-  call.set_save(false); // KAUF: restoring saved values, don't need to re-save
   call.perform();
+
+  // KAUF: Write to hardware immediately during setup so PWM outputs start
+  // before WiFi and other lower-priority components finish their setup().
+  // Without this, write_state() is deferred to loop() which doesn't run
+  // until all components complete setup.
+  this->output_->write_state(this);
 }
 void LightState::dump_config() {
   ESP_LOGCONFIG(TAG, "Light '%s'", this->get_name().c_str());
@@ -188,18 +167,15 @@ void LightState::loop() {
     }
   }
 
-#ifdef KAUF_HAS_AUX
   // KAUF: check if aux lights have changed and refresh main light if so.
   if ( !this->output_->is_aux() ) {
-    if ( (this->output_->warm_rgb != nullptr && this->output_->warm_rgb->has_changed) ||
-         (this->output_->cold_rgb != nullptr && this->output_->cold_rgb->has_changed) ) {
+    if ( this->output_->warm_rgb->has_changed || this->output_->cold_rgb->has_changed ) {
       ESP_LOGV("KAUF_OUTPUT","warm or cold rgb changed");
-      if (this->output_->warm_rgb != nullptr) this->output_->warm_rgb->has_changed = false;
-      if (this->output_->cold_rgb != nullptr) this->output_->cold_rgb->has_changed = false;
+      this->output_->warm_rgb->has_changed = false;
+      this->output_->cold_rgb->has_changed = false;
       this->next_write_ = true;
     }
   }
-#endif
 
   // Write state to the light
   if (this->next_write_) {
@@ -228,29 +204,27 @@ void LightState::wled_apply() {
 
   }
 
-  std::vector<uint8_t> payload;
   while (uint16_t packet_size = udp_->parsePacket()) {
-    payload.resize(packet_size);
+    this->wled_payload_.resize(packet_size);
 
-    if (!udp_->read(&payload[0], payload.size())) {
+    if (!udp_->read(&this->wled_payload_[0], this->wled_payload_.size())) {
       return;
     }
 
-    if (!this->parse_frame_(&payload[0], payload.size())) {
+    if (!this->parse_frame_(&this->wled_payload_[0], this->wled_payload_.size())) {
       return;
     }
 
     // need at least 16 bytes to be able to forward anything.
     // 10 for header, 3 this pixel's data, 3 to forward to next pixel.
-    if ( payload.size() < 16 ) {
+    if ( this->wled_payload_.size() < 16 ) {
       return;
     }
 
     // get current ip address, quit if 254.  Not going to forward to 255.
     network::IPAddress addr = wifi::global_wifi_component->get_ip_addresses()[0];
-    char ip_str[network::IP_ADDRESS_BUFFER_SIZE];
-    addr.str_to(ip_str);
-    uint8_t addr4 = (uint8_t)atoi(strrchr(ip_str, '.') + 1);
+    std::string ip_str = addr.str();
+    uint8_t addr4 = static_cast<uint8_t>(atoi(ip_str.c_str() + ip_str.rfind('.') + 1));
 
     if ( addr4 >= 254 ) {
       ESP_LOGE("KAUF WLED", "DDP chaining force stopped at address *.254");
@@ -266,32 +240,23 @@ void LightState::wled_apply() {
     // divide by 2 gives you number for one of two packets.
     // handle odd total by subtracting packet2 from total to get packet1 instead of dividing by 2 again.
     // packet 2 length is calculated first so that its always the smaller (we don't want packet 1 to be zero is really the issue)
-    uint16_t packet2_length = ((payload.size()-13)/3)/2;
-    uint16_t packet1_length = ((payload.size()-13)/3)-packet2_length;
+    uint16_t packet2_length = ((this->wled_payload_.size()-13)/3)/2;
+    uint16_t packet1_length = ((this->wled_payload_.size()-13)/3)-packet2_length;
 
     // send first packet
     WiFiUDP udp2;
 
-    if (!udp2.beginPacket(ip_str, 4048)) {
+    if (!udp2.beginPacket(addr.str().c_str(), 4048)) {
       ESP_LOGE("KAUF WLED", "Error beginning first DDP packet!");
       return;
     }
 
-    udp2.write(payload[0]);                // flags, keep same
-    udp2.write(payload[1]);                // sequence number, keep same
-    udp2.write(payload[2]);                // data type, keep same
-    udp2.write(payload[3]);                // Source or Destination ID, keep same
-    udp2.write(payload[4]);                // data offset, keep same.  Should always be 0 anyway.
-    udp2.write(payload[5]);                // data offset, keep same.  Should always be 0 anyway.
-    udp2.write(payload[6]);                // data offset, keep same.  Should always be 0 anyway.
-    udp2.write(payload[7]);                // data offset, keep same.  Should always be 0 anyway.
+    udp2.write(&this->wled_payload_[0], 8); // copy header bytes 0-7 (flags, seq, type, id, data offset)
     udp2.write(0);                         // first byte of length always 0, doesn't matter since next pixel doesn't care.
     udp2.write(10 + (packet1_length * 3)); // data length, add 10 for header
 
     // write out payload data starting with byte 13 (4th RGB channel), and going for packet1_length * 3 (3 bytes per pixel).
-    for (uint16_t i = 13; i < ((packet1_length*3)+13); i++) {
-      udp2.write(payload[i]);
-    }
+    udp2.write(&this->wled_payload_[13], packet1_length * 3);
 
     if (!udp2.endPacket()) {
       ESP_LOGE("KAUF WLED", "Error ending first DDP packet!");
@@ -309,26 +274,17 @@ void LightState::wled_apply() {
       addr += packet1_length;
     }
 
-    if (!udp2.beginPacket(ip_str, 4048)) {
+    if (!udp2.beginPacket(addr.str().c_str(), 4048)) {
       ESP_LOGE("KAUF WLED", "Error beginning second DDP packet!");
       return;
     }
 
-    udp2.write(payload[0]);                // flags, keep same
-    udp2.write(payload[1]);                // sequence number, keep same
-    udp2.write(payload[2]);                // data type, keep same
-    udp2.write(payload[3]);                // Source or Destination ID, keep same
-    udp2.write(payload[4]);                // data offset, keep same.  Should always be 0 anyway.
-    udp2.write(payload[5]);                // data offset, keep same.  Should always be 0 anyway.
-    udp2.write(payload[6]);                // data offset, keep same.  Should always be 0 anyway.
-    udp2.write(payload[7]);                // data offset, keep same.  Should always be 0 anyway.
+    udp2.write(&this->wled_payload_[0], 8); // copy header bytes 0-7 (flags, seq, type, id, data offset)
     udp2.write(0);                         // first byte of length always 0, doesn't matter since next pixel doesn't care.
     udp2.write(10 + (packet2_length * 3)); // data length, add 10 for header
 
     // write out all the payload data starting with byte 13 plus packet1_length*3 (RGB channel after first packet).
-    for (uint16_t i = 13+(packet1_length*3); i < payload.size(); i++) {
-      udp2.write(payload[i]);
-    }
+    udp2.write(&this->wled_payload_[13 + (packet1_length * 3)], packet2_length * 3);
 
     if (!udp2.endPacket()) {
       ESP_LOGE("KAUF WLED", "Error ending second DDP packet!");
@@ -338,23 +294,31 @@ void LightState::wled_apply() {
   }
 }
 
+// Logs a DDP packet as hex with a prefix message.
+// Prints up to 14 bytes, with brackets around bytes 10-12 (RGB channel data) when present.
+void LightState::log_ddp_packet_(const char *prefix, const uint8_t *payload, uint16_t size) {
+  char hex[64];
+  int pos = 0;
+  uint16_t print_size = size < 14 ? size : 14;
+
+  for (uint16_t i = 0; i < print_size && pos < (int)sizeof(hex) - 6; i++) {
+    if (i == 10) { pos += snprintf(hex + pos, sizeof(hex) - pos, "["); }
+    if (i > 0) { pos += snprintf(hex + pos, sizeof(hex) - pos, " "); }
+    pos += snprintf(hex + pos, sizeof(hex) - pos, "%02x", payload[i]);
+    if (i == 12) { pos += snprintf(hex + pos, sizeof(hex) - pos, "]"); }
+  }
+
+  ESP_LOGD("KAUF DDP Debug", "%s (size=%d) - %s", prefix, size, hex);
+}
+
 bool LightState::parse_frame_(const uint8_t *payload, uint16_t size) {
 
   if ( this->ddp_debug_ > 0) {
-    if ( size < 10 ){
-      ESP_LOGD("KAUF DDP Debug", "Invalid DDP packet received, too short (size=%d)", size);
-    }
-    else if ( size == 10 ) {
-      ESP_LOGD("KAUF DDP Debug", "DDP packet received w/ no channel data, 3 channels required - %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x", payload[0], payload[1], payload[2], payload[3], payload[4], payload[5], payload[6], payload[7], payload[8], payload[9] );
-    }
-    else if ( size == 11 ) {
-      ESP_LOGD("KAUF DDP Debug", "DDP packet received w/ 1 channel data, 3 channels required - %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x", payload[0], payload[1], payload[2], payload[3], payload[4], payload[5], payload[6], payload[7], payload[8], payload[9], payload[10] );
-    }
-    else if ( size == 12 ) {
-      ESP_LOGD("KAUF DDP Debug", "DDP packet received w/ 2 channel data, 3 channels required - %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x", payload[0], payload[1], payload[2], payload[3], payload[4], payload[5], payload[6], payload[7], payload[8], payload[9], payload[10], payload[11] );
+    if ( size < 13 ) {
+      this->log_ddp_packet_("DDP packet received w/ insufficient channel data, 3 required", payload, size);
     }
     else if ( size > 13 ) {
-      ESP_LOGD("KAUF DDP Debug", "DDP packet received w/ >3 channel data, using first 3 channels (size=%d) - %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x [%02x %02x %02x] %02x", size, payload[0], payload[1], payload[2], payload[3], payload[4], payload[5], payload[6], payload[7], payload[8], payload[9], payload[10], payload[11], payload[12], payload[13] );
+      this->log_ddp_packet_("DDP packet received w/ >3 channel data, using first 3", payload, size);
     }
   }
 
@@ -365,13 +329,13 @@ bool LightState::parse_frame_(const uint8_t *payload, uint16_t size) {
   // ignore packet if data offset != [00 00 00 00]
   if ( (payload[4] != 0) || (payload[5] != 0) || (payload[6] != 0) || (payload[7] != 0) ) {
     if ( this->ddp_debug_ > 0) {
-      ESP_LOGD("KAUF DDP Debug", "Ignoring DDP packet w/ non-zero data offset: %02x %02x %02x %02x [%02x %02x %02x %02x] %02x %02x %02x %02x %02x", payload[0], payload[1], payload[2], payload[3], payload[4], payload[5], payload[6], payload[7], payload[8], payload[9], payload[10], payload[11], payload[12] );
+      this->log_ddp_packet_("Ignoring DDP packet w/ non-zero data offset", payload, size);
     }
     return false;
   }
 
   if ( (this->ddp_debug_ == 2) && (size == 13) ) {
-      ESP_LOGD("KAUF DDP Debug", "DDP packet received: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x [%02x %02x %02x]", payload[0], payload[1], payload[2], payload[3], payload[4], payload[5], payload[6], payload[7], payload[8], payload[9], payload[10], payload[11], payload[12] );
+    this->log_ddp_packet_("DDP packet received", payload, size);
   }
 
   float r = (float)payload[10]/255.0f;

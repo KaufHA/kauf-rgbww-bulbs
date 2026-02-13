@@ -4,9 +4,15 @@ __init__.py
 base_light_effects.h
   - restore color temp after flicker
 
+light_call.cpp
+  - removes a log line for turning on without mode specified
+
 light_color_values.h
   - add use_raw bool
   - make as_rgb and as_ct return values no matter if the light is in that mode or not
+
+light_json_schema.cpp
+  - Always report both RGB and CT in JSON state
 
 light_output.h
   - add pointers between main and aux lights, also some related variables and functions
@@ -18,7 +24,6 @@ light_state.cpp
 
 light_state.h
   - includes, variables, functions needed for DDP support
-
 
 transformers.h
   - changes gamma curve for transitions to tasmota's fast gamma table (the old one)
