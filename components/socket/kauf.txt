@@ -1,0 +1,19 @@
+Socket component changes vs upstream ESPHome (dev)
+
+Changed files:
+__init__.py
+  - Added two optional config keys for ESP8266 wake-path tuning:
+    - esp8266_wake_schedule
+    - esp8266_wake_flag
+  - Added ESP8266-only define emission in to_code():
+    - KAUF_DISABLE_SOCKET_WAKE_SCHEDULE (when esp8266_wake_schedule: false)
+    - KAUF_DISABLE_SOCKET_WAKE_FLAG (when esp8266_wake_flag: false)
+  - Purpose: allow runtime-configurable control over aggressive socket wake behavior on ESP8266.
+
+lwip_raw_tcp_impl.cpp
+  - Added compile-time gates around ESP8266 wake behavior:
+    - KAUF_DISABLE_SOCKET_WAKE_FLAG disables early-exit wake flag path in socket_delay()/socket_wake().
+    - KAUF_DISABLE_SOCKET_WAKE_SCHEDULE disables esp_schedule() wake nudges in socket_wake().
+
+socket.h
+  - Updated comments for socket_delay()/socket_wake() to document the two KAUF tuning defines.

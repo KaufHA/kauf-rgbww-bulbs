@@ -4,7 +4,9 @@
 #include "esphome/core/log.h"
 #include "light_output.h"
 #include "transformers.h"
+#ifdef USE_ESP8266
 #include "esphome/components/esp8266/preferences.h"  // KAUF: included for set_next_forced_addr
+#endif
 
 namespace esphome::light {
 
@@ -37,7 +39,9 @@ void LightState::setup() {
 
   // KAUF: set up rtc_ no matter what in case mode changes later on.
   // KAUF: forced addr/hash support
+#ifdef USE_ESP8266
   if (this->forced_addr != 12345) esp8266::set_next_forced_addr(this->forced_addr);
+#endif
   if (this->forced_hash != 0)
     this->rtc_ = global_preferences->make_preference<LightStateRTCState>(this->forced_hash);
   else
@@ -145,6 +149,7 @@ void LightState::loop() {
   }
 
   // KAUF: run wled / ddp functions if enabled
+#ifdef USE_ARDUINO
   if ( this->use_wled_ ) {wled_apply();}
 
   // KAUF: if not enabled but UPD is configured, stop UDP and reset bulb values
@@ -159,6 +164,7 @@ void LightState::loop() {
     this->current_values = this->remote_values;
     this->next_write_ = true;
   }
+#endif
 
   // Apply transformer (if any)
   if (this->transformer_ != nullptr) {
@@ -214,6 +220,10 @@ void LightState::loop() {
 // KAUF: shell of this function came from the stock ESPHome WLED component.
 // We changed the port and added DDP functionality.
 void LightState::wled_apply() {
+#ifndef USE_ARDUINO
+  this->use_wled_ = false;
+  return;
+#else
 
   // Init UDP lazily
   if (!udp_) {
@@ -336,6 +346,7 @@ void LightState::wled_apply() {
     }
 
   }
+#endif
 }
 
 bool LightState::parse_frame_(const uint8_t *payload, uint16_t size) {

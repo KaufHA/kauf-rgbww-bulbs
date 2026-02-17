@@ -14,8 +14,9 @@
 
 // KAUF: following needed for receiving and sending DDP packets.
 #include <memory>
-#include <ESP8266WiFi.h>
+#ifdef USE_ARDUINO
 #include <WiFiUdp.h>
+#endif
 #include "esphome/components/network/ip_address.h"
 #include "esphome/components/wifi/wifi_component.h"
 
@@ -121,7 +122,9 @@ class LightState : public EntityBase, public Component {
   float get_setup_priority() const override;
 
   // KAUF: for receiving UDP packets
+#ifdef USE_ARDUINO
   std::unique_ptr<WiFiUDP> udp_;
+#endif
 
   // KAUF: functions added for WLED / DDP support
   void wled_apply();
