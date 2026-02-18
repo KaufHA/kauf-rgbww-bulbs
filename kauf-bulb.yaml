@@ -15,13 +15,12 @@ substitutions:
   friendly_name: Kauf Bulb     # **** CHANGE FRIENDLY NAME TO SOMETHING UNIQUE PER DEVICE ****
 
   disable_entities:  "true"    # set to "false" to have all entities show up in Home Assistant automatically
-  disable_webserver: "false"   # set to "true" to disable webserver listening on port 80.
 
   wifi_ap_timeout: 2min    # default to 2 minute timeout for yaml file as package.
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.985"
+  project_ver_num: "1.986"
   project_ver_let: y
 
   sub_4m: "false"
@@ -36,8 +35,6 @@ substitutions:
   sub_cw_pin:     GPIO5
   sub_ww_pin:     GPIO13
 
-  sub_warm_white_temp: 2800 Kelvin
-  sub_cold_white_temp: 6600 Kelvin
 
   sub_red_freq:   125 hz
   sub_green_freq: 125 hz
@@ -46,13 +43,28 @@ substitutions:
   sub_ww_freq:    125 hz
 
   sub_reboot_req: '9'
-  sub_ota_num_attempts: '15'
 
   # removed config entities
   sub_max_power: '0.8'
-  sub_default_transition_length: 250ms
-  sub_api_reboot_timeout: 0s
-  light_restore_mode: RESTORE_DEFAULT_ON  # change power-on action for main light entity (https://esphome.io/components/light/index.html#base-light-configuration)
+
+  # KAUF deprecated substitutions
+  disable_webserver:             "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/DEPRECATED_SUBSTITUTIONS.md#disable_webserver
+  light_restore_mode:            "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/DEPRECATED_SUBSTITUTIONS.md#light_restore_mode
+  sub_api_reboot_timeout:        "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/DEPRECATED_SUBSTITUTIONS.md#sub_api_reboot_timeout
+  sub_ota_num_attempts:          "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/DEPRECATED_SUBSTITUTIONS.md#sub_ota_num_attempts
+  sub_default_transition_length: "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/DEPRECATED_SUBSTITUTIONS.md#sub_default_transition_length
+  sub_warm_white_temp:           "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/DEPRECATED_SUBSTITUTIONS.md#sub_warm_white_temp
+  sub_cold_white_temp:           "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/DEPRECATED_SUBSTITUTIONS.md#sub_cold_white_temp
+
+
+kauf_deprecations:
+  disable_webserver:             $disable_webserver
+  light_restore_mode:            $light_restore_mode
+  sub_api_reboot_timeout:        $sub_api_reboot_timeout
+  sub_ota_num_attempts:          $sub_ota_num_attempts
+  sub_default_transition_length: $sub_default_transition_length
+  sub_warm_white_temp:           $sub_warm_white_temp
+  sub_cold_white_temp:           $sub_cold_white_temp
 
 
 # https://esphome.io/components/esp8266.html
@@ -67,14 +79,13 @@ external_components:
   - source:
       type: git
       url: https://github.com/KaufHA/common
-      ref: v2026.02.07.1
+      ref: v2026.2.3
     refresh: never
   - source:
       type: git
       url: https://github.com/KaufHA/kauf-rgbww-bulbs
-      ref: c2026.1.9
+      ref: c2026.2.1
     refresh: never
-
 
 
 # https://esphome.io/guides/automations.html#global-variables
@@ -95,15 +106,18 @@ esphome:
     version: $project_ver_num($project_ver_let)
 
   on_boot:
-    then:
+    - then:
         # set default values for template sensors, otherwise they are unknown.
-      - binary_sensor.template.publish:
-          id: sensor_4m
-          state: $sub_4m
+        - binary_sensor.template.publish:
+            id: sensor_4m
+            state: $sub_4m
+        - script.execute: script_quick_boot
+    - priority: -100
+      then:
+        - lambda: |-
+            App.set_loop_interval(24);
 
-      - script.execute: script_quick_boot
-
-  min_version: 2026.1.4
+  min_version: 2026.2.0
 
 
 # https://esphome.io/components/button/index.html
@@ -132,6 +146,11 @@ wifi:
   output_power: 14
 
 
+socket:
+  esp8266_wake_schedule: false   # disables esp_schedule() wake nudges
+  esp8266_wake_flag: false       # disables s_socket_woke early-exit path
+
+
 # https://esphome.io/components/captive_portal.html
 captive_portal:
 
@@ -143,7 +162,7 @@ logger:
 # https://esphome.io/components/api.html
 api:
   id: kauf_api
-  reboot_timeout: $sub_api_reboot_timeout
+  reboot_timeout: 0s
 
 
 # https://esphome.io/components/ota.html
@@ -157,12 +176,11 @@ ota:
 
 
 safe_mode:
-  num_attempts: $sub_ota_num_attempts
+  num_attempts: 15
 
 
 # https://esphome.io/components/web_server.html
 web_server:
-  disable: $disable_webserver
   sensor_4m: $sub_4m
   js_url: https://kaufha.com/v2/www.js
   product: rgbww
@@ -207,7 +225,8 @@ light:
     entity_category: config
     default_transition_length: 0ms
     icon: mdi:store-cog
-    aux: true
+    aux: warm
+    main_light: kauf_light
     name: Warm RGB
     forced_hash: 4077116474
     forced_addr: 28
@@ -220,7 +239,8 @@ light:
     entity_category: config
     default_transition_length: 0ms
     icon: mdi:store-cog-outline
-    aux: true
+    aux: cold
+    main_light: kauf_light
     name: Cold RGB
     forced_hash: 301094535
     forced_addr: 40
@@ -230,20 +250,18 @@ light:
   # Main RGBWW light
   - platform: kauf_rgbww
     id: kauf_light
-    default_transition_length: $sub_default_transition_length
+    default_transition_length: 250ms
     name: ""
     red: pwm_red
     green: pwm_green
     blue: pwm_blue
     warm_white: pwm_ww
     cold_white: pwm_cw
-    warm_rgb: warm_rgb
-    cold_rgb: cold_rgb
-    warm_white_color_temperature: $sub_warm_white_temp
-    cold_white_color_temperature: $sub_cold_white_temp
+    warm_white_color_temperature: 2800 Kelvin
+    cold_white_color_temperature: 6600 Kelvin
     forced_hash: 2723974766
     forced_addr: 52
-    restore_mode: $light_restore_mode
+    restore_mode: RESTORE_DEFAULT_ON
     on_turn_on:
       - script.execute: $sub_on_turn_on
     on_turn_off:
