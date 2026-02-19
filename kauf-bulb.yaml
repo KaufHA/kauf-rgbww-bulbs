@@ -48,13 +48,13 @@ substitutions:
   sub_max_power: '0.8'
 
   # KAUF deprecated substitutions
-  disable_webserver:             "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/DEPRECATED_SUBSTITUTIONS.md#disable_webserver
-  light_restore_mode:            "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/DEPRECATED_SUBSTITUTIONS.md#light_restore_mode
-  sub_api_reboot_timeout:        "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/DEPRECATED_SUBSTITUTIONS.md#sub_api_reboot_timeout
-  sub_ota_num_attempts:          "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/DEPRECATED_SUBSTITUTIONS.md#sub_ota_num_attempts
-  sub_default_transition_length: "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/DEPRECATED_SUBSTITUTIONS.md#sub_default_transition_length
-  sub_warm_white_temp:           "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/DEPRECATED_SUBSTITUTIONS.md#sub_warm_white_temp
-  sub_cold_white_temp:           "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/DEPRECATED_SUBSTITUTIONS.md#sub_cold_white_temp
+  disable_webserver:             "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/blob/main/DEPRECATED_SUBSTITUTIONS.md#disable_webserver
+  light_restore_mode:            "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/blob/main/DEPRECATED_SUBSTITUTIONS.md#light_restore_mode
+  sub_api_reboot_timeout:        "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/blob/main/DEPRECATED_SUBSTITUTIONS.md#sub_api_reboot_timeout
+  sub_ota_num_attempts:          "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/blob/main/DEPRECATED_SUBSTITUTIONS.md#sub_ota_num_attempts
+  sub_default_transition_length: "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/blob/main/DEPRECATED_SUBSTITUTIONS.md#sub_default_transition_length
+  sub_warm_white_temp:           "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/blob/main/DEPRECATED_SUBSTITUTIONS.md#sub_warm_white_temp
+  sub_cold_white_temp:           "__KAUF_DEPRECATED_SENTINEL__"  # deprecated; see https://github.com/KaufHA/common/blob/main/DEPRECATED_SUBSTITUTIONS.md#sub_cold_white_temp
 
 
 kauf_deprecations:
@@ -79,7 +79,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/KaufHA/common
-      ref: v2026.2.3
+      ref: v2026.2.5
     refresh: never
   - source:
       type: git
