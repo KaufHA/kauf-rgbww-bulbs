@@ -20,7 +20,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.986"
+  project_ver_num: "1.987"
   project_ver_let: y
 
   sub_4m: "false"
