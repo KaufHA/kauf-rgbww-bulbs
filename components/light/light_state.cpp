@@ -91,6 +91,13 @@ void LightState::restore_with_mode(uint32_t transition_length) {
       break;
   }
 
+  // KAUF: default unknown startup mode to CT.
+  auto traits = this->get_traits();
+  if (recovered.color_mode == ColorMode::UNKNOWN) {
+    recovered.color_mode = ColorMode::COLOR_TEMPERATURE;
+    recovered.color_temp = traits.get_min_mireds();
+  }
+
   // KAUF: Seed remote/current values with all recovered channels so inactive modes keep their saved values.
   this->remote_values.set_color_mode(recovered.color_mode);
   this->remote_values.set_state(recovered.state);
