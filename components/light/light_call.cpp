@@ -12,9 +12,12 @@ static const char *const TAG = "light";
 
 // Helper functions to reduce code size for logging
 static void clamp_and_log_if_invalid(const char *name, float &value, const LogString *param_name, float min = 0.0f,
-                                     float max = 1.0f) {
+                                     float max = 1.0f, float warn_tolerance = 0.0f) {
   if (value < min || value > max) {
-    ESP_LOGW(TAG, "'%s': %s value %.2f is out of range [%.1f - %.1f]", name, LOG_STR_ARG(param_name), value, min, max);
+    const bool near_edge = (value >= (min - warn_tolerance) && value <= (max + warn_tolerance));
+    if (!near_edge) {
+      ESP_LOGW(TAG, "'%s': %s value %.2f is out of range [%.1f - %.1f]", name, LOG_STR_ARG(param_name), value, min, max);
+    }
     value = clamp(value, min, max);
   }
 }
@@ -286,7 +289,7 @@ LightColorValues LightCall::validate_() {
   VALIDATE_AND_APPLY(white, "White")
   VALIDATE_AND_APPLY(cold_white, "Cold white")
   VALIDATE_AND_APPLY(warm_white, "Warm white")
-  VALIDATE_AND_APPLY(color_temperature, "Color temperature", traits.get_min_mireds(), traits.get_max_mireds())
+  VALIDATE_AND_APPLY(color_temperature, "Color temperature", traits.get_min_mireds(), traits.get_max_mireds(), 1.0f)
 
 #undef VALIDATE_AND_APPLY
 

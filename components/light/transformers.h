@@ -57,22 +57,24 @@ class LightTransitionTransformer : public LightTransformer {
       this->end_values_.blue_ = 0.0f;
     }
 
-    // get starting and ending actual RGBCW values to be output including gamma and brightness
+    // CT is independent of gamma path: always use current/target mired values directly.
+    start_ct = this->start_values_.get_color_temperature();
+    end_ct = this->end_values_.get_color_temperature();
+
+    // get starting and ending actual RGB/WB values to be output including gamma and brightness
     // If start_values_ is already raw (output-space), avoid applying gamma twice.
     if (this->start_values_.use_raw) {
       start_r = this->start_values_.get_red();
       start_g = this->start_values_.get_green();
       start_b = this->start_values_.get_blue();
-      // Color temperature is stored in mireds; convert back to 0..1 for our CT interpolation.
-      const float ct_mireds = this->start_values_.get_color_temperature();
-      start_ct = (ct_mireds - 150.0f) / (350.0f - 150.0f);
-      start_ct = clamp(start_ct, 0.0f, 1.0f);
       // In apply(), WB is written via set_brightness(), so use brightness here.
       start_wb = this->start_values_.get_brightness();
     } else {
-      this->start_values_.as_rgbct(150, 350, &start_r, &start_g, &start_b, &start_ct, &start_wb, 2.8f);
+      float ct_unused;
+      this->start_values_.as_rgbct(150, 350, &start_r, &start_g, &start_b, &ct_unused, &start_wb, 2.8f);
     }
-    this->end_values_.as_rgbct(150, 350, &end_r, &end_g, &end_b, &end_ct, &end_wb, 2.8f);
+    float ct_unused;
+    this->end_values_.as_rgbct(150, 350, &end_r, &end_g, &end_b, &ct_unused, &end_wb, 2.8f);
 
     // precompute reverse gamma values once, used every frame in apply()
     start_r_rev = kauf_gamma_rev(start_r);
@@ -96,12 +98,11 @@ class LightTransitionTransformer : public LightTransformer {
   optional<LightColorValues> apply() override {
     float p = this->get_progress_();
 
-    // RGB variables.  CT F for float value, CT I for integer mired value
-    float red, green, blue, ct_f, ct_i, wb;
+    // RGB variables and CT in mireds.
+    float red, green, blue, ct_i, wb;
 
-    // ct is just straight linear interpolation.
-    ct_f = ((end_ct-start_ct)*p) + start_ct;
-    ct_i = 200*ct_f + 150; // need mireds for set_color_temperature function
+    // CT is linearly interpolated in mired space.
+    ct_i = ((end_ct - start_ct) * p) + start_ct;
 
     // apply Tasmota's fast gamma between start and end
     // uses precomputed reverse gamma values from start()
@@ -110,7 +111,7 @@ class LightTransitionTransformer : public LightTransformer {
     blue = kauf_gamma((end_b_rev - start_b_rev) * p + start_b_rev);
     wb = kauf_gamma((end_wb_rev - start_wb_rev) * p + start_wb_rev);
 
-//    ESP_LOGD("KAUF Transformer","Progress Values: P:%f R:%f  G:%f  B:%f  CT:%f:%f  WB:%f", p, red, green, blue, ct_f, ct_i, wb);
+//    ESP_LOGD("KAUF Transformer","Progress Values: P:%f R:%f  G:%f  B:%f  CT:%f  WB:%f", p, red, green, blue, ct_i, wb);
 
     LightColorValues kauf_display;
     kauf_display.color_mode_ = this->end_values_.color_mode_;
