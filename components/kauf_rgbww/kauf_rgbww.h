@@ -4,6 +4,10 @@
 #include "esphome/components/output/float_output.h"
 #include "esphome/components/light/light_output.h"
 
+#ifdef KAUF_ESP8266_PHASE_LOCKED_PWM
+namespace esphome { namespace esp8266_pwm { class ESP8266PWM; } }
+#endif
+
 namespace esphome::kauf_rgbww {
 
 class KaufRGBWWLight : public light::LightOutput, public Component {
@@ -17,6 +21,9 @@ class KaufRGBWWLight : public light::LightOutput, public Component {
   void set_blue(output::FloatOutput *blue) { blue_ = blue; }
   void set_cold_white(output::FloatOutput *cold_white) { cold_white_ = cold_white; }
   void set_warm_white(output::FloatOutput *warm_white) { warm_white_ = warm_white; }
+#ifdef KAUF_ESP8266_PHASE_LOCKED_PWM
+  void set_warm_white_pwm(output::FloatOutput *pwm);
+#endif
   void set_cold_white_temperature(float cold_white_temperature) { this->min_mireds = cold_white_temperature; }
   void set_warm_white_temperature(float warm_white_temperature) { this->max_mireds = warm_white_temperature; }
   void set_constant_brightness(bool constant_brightness) { constant_brightness_ = constant_brightness; }
@@ -39,6 +46,10 @@ class KaufRGBWWLight : public light::LightOutput, public Component {
 
   float min_mireds = 150.0f;
   float max_mireds = 350.0f;
+
+#ifdef KAUF_ESP8266_PHASE_LOCKED_PWM
+  esphome::esp8266_pwm::ESP8266PWM *warm_white_pwm_{nullptr};
+#endif
 
   // limiting coefficients for white and blue.  Must be between 0.0 and 1.0.
   float max_white = .75f; // applies only to rgb blending into white.  Color temp mode will still go to 1.0 in combination

@@ -1,5 +1,8 @@
 #include "esphome/core/log.h"
 #include "kauf_rgbww.h"
+#ifdef KAUF_ESP8266_PHASE_LOCKED_PWM
+#include "esphome/components/esp8266_pwm/esp8266_pwm.h"
+#endif
 
 namespace esphome::kauf_rgbww {
 
@@ -24,6 +27,12 @@ light::LightTraits KaufRGBWWLight::get_traits() {
 
 void KaufRGBWWLight::setup_state(light::LightState *state) {
 }
+
+#ifdef KAUF_ESP8266_PHASE_LOCKED_PWM
+void KaufRGBWWLight::set_warm_white_pwm(output::FloatOutput *pwm) {
+  warm_white_pwm_ = static_cast<esphome::esp8266_pwm::ESP8266PWM *>(pwm);
+}
+#endif
 
 void KaufRGBWWLight::write_state(light::LightState *state) {
 
@@ -187,6 +196,21 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
     this->green_->set_level(scaled_green);
     this->blue_->set_level(scaled_blue);
     this->cold_white_->set_level(scaled_cold);
+
+#ifdef KAUF_ESP8266_PHASE_LOCKED_PWM
+    float last_ww = warm_white_pwm_ ? warm_white_pwm_->get_last_output() : 0.0f;
+    if (warm_white_pwm_ != nullptr
+        && scaled_warm > 0.0f
+        && (last_ww <= 0.0f || last_ww >= 1.0f)) {
+      float remote_ct = state->remote_values.get_color_temperature();
+      if (remote_ct >= this->min_mireds && remote_ct <= this->max_mireds) {
+        float ct_norm = (remote_ct - this->min_mireds) / (this->max_mireds - this->min_mireds);
+        float phase = fmaxf(1.0f - ct_norm, 1.0f - warm_white_pwm_->get_max_power());
+        warm_white_pwm_->prepare_startup_phase(phase);
+      }
+    }
+#endif
+
     this->warm_white_->set_level(scaled_warm);
 
 }

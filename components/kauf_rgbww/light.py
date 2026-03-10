@@ -20,6 +20,13 @@ from esphome.const import (
 kauf_rgbww_ns = cg.esphome_ns.namespace('kauf_rgbww')
 KaufRGBWWLight = kauf_rgbww_ns.class_('KaufRGBWWLight', light.LightOutput)
 
+def _output_has_align_pin(output_id):
+    for out_conf in CORE.config.get("output", []):
+        out_id = out_conf.get(CONF_ID)
+        if out_id and out_id.id == output_id:
+            return "align_pin" in out_conf
+    return False
+
 def get_pwm_steps_for_output(output_id):
     """Look up output frequency and return PWM steps (1,000,000 / frequency)."""
     for out_conf in CORE.config.get("output", []):
@@ -130,6 +137,8 @@ async def to_code(config):
         cg.add(var.set_cold_white(cwhite))
         wwhite = await cg.get_variable(config[CONF_WARM_WHITE])
         cg.add(var.set_warm_white(wwhite))
+        if _output_has_align_pin(config[CONF_WARM_WHITE].id):
+            cg.add(var.set_warm_white_pwm(wwhite))
 
         # Calculate PWM steps for each channel based on output frequency
         # steps = 1,000,000 / frequency (e.g., 125Hz -> 8000 steps, 1000Hz -> 1000 steps)
