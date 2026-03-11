@@ -12,8 +12,8 @@ esphome:
             lambda: return (id(first_boot));
           then:
             - script.execute: script_factory_test
-            - lambda: wifi_wificomponent_id->set_fast_connect(true);
           else:
+            - lambda: wifi_wificomponent_id->set_fast_connect(false);
             - lambda: wifi_wificomponent_id->disable_scanning = false;
 
 
@@ -26,37 +26,36 @@ button:
     entity_category: diagnostic
     on_press:
       then:
-        - light.turn_on:
-            id: kauf_light
-            brightness: 1.0
-            color_temperature: 150 mireds
+        - lambda: id(kauf_light).restore_with_mode(250);
         - script.execute: script_factory_test_stop
 
 
 script:
   - id: script_factory_test
     then:
+
         # show button to disable factory test
-      - lambda: id(button_factory_stop).set_internal(false);
+      - lambda: |-
+          id(button_factory_stop).set_internal(false);
+          id(pwm_red).set_max_power(1.0f);
+          id(pwm_green).set_max_power(1.0f);
+          id(pwm_blue).set_max_power(1.0f);
+          id(pwm_ww).set_max_power(1.0f);
+          id(pwm_cw).set_max_power(1.0f);
+
       - while:               # repeat test pattern 30 times total to get to 10 minutes
           condition:
             lambda: return (id(test_count) < 30);
           then:
-
-            - lambda: |-
-                id(pwm_red).set_max_power(1.0f);
-                id(pwm_green).set_max_power(1.0f);
-                id(pwm_blue).set_max_power(1.0f);
-                id(pwm_ww).set_max_power(1.0f);
-                id(pwm_cw).set_max_power(1.0f);
 
             - lambda: ESP_LOGD("KAUF Test", "[1] Test Pattern to Red");
 
               # light on to red
             - lambda: |-
                 auto call = id(kauf_light).turn_on();
-                call.set_transition_length(2000);
+                call.set_transition_length(1000);
                 call.set_brightness(1.0);
+                call.set_color_mode_if_supported(light::ColorMode::RGB);
                 call.set_rgb(1.0, 0.0, 0.0);
                 call.set_save(false);
                 call.perform();
@@ -67,9 +66,11 @@ script:
               # light on to warm white
             - lambda: |-
                 auto call = id(kauf_light).turn_on();
-                call.set_transition_length(2000);
+                auto traits = id(kauf_light).get_traits();
+                call.set_transition_length(1000);
                 call.set_brightness(1.0);
-                call.set_color_temperature(350);
+                call.set_color_mode_if_supported(light::ColorMode::COLOR_TEMPERATURE);
+                call.set_color_temperature(traits.get_max_mireds());
                 call.set_save(false);
                 call.perform();
             - delay: 4s
@@ -79,8 +80,9 @@ script:
             # light on to green
             - lambda: |-
                 auto call = id(kauf_light).turn_on();
-                call.set_transition_length(2000);
+                call.set_transition_length(1000);
                 call.set_brightness(1.0);
+                call.set_color_mode_if_supported(light::ColorMode::RGB);
                 call.set_rgb(0.0, 1.0, 0.0);
                 call.set_save(false);
                 call.perform();
@@ -91,9 +93,11 @@ script:
               # light on to cold white
             - lambda: |-
                 auto call = id(kauf_light).turn_on();
-                call.set_transition_length(2000);
+                auto traits = id(kauf_light).get_traits();
+                call.set_transition_length(1000);
                 call.set_brightness(1.0);
-                call.set_color_temperature(150);
+                call.set_color_mode_if_supported(light::ColorMode::COLOR_TEMPERATURE);
+                call.set_color_temperature(traits.get_min_mireds());
                 call.set_save(false);
                 call.perform();
             - delay: 4s
@@ -103,8 +107,9 @@ script:
             # light on to blue
             - lambda: |-
                 auto call = id(kauf_light).turn_on();
-                call.set_transition_length(2000);
+                call.set_transition_length(1000);
                 call.set_brightness(1.0);
+                call.set_color_mode_if_supported(light::ColorMode::RGB);
                 call.set_rgb(0.0, 0.0, 1.0);
                 call.set_save(false);
                 call.perform();
@@ -120,6 +125,7 @@ script:
 
   - id: script_factory_test_stop
     then:
+        - lambda: ESP_LOGI("KAUF Test", "Stopping factory routine and restoring normal settings");
         - globals.set:
             id: first_boot
             value: 'false'
@@ -137,6 +143,7 @@ script:
             id(pwm_ww).set_max_power(new_power);
             id(pwm_cw).set_max_power(new_power);
             id(kauf_light)->set_next_write();
+        - lambda: ESP_LOGI("KAUF Test", "Factory routine stop complete");
 
 
 globals:
@@ -152,6 +159,7 @@ globals:
 
 # disable scanning during factory test
 wifi:
+  fast_connect: true
   disable_scanning: true
 
 web_server:

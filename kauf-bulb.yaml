@@ -20,7 +20,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.988"
+  project_ver_num: "1.991"
   project_ver_let: y
 
   sub_4m: "false"
@@ -79,12 +79,12 @@ external_components:
   - source:
       type: git
       url: https://github.com/KaufHA/common
-      ref: v2026.2.6
+      ref: v2026.2.12
     refresh: never
   - source:
       type: git
       url: https://github.com/KaufHA/kauf-rgbww-bulbs
-      ref: c2026.2.2
+      ref: c2026.2.5
     refresh: never
 
 
@@ -112,12 +112,8 @@ esphome:
             id: sensor_4m
             state: $sub_4m
         - script.execute: script_quick_boot
-    - priority: -100
-      then:
-        - lambda: |-
-            App.set_loop_interval(24);
 
-  min_version: 2026.2.1
+  min_version: 2026.2.4
 
 
 # https://esphome.io/components/button/index.html
@@ -144,11 +140,6 @@ wifi:
   min_auth_mode: WPA2
 
   output_power: 14
-
-
-socket:
-  esp8266_wake_schedule: false   # disables esp_schedule() wake nudges
-  esp8266_wake_flag: false       # disables s_socket_woke early-exit path
 
 
 # https://esphome.io/components/captive_portal.html
@@ -194,16 +185,22 @@ output:
     frequency: $sub_red_freq
     id: pwm_red
     max_power: $sub_max_power
+    align_pin: pwm_cw
+    phase_offset: 0.25        # 90°
   - platform: esp8266_pwm
     pin: $sub_green_pin
     frequency: $sub_green_freq
     id: pwm_green
     max_power: $sub_max_power
+    align_pin: pwm_cw
+    phase_offset: 0.833       # 300°
   - platform: esp8266_pwm
     pin: $sub_blue_pin
     frequency: $sub_blue_freq
     id: pwm_blue
     max_power: $sub_max_power
+    align_pin: pwm_cw
+    phase_offset: 0.667       # 240°
   - platform: esp8266_pwm
     pin: $sub_cw_pin
     frequency: $sub_cw_freq
@@ -214,6 +211,7 @@ output:
     frequency: $sub_ww_freq
     id: pwm_ww
     max_power: $sub_max_power
+    align_pin: pwm_cw
 
 
 # https://esphome.io/components/light/index.html
