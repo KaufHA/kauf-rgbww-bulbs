@@ -115,34 +115,43 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
 
     }
 
-    else {
-        // During transitions we must evaluate RGB and CT/WB together because mode-to-mode
-        // transitions can have both contributions at once.
-        if (state->is_transformer_active()) {
-            state->current_values.as_rgb(&red, &green, &blue);
-            state->current_values.as_ct(min_mireds, max_mireds, &ct, &white_brightness);
-            red = apply_tasmota_gamma(red);
-            green = apply_tasmota_gamma(green);
-            blue = apply_tasmota_gamma(blue);
-            white_brightness = apply_tasmota_gamma(white_brightness);
-        }
+    // During transitions we must evaluate RGB and CT/WB together because mode-to-mode
+    // transitions can have both contributions at once. Transformer output is already
+    // in linear output space, so read it directly (do not re-scale via as_rgb/as_ct).
+    else if (state->is_transformer_active()) {
+
+        red = state->current_values.get_red();
+        green = state->current_values.get_green();
+        blue = state->current_values.get_blue();
+        white_brightness = state->current_values.get_brightness();
+        ct = (state->current_values.get_color_temperature() - min_mireds) / (max_mireds - min_mireds);
+        if (ct < 0.0f) ct = 0.0f;
+        if (ct > 1.0f) ct = 1.0f;
+        red = apply_tasmota_gamma(red);
+        green = apply_tasmota_gamma(green);
+        blue = apply_tasmota_gamma(blue);
+        white_brightness = apply_tasmota_gamma(white_brightness);
+
+    }
+
     // CT color mode.  all RGB zeros, get ct values.
-        else if ( state->current_values.get_color_mode() & light::ColorCapability::COLOR_TEMPERATURE ) {
+    else if ( state->current_values.get_color_mode() & light::ColorCapability::COLOR_TEMPERATURE ) {
 
-            state->current_values_as_ct(&ct, &white_brightness);
-            red = 0.0f;
-            green = 0.0f;
-            blue = 0.0f;
+        state->current_values_as_ct(&ct, &white_brightness);
+        red = 0.0f;
+        green = 0.0f;
+        blue = 0.0f;
 
-        }
+    }
 
     // RGB color mode.  Get rgb values with default gamma.  No white channel in RGB mode.
-        else {
+    else {
 
-            state->current_values_as_rgb(&red, &green, &blue);
-            white_brightness = 0.0f;
-        }
+        state->current_values_as_rgb(&red, &green, &blue);
+        white_brightness = 0.0f;
+
     }
+
 
     float inv_ct = 1.0f - ct;
 
@@ -211,21 +220,6 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
     //   reduce blue to make RGB more accurate
     scaled_blue *= max_blue;
 
-    // Round up to the nearest PWM step to prevent near-zero values from rounding to zero.
-    // Without this, long fades turn off too soon because small values round down to zero.
-    // Gated on > 0.0f to skip the ceil/multiply/divide for channels that are already zero
-    // (e.g. all three RGB channels in CT mode, or both white channels in RGB mode with no
-    // white blend).  The > 0.0f comparison is essentially free (integer bit check on the
-    // float representation) while the ceil/multiply/divide are expensive on ESP8266 (no FPU).
-    if (scaled_red   > 0.0f) scaled_red   = ceil(scaled_red   * KAUF_PWM_STEPS_RED  ) / KAUF_PWM_STEPS_RED;
-    if (scaled_green > 0.0f) scaled_green = ceil(scaled_green * KAUF_PWM_STEPS_GREEN) / KAUF_PWM_STEPS_GREEN;
-    if (scaled_blue  > 0.0f) scaled_blue  = ceil(scaled_blue  * KAUF_PWM_STEPS_BLUE ) / KAUF_PWM_STEPS_BLUE;
-    if (scaled_cold  > 0.0f) scaled_cold  = ceil(scaled_cold  * KAUF_PWM_STEPS_COLD ) / KAUF_PWM_STEPS_COLD;
-    if (scaled_warm  > 0.0f) scaled_warm  = ceil(scaled_warm  * KAUF_PWM_STEPS_WARM ) / KAUF_PWM_STEPS_WARM;
-
-
-    ESP_LOGV("Kauf Light", "Setting Levels - R:%f G:%f B:%f CW:%f WW:%f)", scaled_red, scaled_green, scaled_blue, scaled_cold, scaled_warm);
-
     // set outputs
     this->red_->set_level(scaled_red);
     this->green_->set_level(scaled_green);
@@ -233,6 +227,7 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
     this->cold_white_->set_level(scaled_cold);
 
 #ifdef KAUF_ESP8266_PHASE_LOCKED_PWM
+    // this block is notifying the warm white output of what phase it needs to turn on to so that it doesn't overlap cold white
     float last_ww = warm_white_pwm_ ? warm_white_pwm_->get_last_output() : 0.0f;
     if (warm_white_pwm_ != nullptr
         && scaled_warm > 0.0f
@@ -247,6 +242,8 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
 #endif
 
     this->warm_white_->set_level(scaled_warm);
+
+    ESP_LOGV("Kauf Light", "Set Levels - R:%f G:%f B:%f CW:%f WW:%f)", scaled_red, scaled_green, scaled_blue, scaled_cold, scaled_warm);
 
 }
 
