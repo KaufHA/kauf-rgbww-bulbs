@@ -8,6 +8,35 @@ namespace esphome::kauf_rgbww {
 
 static const char *TAG = "kauf_rgbww.light";
 
+// Tasmota fast gamma curve used only during active transitions.
+// input < 0        :: output = 0
+// input   0 -  384 :: output   0 -  192
+// input 384 -  768 :: output 192 -  576
+// input 768 - 1023 :: output 576 - 1023
+// input > 1023     :: output = 1023
+static constexpr float TASMOTA_GAMMA_I1 = 384.0f / 1023.0f;
+static constexpr float TASMOTA_GAMMA_I2 = 768.0f / 1023.0f;
+static constexpr float TASMOTA_GAMMA_O1 = 192.0f / 1023.0f;
+static constexpr float TASMOTA_GAMMA_O2 = 576.0f / 1023.0f;
+static constexpr float TASMOTA_GAMMA_SLOPE1 = TASMOTA_GAMMA_O1 / TASMOTA_GAMMA_I1;
+static constexpr float TASMOTA_GAMMA_SLOPE2 =
+    (TASMOTA_GAMMA_O2 - TASMOTA_GAMMA_O1) / (TASMOTA_GAMMA_I2 - TASMOTA_GAMMA_I1);
+static constexpr float TASMOTA_GAMMA_SLOPE3 =
+    (1.0f - TASMOTA_GAMMA_O2) / (1.0f - TASMOTA_GAMMA_I2);
+
+static inline float apply_tasmota_gamma(float x) {
+    if (x >= 0.0f && x <= TASMOTA_GAMMA_I1) {
+        return x * TASMOTA_GAMMA_SLOPE1;
+    }
+    if (x <= TASMOTA_GAMMA_I2) {
+        return (x - TASMOTA_GAMMA_I1) * TASMOTA_GAMMA_SLOPE2 + TASMOTA_GAMMA_O1;
+    }
+    if (x <= 1.0f) {
+        return (x - TASMOTA_GAMMA_I2) * TASMOTA_GAMMA_SLOPE3 + TASMOTA_GAMMA_O2;
+    }
+    return 0.0f;
+}
+
 light::LightTraits KaufRGBWWLight::get_traits() {
     auto traits = light::LightTraits();
 
@@ -61,12 +90,7 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
 
     // get rgbww values.
 
-    // use_raw means don't apply gamma. Due to being in a transition.
-    // The KAUF custom transition applies a different gamma curve
-    // within the transition so we don't want to apply more gamma.
-
-    // use_raw is now also used with values received via WLED DDP.
-    // Presumably WLED applies any desired gamma correction before sending out the values.
+    // use_raw is reserved for DDP/raw values; don't reshape them here.
     if ( state->current_values.use_raw ) {
 
         // ESP_LOGD("Kauf Light", "Use Raw - Yes");
@@ -91,22 +115,33 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
 
     }
 
+    else {
+        // During transitions we must evaluate RGB and CT/WB together because mode-to-mode
+        // transitions can have both contributions at once.
+        if (state->is_transformer_active()) {
+            state->current_values.as_rgb(&red, &green, &blue);
+            state->current_values.as_ct(min_mireds, max_mireds, &ct, &white_brightness);
+            red = apply_tasmota_gamma(red);
+            green = apply_tasmota_gamma(green);
+            blue = apply_tasmota_gamma(blue);
+            white_brightness = apply_tasmota_gamma(white_brightness);
+        }
     // CT color mode.  all RGB zeros, get ct values.
-    else if ( state->current_values.get_color_mode() & light::ColorCapability::COLOR_TEMPERATURE ) {
+        else if ( state->current_values.get_color_mode() & light::ColorCapability::COLOR_TEMPERATURE ) {
 
-        state->current_values_as_ct(&ct, &white_brightness);
-        red = 0.0f;
-        green = 0.0f;
-        blue = 0.0f;
+            state->current_values_as_ct(&ct, &white_brightness);
+            red = 0.0f;
+            green = 0.0f;
+            blue = 0.0f;
 
-    }
+        }
 
     // RGB color mode.  Get rgb values with default gamma.  No white channel in RGB mode.
-    else {
+        else {
 
-        state->current_values_as_rgb(&red, &green, &blue);
-        white_brightness = 0.0f;
-
+            state->current_values_as_rgb(&red, &green, &blue);
+            white_brightness = 0.0f;
+        }
     }
 
     float inv_ct = 1.0f - ct;
