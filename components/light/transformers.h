@@ -11,6 +11,35 @@ namespace esphome::light {
 
 class LightTransitionTransformer : public LightTransformer {
  public:
+  // KAUF: Match steady-state gamma endpoints while using Tasmota gamma during transition.
+  // We interpolate in "Tasmota input" space, so pre-map endpoints:
+  //   linear -> steady gamma -> reverse(Tasmota gamma)
+  static constexpr float DEFAULT_GAMMA = 2.8f;
+  static constexpr float TASMOTA_GAMMA_I1 = 384.0f / 1023.0f;
+  static constexpr float TASMOTA_GAMMA_I2 = 768.0f / 1023.0f;
+  static constexpr float TASMOTA_GAMMA_O1 = 192.0f / 1023.0f;
+  static constexpr float TASMOTA_GAMMA_O2 = 576.0f / 1023.0f;
+  static constexpr float TASMOTA_GAMMA_SLOPE1 = TASMOTA_GAMMA_O1 / TASMOTA_GAMMA_I1;
+  static constexpr float TASMOTA_GAMMA_SLOPE2 =
+      (TASMOTA_GAMMA_O2 - TASMOTA_GAMMA_O1) / (TASMOTA_GAMMA_I2 - TASMOTA_GAMMA_I1);
+  static constexpr float TASMOTA_GAMMA_SLOPE3 =
+      (1.0f - TASMOTA_GAMMA_O2) / (1.0f - TASMOTA_GAMMA_I2);
+
+  static inline float gamma_default_(float x) {
+    x = clamp(x, 0.0f, 1.0f);
+    return powf(x, DEFAULT_GAMMA);
+  }
+
+  static inline float reverse_tasmota_gamma_(float y) {
+    y = clamp(y, 0.0f, 1.0f);
+    if (y <= TASMOTA_GAMMA_O1) {
+      return y / TASMOTA_GAMMA_SLOPE1;
+    }
+    if (y <= TASMOTA_GAMMA_O2) {
+      return ((y - TASMOTA_GAMMA_O1) / TASMOTA_GAMMA_SLOPE2) + TASMOTA_GAMMA_I1;
+    }
+    return ((y - TASMOTA_GAMMA_O2) / TASMOTA_GAMMA_SLOPE3) + TASMOTA_GAMMA_I2;
+  }
 
   // KAUF: variables for start and end points
   float start_r, start_g, start_b, start_ct, start_wb;
@@ -60,6 +89,17 @@ class LightTransitionTransformer : public LightTransformer {
     this->end_values_.as_rgb(&end_r, &end_g, &end_b);
     end_wb = this->end_values_.get_white_brightness();
     end_ct = this->end_values_.get_color_temperature();
+
+    // KAUF: map endpoints into Tasmota input space so transition boundaries line up
+    // with steady-state (LUT/power gamma) output.
+    start_r = reverse_tasmota_gamma_(gamma_default_(start_r));
+    start_g = reverse_tasmota_gamma_(gamma_default_(start_g));
+    start_b = reverse_tasmota_gamma_(gamma_default_(start_b));
+    start_wb = reverse_tasmota_gamma_(gamma_default_(start_wb));
+    end_r = reverse_tasmota_gamma_(gamma_default_(end_r));
+    end_g = reverse_tasmota_gamma_(gamma_default_(end_g));
+    end_b = reverse_tasmota_gamma_(gamma_default_(end_b));
+    end_wb = reverse_tasmota_gamma_(gamma_default_(end_wb));
 
     ESP_LOGV("KAUF Transformer","");
     ESP_LOGV("KAUF Transformer","/////////////////////////////////////////////////////////////////////////////");
