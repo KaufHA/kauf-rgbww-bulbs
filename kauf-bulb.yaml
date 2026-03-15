@@ -20,7 +20,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.991"
+  project_ver_num: "1.992"
   project_ver_let: y
 
   sub_4m: "false"
@@ -36,11 +36,11 @@ substitutions:
   sub_ww_pin:     GPIO13
 
 
-  sub_red_freq:   125 hz
-  sub_green_freq: 125 hz
-  sub_blue_freq:  125 hz
-  sub_cw_freq:    125 hz
-  sub_ww_freq:    125 hz
+  sub_red_freq:   250 hz
+  sub_green_freq: 250 hz
+  sub_blue_freq:  250 hz
+  sub_cw_freq:    250 hz
+  sub_ww_freq:    250 hz
 
   sub_reboot_req: '9'
 
@@ -75,17 +75,17 @@ esp8266:
 
 
 # https://esphome.io/components/external_components.html
-external_components:
-  - source:
-      type: git
-      url: https://github.com/KaufHA/common
-      ref: v2026.2.12
-    refresh: never
-  - source:
-      type: git
-      url: https://github.com/KaufHA/kauf-rgbww-bulbs
-      ref: c2026.2.5
-    refresh: never
+# external_components:
+#   - source:
+#       type: git
+#       url: https://github.com/KaufHA/common
+#       ref: v2026.3.0
+#     refresh: never
+#   - source:
+#       type: git
+#       url: https://github.com/KaufHA/kauf-rgbww-bulbs
+#       ref: c2026.3.0
+#     refresh: never
 
 
 # https://esphome.io/guides/automations.html#global-variables
@@ -113,7 +113,7 @@ esphome:
             state: $sub_4m
         - script.execute: script_quick_boot
 
-  min_version: 2026.2.4
+  min_version: 2026.3.0
 
 
 # https://esphome.io/components/button/index.html
@@ -184,6 +184,7 @@ output:
     pin: $sub_red_pin
     frequency: $sub_red_freq
     id: pwm_red
+    quantize: up
     max_power: $sub_max_power
     align_pin: pwm_cw
     phase_offset: 0.25        # 90°
@@ -191,6 +192,7 @@ output:
     pin: $sub_green_pin
     frequency: $sub_green_freq
     id: pwm_green
+    quantize: up
     max_power: $sub_max_power
     align_pin: pwm_cw
     phase_offset: 0.833       # 300°
@@ -198,6 +200,7 @@ output:
     pin: $sub_blue_pin
     frequency: $sub_blue_freq
     id: pwm_blue
+    quantize: up
     max_power: $sub_max_power
     align_pin: pwm_cw
     phase_offset: 0.667       # 240°
@@ -205,11 +208,13 @@ output:
     pin: $sub_cw_pin
     frequency: $sub_cw_freq
     id: pwm_cw
+    quantize: up
     max_power: $sub_max_power
   - platform: esp8266_pwm
     pin: $sub_ww_pin
     frequency: $sub_ww_freq
     id: pwm_ww
+    quantize: up
     max_power: $sub_max_power
     align_pin: pwm_cw
 
