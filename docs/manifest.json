@@ -1,0 +1,9 @@
+{
+  "name": "Kauf.RGBWW",
+  "version": "1.993",
+  "builds": [
+    {
+      "chipFamily": "ESP8266"
+    }
+  ]
+}
