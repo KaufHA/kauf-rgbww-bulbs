@@ -20,7 +20,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.969"
+  project_ver_num: "1.994"
   project_ver_let: l
 
   sub_4m: "false"
@@ -37,11 +37,11 @@ substitutions:
   sub_warm_white_temp: 2800 Kelvin
   sub_cold_white_temp: 6600 Kelvin
 
-  sub_red_freq:   125 hz
-  sub_green_freq: 125 hz
-  sub_blue_freq:  125 hz
-  sub_cw_freq:    125 hz
-  sub_ww_freq:    125 hz
+  sub_red_freq:   250 hz
+  sub_green_freq: 250 hz
+  sub_blue_freq:  250 hz
+  sub_cw_freq:    250 hz
+  sub_ww_freq:    250 hz
 
   sub_reboot_req: '9'
   sub_ota_num_attempts: '15'
