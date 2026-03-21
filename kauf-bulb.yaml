@@ -20,7 +20,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.993"
+  project_ver_num: "1.994"
   project_ver_let: y
 
   sub_4m: "false"
@@ -159,9 +159,11 @@ api:
 # https://esphome.io/components/ota.html
 ota:
   - platform: web_server
+    id: kauf_web_server_ota
     on_error:
       - button.press: restart_button
   - platform: esphome
+    id: kauf_esphome_ota
     on_error:
       - button.press: restart_button
 
