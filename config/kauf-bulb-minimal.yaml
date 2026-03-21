@@ -24,7 +24,7 @@ esphome:
   name: $name
   project:
     name: "Kauf.RGBWW"
-    version: "1.969(m)"
+    version: "1.994(m)"
 
   min_version: 2026.1.0
 
