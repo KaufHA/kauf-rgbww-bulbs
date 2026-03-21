@@ -129,9 +129,11 @@ api:
 # https://esphome.io/components/ota.html
 ota:
   - platform: web_server
+    id: kauf_web_server_ota
     on_error:
       - button.press: restart_button
   - platform: esphome
+    id: kauf_esphome_ota
     on_error:
       - button.press: restart_button
 

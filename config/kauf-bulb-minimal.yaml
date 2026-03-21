@@ -49,7 +49,9 @@ logger:             # https://esphome.io/components/logger.html
 api:                # https://esphome.io/components/api.html
 ota:                # https://esphome.io/components/ota.html
   - platform: esphome
+    id: kauf_esphome_ota
   - platform: web_server
+    id: kauf_web_server_ota
 safe_mode:
 web_server:         # https://esphome.io/components/web_server.html
 
