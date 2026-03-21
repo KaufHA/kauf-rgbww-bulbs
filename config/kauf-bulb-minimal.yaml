@@ -61,27 +61,27 @@ web_server:         # https://esphome.io/components/web_server.html
 output:
   - platform: esp8266_pwm
     pin: $sub_red_pin
-    frequency: 125 Hz
+    frequency: 250 Hz
     id: pwm_red
     max_power: .8
   - platform: esp8266_pwm
     pin: $sub_green_pin
-    frequency: 125 Hz
+    frequency: 250 Hz
     id: pwm_green
     max_power: .8
   - platform: esp8266_pwm
     pin: $sub_blue_pin
-    frequency: 125 Hz
+    frequency: 250 Hz
     id: pwm_blue
     max_power: .8
   - platform: esp8266_pwm
     pin: $sub_cw_pin
-    frequency: 125 Hz
+    frequency: 250 Hz
     id: pwm_cw
     max_power: .8
   - platform: esp8266_pwm
     pin: $sub_ww_pin
-    frequency: 125 Hz
+    frequency: 250 Hz
     id: pwm_ww
     max_power: .8
 
