@@ -1,5 +1,8 @@
 substitutions:
   project_ver_let: u
+  sub_update_source: http://kaufha.com/kauf-manifests/bulb/manifest.json
+  sub_update_release_url: https://github.com/KaufHA/kauf-rgbww-bulbs/releases/latest
+  sub_update_firmware_url: https://github.com/KaufHA/kauf-rgbww-bulbs/releases/latest/download/kauf-bulb-v{version}-update-1m.bin.gz
 
 
 packages:
@@ -23,3 +26,16 @@ wifi:
 # embed the web server's js file for binary update files
 web_server:
   local: true
+
+
+http_request:
+  esp8266_disable_ssl_support: true
+
+
+update:
+  - platform: kauf_esp8266_update
+    name: Firmware Update
+    source: $sub_update_source
+    release_url: $sub_update_release_url
+    firmware_url: $sub_update_firmware_url
+    update_interval: 7d

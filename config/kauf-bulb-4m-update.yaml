@@ -1,3 +1,6 @@
+substitutions:
+  sub_update_firmware_url: https://github.com/KaufHA/kauf-rgbww-bulbs/releases/latest/download/kauf-bulb-v{version}-update-4m.bin.gz
+
 packages:
   Kauf.Bulb-u: !include kauf-bulb-update.yaml
   Kauf.4m:     !include kauf-bulb-4m-base.yaml

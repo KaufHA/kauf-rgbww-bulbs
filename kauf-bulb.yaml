@@ -20,7 +20,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "1.994"
+  project_ver_num: "2.00"
   project_ver_let: y
 
   sub_4m: "false"
@@ -79,7 +79,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/KaufHA/common
-      ref: v2026.3.1
+      ref: v2026.3.3
     refresh: never
   - source:
       type: git
@@ -176,7 +176,7 @@ safe_mode:
 web_server:
   sensor_4m: $sub_4m
   js_url: https://kaufha.com/v2/www.js
-  product: rgbww
+  product: bulb
 
 
 # PWM outputs for each LED channel
