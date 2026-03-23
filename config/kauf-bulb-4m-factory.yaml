@@ -1,14 +1,17 @@
 substitutions:
   project_ver_let: f
 
+
 packages:
   kauf_bulb_update: !include kauf-bulb-4m-update.yaml
-  Kauf.4m:          !include kauf-bulb-4m-base.yaml
 
 
 esphome:
+  platformio_options:
+    build_flags: -DKAUF_FACTORY
   on_boot:
-    then:
+    - then:
+      - lambda: web_server_webserver_id->set_factory_condition(&id(first_boot));
       - if:
           condition:
             lambda: return (id(first_boot));
@@ -36,9 +39,7 @@ script:
   - id: script_factory_test
     then:
 
-        # show button to disable factory test
       - lambda: |-
-          id(button_factory_stop).set_internal(false);
           id(pwm_red).set_max_power(1.0f);
           id(pwm_green).set_max_power(1.0f);
           id(pwm_blue).set_max_power(1.0f);
@@ -136,7 +137,6 @@ script:
             value: '0'
         - lambda: global_preferences->sync();
         - script.stop: script_factory_test
-        - lambda: id(button_factory_stop).set_internal(true);
         - lambda: |-
             float new_power = ((float)id(number_max_power).state)/100.0f;
             id(pwm_red).set_max_power(new_power);
