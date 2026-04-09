@@ -6,7 +6,7 @@
 #include "light_output.h"
 #include "transformers.h"
 #ifdef USE_ESP8266
-#include "esphome/components/esp8266/preferences.h"  // KAUF: included for set_next_forced_addr
+#include "esphome/components/esp8266/preferences.h"  // KAUF: forced_addr support
 #endif
 
 namespace esphome::light {
@@ -40,11 +40,12 @@ void LightState::setup() {
 
   // KAUF: set up rtc_ no matter what in case mode changes later on.
   // KAUF: forced addr/hash support
-#ifdef USE_ESP8266
-  if (this->forced_addr != 12345) esp8266::set_next_forced_addr(this->forced_addr);
-#endif
   if (this->forced_hash != 0)
+#ifdef USE_ESP8266
+    this->rtc_ = global_preferences->make_preference<LightStateRTCState>(this->forced_hash, this->forced_addr);
+#else
     this->rtc_ = global_preferences->make_preference<LightStateRTCState>(this->forced_hash);
+#endif
   else
     this->rtc_ = this->make_entity_preference<LightStateRTCState>();
 
