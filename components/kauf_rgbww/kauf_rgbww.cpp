@@ -86,6 +86,8 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
 
     float red, green, blue;
     float white_brightness;
+    const float mired_span = max_mireds - min_mireds;
+    const float inv_mired_span = mired_span != 0.0f ? (1.0f / mired_span) : 0.0f;
 
 
     // get rgbww values.
@@ -124,7 +126,7 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
         green = state->current_values.get_green();
         blue = state->current_values.get_blue();
         white_brightness = state->current_values.get_brightness();
-        ct = (state->current_values.get_color_temperature() - min_mireds) / (max_mireds - min_mireds);
+        ct = (state->current_values.get_color_temperature() - min_mireds) * inv_mired_span;
         if (ct < 0.0f) ct = 0.0f;
         if (ct > 1.0f) ct = 1.0f;
         red = apply_tasmota_gamma(red);
@@ -234,7 +236,7 @@ void KaufRGBWWLight::write_state(light::LightState *state) {
         && (last_ww <= 0.0f || last_ww >= 1.0f)) {
       float remote_ct = state->remote_values.get_color_temperature();
       if (remote_ct >= this->min_mireds && remote_ct <= this->max_mireds) {
-        float ct_norm = (remote_ct - this->min_mireds) / (this->max_mireds - this->min_mireds);
+        float ct_norm = (remote_ct - this->min_mireds) * inv_mired_span;
         float phase = fmaxf(1.0f - ct_norm, 1.0f - warm_white_pwm_->get_max_power());
         warm_white_pwm_->prepare_startup_phase(phase);
       }

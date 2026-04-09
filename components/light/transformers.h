@@ -144,7 +144,6 @@ class LightTransitionTransformer : public LightTransformer {
 
  protected:
   LightColorValues end_values_{};
-  LightColorValues intermediate_values_{};
   bool changing_color_mode_{false};
 };
 
