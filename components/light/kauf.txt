@@ -5,11 +5,12 @@ base_light_effects.h
   - restore color temp after flicker
 
 light_call.cpp
-  - removes a log line for turning on without mode specified
+  - suppress warning messages if color temp is within 1.0 mireds so we can undershoot or overshoot non-integer values that are hard to get exact.
 
 light_color_values.h
   - add use_raw bool
   - make as_rgb and as_ct return values no matter if the light is in that mode or not
+  - add function to get white brightness, used in transformers.h
 
 light_json_schema.cpp
   - Always report both RGB and CT in JSON state
