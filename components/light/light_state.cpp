@@ -94,6 +94,14 @@ void LightState::restore_with_mode(uint32_t transition_length) {
       break;
   }
 
+  // A light coming up on boot must never end up on-but-invisible: if the resolved restore
+  // state is on but its brightness is zero (e.g. a stale/persisted value from before a
+  // forced-on restore mode, or an inverted restore flipping a dim-to-0 off state to on),
+  // reset it to full brightness.
+  if (recovered.state && recovered.brightness == 0.0f) {
+    recovered.brightness = 1.0f;
+  }
+
   // KAUF: default unknown startup mode to CT.
   auto traits = this->get_traits();
   if (recovered.color_mode == ColorMode::UNKNOWN) {
