@@ -447,9 +447,7 @@ bool LightState::parse_frame_(const uint8_t *payload, uint16_t size) {
   return true;
 
 }
-// /KAUF:
-
-float LightState::get_setup_priority() const { return setup_priority::HARDWARE - 1.0f; }
+// /KAUF
 
 void LightState::publish_state() {
   if (this->remote_values_listeners_) {
@@ -486,25 +484,11 @@ void LightState::add_target_state_reached_listener(LightTargetStateReachedListen
   this->target_state_reached_listeners_->push_back(listener);
 }
 
-void LightState::set_default_transition_length(uint32_t default_transition_length) {
-  this->default_transition_length_ = default_transition_length;
-}
-uint32_t LightState::get_default_transition_length() const { return this->default_transition_length_; }
-void LightState::set_flash_transition_length(uint32_t flash_transition_length) {
-  this->flash_transition_length_ = flash_transition_length;
-}
-uint32_t LightState::get_flash_transition_length() const { return this->flash_transition_length_; }
-void LightState::set_gamma_correct(float gamma_correct) { this->gamma_correct_ = gamma_correct; }
-void LightState::set_restore_mode(LightRestoreMode restore_mode) { this->restore_mode_ = restore_mode; }
-void LightState::set_initial_state(void (*callback)(LightStateRTCState &)) { this->initial_state_callback_ = callback; }
-bool LightState::supports_effects() { return !this->effects_.empty(); }
-const FixedVector<LightEffect *> &LightState::get_effects() const { return this->effects_; }
 void LightState::add_effects(const std::initializer_list<LightEffect *> &effects) {
   // Called once from Python codegen during setup with all effects from YAML config
   this->effects_ = effects;
 }
 
-void LightState::current_values_as_binary(bool *binary) { this->current_values.as_binary(binary); }
 void LightState::current_values_as_brightness(float *brightness) {
   this->current_values.as_brightness(brightness);
   *brightness = this->gamma_correct_lut(*brightness);
@@ -624,8 +608,6 @@ float LightState::gamma_uncorrect_lut(float value) const {
   return (lo + frac) / 255.0f;
 }
 #endif  // USE_LIGHT_GAMMA_LUT
-
-bool LightState::is_transformer_active() { return this->is_transformer_active_; }
 
 void LightState::start_effect_(uint32_t effect_index) {
   this->stop_effect_();
