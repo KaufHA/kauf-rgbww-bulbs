@@ -5,8 +5,6 @@
 #include "light_state.h"
 #include "light_transformer.h"
 
-#include "esphome/components/globals/globals_component.h"
-
 namespace esphome::light {
 
 /// Interface to write LightStates to hardware.

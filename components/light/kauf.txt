@@ -20,7 +20,7 @@ light_output.h
 
 light_state.cpp
   - DDP support
-  - always load preferences but don't always save
+  - always load preferences
   - add linkage for aux lights to control main lights
 
 light_state.h
