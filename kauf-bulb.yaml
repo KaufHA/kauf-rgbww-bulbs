@@ -20,7 +20,7 @@ substitutions:
 
   # https://esphome.io/components/esphome.html#esphome-creators-project
   project_name: Kauf.RGBWW
-  project_ver_num: "2.015"
+  project_ver_num: "2.016"
   project_ver_let: y
 
   sub_4m: "false"
@@ -404,18 +404,16 @@ script:
           condition:
             lambda: return ( id(global_quick_boot_count) > 3 );
           then:
-            - lambda: |-
-                auto call = id(kauf_light).turn_on();
-                call.set_brightness(0.5);
-                call.set_rgb(1.0, 1.0, 0.0);
-                call.set_save(false);
-                call.perform();
+            - light.turn_on:
+                id: kauf_light
+                brightness: 50%
+                red: 100%
+                green: 100%
+                blue: 0%
+                flash_length: 3s
 
-      - delay: 3s
-      - lambda: id(kauf_light).restore_with_mode(250);
-
-      # wait 7 more seconds (10 seconds total)
-      - delay: 7s
+      # wait 10 more seconds
+      - delay: 10s
       - lambda: ESP_LOGD("kauf-bulb.yaml", "quick boot script, 10 seconds up");
 
       # wait until wifi is connected
