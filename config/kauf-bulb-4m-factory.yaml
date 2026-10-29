@@ -31,7 +31,14 @@ button:
     entity_category: diagnostic
     on_press:
       then:
-        - lambda: id(kauf_light).restore_with_mode(250);
+        - lambda: |-
+            // nothing is saved while the factory routine runs, so go to the default state (bright cold white).
+            auto call = id(kauf_light).turn_on();
+            call.set_transition_length(250);
+            call.set_brightness(1.0);
+            call.set_color_mode_if_supported(light::ColorMode::COLOR_TEMPERATURE);
+            call.set_color_temperature(id(kauf_light).get_traits().get_min_mireds());
+            call.perform();
         - script.execute: script_factory_test_stop
 
 
@@ -135,7 +142,11 @@ script:
         - globals.set:
             id: global_quick_boot_count
             value: '0'
-        - lambda: global_preferences->sync();
+        - lambda: |-
+            // restoring globals only store on update(), so store now before syncing to flash.
+            first_boot->update();
+            global_quick_boot_count->update();
+            global_preferences->sync();
         - script.stop: script_factory_test
         - lambda: |-
             float new_power = ((float)id(number_max_power).state)/100.0f;

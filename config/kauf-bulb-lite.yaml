@@ -257,7 +257,7 @@ script:
 
                 // reset counter and immediately save
                 id(global_quick_boot_count) = 0;
-                global_quick_boot_count->loop();
+                global_quick_boot_count->update();
                 global_preferences->sync();
 
             # short delay
@@ -278,7 +278,7 @@ script:
       - lambda: |-
           ESP_LOGD("kauf-bulb.yaml", "quick boot count variable is now %d.  Need $sub_reboot_req to overwrite credentials", id(global_quick_boot_count));
           id(global_quick_boot_count) += 1;
-          global_quick_boot_count->loop();
+          global_quick_boot_count->update();
           global_preferences->sync();
 
       # if quick boot count gets over 1 (don't flash on first occurance in case it's an accident), flash light to indicate we are in process
@@ -305,5 +305,5 @@ script:
       # any time boot is greater than 10 seconds and also connects to wifi, reset quick boot count to 0
       - lambda: |-
           id(global_quick_boot_count) = 0;
-          global_quick_boot_count->loop();
+          global_quick_boot_count->update();
           global_preferences->sync();
