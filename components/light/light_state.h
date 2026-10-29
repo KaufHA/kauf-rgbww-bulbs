@@ -228,9 +228,6 @@ class LightState : public EntityBase, public Component {
   /// Get the forward gamma lookup table, 256 PROGMEM entries
   const uint16_t *get_gamma_table() const { return this->gamma_table_ != nullptr ? this->gamma_table_->lut : nullptr; }
 
-  /// Get the complete gamma table object so callers can temporarily replace and later restore it.
-  const GammaTable *get_gamma_table_object() const { return this->gamma_table_; }
-
   /// Apply gamma correction using the pre-computed forward LUT
   float gamma_correct_lut(float value) const;
   /// Reverse gamma correction by binary-searching the forward LUT
