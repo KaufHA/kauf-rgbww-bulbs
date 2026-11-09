@@ -110,33 +110,24 @@ async def to_code(config):
 
         # set cold and warm rgb lights if configured
         if "cold_rgb" in config and "warm_rgb" in config:
-            crgb = await cg.get_variable(config["cold_rgb"])
-            cg.add(var.set_cold_rgb(crgb))
-            wrgb = await cg.get_variable(config["warm_rgb"])
-            cg.add(var.set_warm_rgb(wrgb))
+            await cg.add_variable(var.set_cold_rgb, config["cold_rgb"])
+            await cg.add_variable(var.set_warm_rgb, config["warm_rgb"])
             cg.add_define("KAUF_HAS_AUX")
 
         # then set aux false after rgb light pointers set
         cg.add(var.set_aux(False))
 
         # set min/max color temp
-        if CONF_WARM_WHITE_COLOR_TEMPERATURE in config:
-            cg.add(var.set_warm_white_temperature(config[CONF_WARM_WHITE_COLOR_TEMPERATURE]))
-        if CONF_COLD_WHITE_COLOR_TEMPERATURE in config:
-            cg.add(var.set_cold_white_temperature(config[CONF_COLD_WHITE_COLOR_TEMPERATURE]))
+        cg.add_optional(var.set_warm_white_temperature, config.get(CONF_WARM_WHITE_COLOR_TEMPERATURE))
+        cg.add_optional(var.set_cold_white_temperature, config.get(CONF_COLD_WHITE_COLOR_TEMPERATURE))
 
 
         # add RGBWW PWM, but wait until they exist using await
-        red = await cg.get_variable(config[CONF_RED])
-        cg.add(var.set_red(red))
-        green = await cg.get_variable(config[CONF_GREEN])
-        cg.add(var.set_green(green))
-        blue = await cg.get_variable(config[CONF_BLUE])
-        cg.add(var.set_blue(blue))
-        cwhite = await cg.get_variable(config[CONF_COLD_WHITE])
-        cg.add(var.set_cold_white(cwhite))
-        wwhite = await cg.get_variable(config[CONF_WARM_WHITE])
-        cg.add(var.set_warm_white(wwhite))
+        await cg.add_variable(var.set_red, config[CONF_RED])
+        await cg.add_variable(var.set_green, config[CONF_GREEN])
+        await cg.add_variable(var.set_blue, config[CONF_BLUE])
+        await cg.add_variable(var.set_cold_white, config[CONF_COLD_WHITE])
+        wwhite = await cg.add_variable(var.set_warm_white, config[CONF_WARM_WHITE])
         if _output_has_align_pin(config[CONF_WARM_WHITE].id):
             cg.add(var.set_warm_white_pwm(wwhite))
 
@@ -153,8 +144,7 @@ async def to_code(config):
 
     # aux light registers itself with the main light
     if config["aux"] in ("warm", "cold") and "main_light" in config:
-        ml = await cg.get_variable(config["main_light"])
-        cg.add(var.set_main_light(ml))
+        ml = await cg.add_variable(var.set_main_light, config["main_light"])
         ls = await cg.get_variable(config[CONF_ID])
         if config["aux"] == "warm":
             cg.add(cg.RawExpression(f"{ml}->get_output()->set_warm_rgb({ls})"))

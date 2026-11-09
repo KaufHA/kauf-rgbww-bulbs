@@ -1,0 +1,1 @@
+DOMAIN = "kauf_rgbww"
